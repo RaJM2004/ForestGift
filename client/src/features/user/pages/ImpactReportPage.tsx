@@ -74,8 +74,8 @@ export function ImpactReportPage() {
       // 2. SANITIZE EVERY ELEMENT IN THE LIVE CLONE
       const elements = Array.from(clone.getElementsByTagName('*'));
       elements.forEach(node => {
-        const el = node as HTMLElement;
-        if (!(el instanceof HTMLElement || el instanceof SVGElement)) return;
+        const el = node as any;
+        if (!el || !(el instanceof HTMLElement || el instanceof SVGElement)) return;
         
         const computed = window.getComputedStyle(el);
         const style = el.style;
