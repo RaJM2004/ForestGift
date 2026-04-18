@@ -82,10 +82,18 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({ user, submis
     }
   };
 
+  const scale = typeof window !== 'undefined' ? Math.max(0.2, Math.min(0.85, (window.innerWidth - 32) / 1123)) : 0.85;
+  const marginLossY = 794 * (1 - scale);
+  
   return (
-    <div className="fixed inset-0 z-[2000] flex flex-col items-center justify-center py-4 px-4 bg-black/95 overflow-hidden animate-in fade-in duration-500">
-      <div className="max-w-5xl w-full flex flex-col items-center gap-4 no-print mb-12">
-        <div className="preview-scale-container relative w-fit h-fit overflow-hidden rounded-xl shadow-2xl border-4 border-white/10" style={{ transform: 'scale(0.65)', transformOrigin: 'center' }}>
+    <>
+      {/* Background Layer */}
+      <div className="fixed inset-0 z-[2000] bg-black/95 backdrop-blur-sm animate-in fade-in duration-500 pointer-events-none" />
+      
+      {/* Scrollable Content Layer */}
+      <div className="fixed inset-0 z-[2005] flex flex-col items-center justify-start py-8 px-2 md:px-8 overflow-y-auto overflow-x-hidden animate-in fade-in duration-500 pb-40">
+        <div className="w-full flex-none flex flex-col items-center justify-start min-h-max">
+        <div className="preview-scale-container relative w-fit h-fit overflow-hidden rounded-3xl shadow-[0_0_100px_rgba(255,255,255,0.1)] border border-white/20" style={{ transform: `scale(${scale})`, transformOrigin: 'top center', marginBottom: `-${marginLossY}px` }}>
           <div 
             ref={certificateRef}
             style={{ 
@@ -209,30 +217,44 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({ user, submis
           </div>
         </div>
       </div>
-
-      <div className="fixed bottom-12 left-1/2 -translate-x-1/2 flex gap-8 no-print">
-        <button 
-          onClick={downloadCertificate}
-          disabled={isGenerating}
-          className="bg-[#022c22] text-white px-12 py-5 rounded-none text-sm font-black uppercase tracking-[0.4em] hover:bg-black transition-all flex items-center gap-6 shadow-2xl group border border-[#ffffff1a] disabled:opacity-50"
-        >
-          {isGenerating ? (
-              <div className="w-5 h-5 border-4 border-[#ffffff33] border-t-white rounded-full animate-spin"></div>
-          ) : (
-            <>
-              <Icon name="download" size={18} className="group-hover:-translate-y-1 transition-transform" />
-              Claim My Certificate
-            </>
-          )}
-        </button>
-        
-        <button 
-          onClick={onClose}
-          className="bg-white text-black px-12 py-5 rounded-none text-sm font-black uppercase tracking-[0.2em] hover:bg-gray-100 transition-all shadow-xl"
-        >
-          Close Preview
-        </button>
       </div>
-    </div>
+
+      {/* Floating Action Layer (Completely decoupled from scrolling context) */}
+      <div className="fixed inset-0 z-[2020] pointer-events-none animate-in fade-in duration-500">
+        
+        {/* Mobile-optimized Top Right Close Button */}
+        <button 
+          onClick={onClose} 
+          className="absolute top-4 right-4 md:top-8 md:right-8 w-12 h-12 flex items-center justify-center bg-white/10 hover:bg-white/30 backdrop-blur-md rounded-full text-white transition-colors shadow-2xl border border-white/10 pointer-events-auto"
+        >
+          <span className="sr-only">Close Preview</span>
+          <Icon name="x" size={24} />
+        </button>
+
+        <div className="absolute bottom-20 md:bottom-12 left-4 right-4 md:left-1/2 md:right-auto md:w-auto md:-translate-x-1/2 flex flex-row md:gap-8 no-print bg-black/80 md:bg-transparent backdrop-blur-md md:backdrop-blur-none border border-white/10 md:border-none p-3 md:p-0 rounded-2xl md:rounded-none pointer-events-auto shadow-2xl md:shadow-none">
+          <button 
+            onClick={downloadCertificate}
+            disabled={isGenerating}
+            className="flex-1 md:flex-none bg-emerald-700 md:bg-[#022c22] text-white py-4 md:px-12 md:py-5 rounded-xl md:rounded-none text-[10px] md:text-sm font-black uppercase tracking-widest md:tracking-[0.4em] hover:bg-emerald-600 md:hover:bg-black transition-all flex items-center justify-center gap-2 md:gap-6 shadow-2xl group border border-emerald-500/50 md:border-[#ffffff1a] disabled:opacity-50 mr-2 md:mr-0"
+          >
+            {isGenerating ? (
+                <div className="w-5 h-5 border-4 border-[#ffffff33] border-t-white rounded-full animate-spin mx-auto"></div>
+            ) : (
+              <>
+                <Icon name="download" size={16} className="group-hover:-translate-y-1 transition-transform" />
+                Claim
+              </>
+            )}
+          </button>
+          
+          <button 
+            onClick={onClose}
+            className="flex-1 md:flex-none bg-zinc-800 text-white py-4 md:px-12 md:py-5 rounded-xl md:rounded-none text-[10px] md:text-sm font-black uppercase tracking-widest md:tracking-[0.2em] hover:bg-zinc-700 transition-all shadow-xl border border-zinc-700/50 md:border-none"
+          >
+            Close Review
+          </button>
+        </div>
+      </div>
+    </>
   );
 };

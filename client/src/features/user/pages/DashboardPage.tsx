@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { 
   TreePine, 
   TrendingUp, 
@@ -11,7 +11,9 @@ import {
   ChevronRight,
   Monitor,
   Heart,
-  Droplets
+  Droplets,
+  FileCheck,
+  X
 } from "lucide-react";
 import { Card } from "../../../shared/components/ui/card";
 import { Button } from "../../../shared/components/ui/button";
@@ -23,9 +25,11 @@ import 'leaflet/dist/leaflet.css';
 import { customMarkerIcon } from "../../../shared/utils/leaflet-icons";
 import { useUser } from "../context/UserContext";
 import { ImpactCard } from "../../../shared/components/ui/ImpactCard";
+import { CertificateModal } from "../../admin/CertificateModal";
 
 export function DashboardPage() {
-  const { user, stats, orders, treeEntries, isRefreshing } = useUser();
+  const { user, stats, orders, treeEntries, certificates, isRefreshing } = useUser();
+  const [selectedCert, setSelectedCert] = useState<any>(null);
 
   if (!user) return null;
 
@@ -59,32 +63,58 @@ export function DashboardPage() {
             <Button variant="ghost" size="sm" className="font-black text-[10px] uppercase text-emerald-600 tracking-widest">View All <ChevronRight className="w-3 h-3 ml-1" /></Button>
          </div>
          <div className="grid grid-cols-1 gap-4">
-            {orders.slice(0, 3).map((order) => (
-               <Card key={order.orderId} className="p-6 border-none shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                     <div className="space-y-1 min-w-[200px]">
-                        <h4 className="font-black text-gray-900 tracking-tight">{order.orderId}</h4>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{order.trees} Trees • {order.date}</p>
-                     </div>
-                     
-                     <div className="flex-1 space-y-2">
-                        <div className="flex justify-between items-center text-[10px] font-black uppercase text-gray-500">
-                           <span>Progress</span>
-                           <span className="text-emerald-600">{order.progress}%</span>
-                        </div>
-                        <Progress value={order.progress} className="h-2" />
-                     </div>
+            {orders.slice(0, 3).map((order) => {
+               const cert = certificates.find(c => c.orderId === order.orderId) || (certificates.length > 0 ? certificates[0] : null);
+               const displayProgress = cert ? 100 : order.progress;
+               const displayStatus = cert ? 'Certified' : order.status;
 
-                     <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="h-9 px-6 text-[9px] font-black uppercase tracking-widest border-2">Track</Button>
-                        <Button className="h-9 px-6 text-[9px] font-black uppercase tracking-widest bg-emerald-600 hover:bg-emerald-700 shadow-sm">Certificate</Button>
-                        <Badge className={`h-9 px-4 rounded-lg font-black text-[9px] uppercase tracking-widest flex items-center justify-center ${order.status === 'Growing' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
-                           {order.status}
-                        </Badge>
-                     </div>
-                  </div>
-               </Card>
-            ))}
+               return (
+                 <Card key={order.orderId} className="p-6 border-none shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                       <div className="space-y-1 min-w-[200px]">
+                          <h4 className="font-black text-gray-900 tracking-tight">{order.orderId}</h4>
+                          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{order.trees} Trees • {order.date}</p>
+                       </div>
+                       
+                       <div className="flex-1 space-y-2">
+                          <div className="flex justify-between items-center text-[10px] font-black uppercase text-gray-500">
+                             <span>Progress</span>
+                             <span className="text-emerald-600">{displayProgress}%</span>
+                          </div>
+                          <Progress value={displayProgress} className="h-2" />
+                       </div>
+
+                       <div className="flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => {
+                              const certCode = cert ? (cert as any).verificationCode || cert.id || cert._id : null;
+                              if (certCode) {
+                                window.open(`/verify/${certCode}`, '_blank');
+                              } else {
+                                window.alert('Verification not available.');
+                              }
+                            }}
+                            disabled={!cert}
+                            className={`h-9 px-6 text-[9px] font-black uppercase tracking-widest border-2 ${cert ? 'hover:bg-gray-50 text-gray-700 border-gray-200' : 'text-gray-300 border-gray-100 cursor-not-allowed'}`}>
+                            Verify
+                          </Button>
+                          <Button 
+                             onClick={() => setSelectedCert(cert)}
+                             disabled={!cert}
+                             className={`h-9 px-6 text-[9px] font-black uppercase tracking-widest shadow-sm ${cert ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+                          >
+                             Certificate
+                          </Button>
+                          <Badge className={`h-9 px-4 rounded-lg font-black text-[9px] uppercase tracking-widest flex items-center justify-center ${displayStatus === 'Certified' || displayStatus === 'Planted' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
+                             {displayStatus}
+                          </Badge>
+                       </div>
+                    </div>
+                 </Card>
+               );
+            })}
          </div>
       </div>
 
@@ -139,6 +169,14 @@ export function DashboardPage() {
             bgColor="bg-purple-50" 
          />
       </div>
+      
+      {selectedCert && (
+        <CertificateModal 
+            user={{...user, certificate: selectedCert }} 
+            submission={{ species: "Trees", ngoName: selectedCert.ngoName || user.ngo }}
+            onClose={() => setSelectedCert(null)} 
+        />
+      )}
     </div>
   );
 }

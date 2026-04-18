@@ -277,3 +277,81 @@ export const fetchCertificates = async () => {
   const res = await fetch(`${API_URL}/certificates`);
   return res.json();
 };
+
+// Admin CRUD capabilities 
+export const deleteUser = async (id: string) => {
+  const res = await fetch(`${API_URL}/admin/users/${id}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Failed to delete user');
+  return res.json();
+};
+
+export const updateUser = async (id: string, data: any) => {
+  const res = await fetch(`${API_URL}/admin/users/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to update user');
+  return res.json();
+};
+
+export const deleteNGO = async (id: string) => {
+  const res = await fetch(`${API_URL}/admin/ngos/${id}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Failed to delete NGO');
+  return res.json();
+};
+
+export const updateAdminNGO = async (id: string, data: any) => {
+  const res = await fetch(`${API_URL}/admin/ngos/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to update NGO');
+  return res.json();
+};
+
+export const deleteCakeVendor = async (id: string) => {
+  const res = await fetch(`${API_URL}/admin/vendors/${id}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Failed to delete Cake Vendor');
+  return res.json();
+};
+
+export const updateCakeVendor = async (id: string, data: any) => {
+  const res = await fetch(`${API_URL}/admin/vendors/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to update Cake Vendor');
+  return res.json();
+};
+
+export const fetchAdminSettings = async () => {
+  const res = await fetch(`${API_URL}/admin/settings`);
+  if (!res.ok) throw new Error('Failed to fetch settings');
+  return res.json();
+};
+
+export const updateAdminSettings = async (data: any) => {
+  const res = await fetch(`${API_URL}/admin/settings`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to update settings');
+  return res.json();
+};
+
+export const resendWelcomeEmail = async (userId: string) => {
+  const res = await fetch(`${API_URL}/admin/resend-welcome-email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId }),
+  });
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || 'Failed to resend email');
+  }
+  return res.json();
+};

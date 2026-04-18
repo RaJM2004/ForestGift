@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Toaster } from 'sonner';
 import { AdminDashboard } from './features/admin';
 import { NGODashboard } from './features/ngo';
 import { CakeDashboard } from './features/cake';
@@ -55,20 +56,13 @@ function App() {
 
   return (
     <div className="relative h-screen bg-gray-50">
-      {/* Dev Reset / Logout Button */}
-      <div className="fixed bottom-4 right-4 z-50">
-        <button
-          onClick={handleLogout}
-          className="bg-slate-900 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-2xl hover:bg-red-600 transition-colors"
-        >
-          Logout & Reset
-        </button>
-      </div>
+      <Toaster position="top-right" richColors />
+      {/* Global floating button removed; delegating logout controls to specific dashboards */}
 
       <div className="h-full overflow-hidden">
-        {role === 'admin' && <AdminDashboard />}
-        {role === 'ngo' && <NGODashboard user={user} />}
-        {role === 'cake' && <CakeDashboard user={user} />}
+        {role === 'admin' && <AdminDashboard handleLogout={handleLogout} />}
+        {role === 'ngo' && <NGODashboard user={user} handleLogout={handleLogout} />}
+        {role === 'cake' && <CakeDashboard user={user} handleLogout={handleLogout} />}
         {role === 'user' && (
           <UserProvider initialUser={user}>
             <UserDashboard handleLogout={handleLogout} />

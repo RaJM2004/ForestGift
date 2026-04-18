@@ -22,6 +22,7 @@ export interface IUser extends Document {
   referralCount: number;
   impactPoints: number;
   globalRank: number;
+  welcomeEmailSent: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -52,6 +53,7 @@ const UserSchema: Schema = new Schema({
   referralCount: { type: Number, default: 0 },
   impactPoints: { type: Number, default: 0 },
   globalRank: { type: Number, default: 0 },
+  welcomeEmailSent: { type: Boolean, default: false },
 }, { timestamps: true });
 
 export default mongoose.model<IUser>('User', UserSchema);

@@ -1,6 +1,9 @@
 import { Request, Response } from 'express';
 import Certificate from '../models/Certificate';
 import BulkTreeEntry from '../models/BulkTreeEntry';
+import Submission from '../models/Submission';
+import User from '../models/User';
+import { sendCertificateEmail } from '../services/emailService';
 
 export const createCertificate = async (req: Request, res: Response) => {
   try {
@@ -32,6 +35,17 @@ export const createCertificate = async (req: Request, res: Response) => {
 
     const saved = await newCertificate.save();
     console.log(`[CERT] Created new certificate: ${verificationCode}`);
+
+    // Trigger Certificate Email
+    const user = await User.findOne({ id: userId });
+    if (user && user.email) {
+        const emailResult = await sendCertificateEmail(user.email, user.name, verificationCode);
+        if (emailResult.success) {
+            saved.emailSent = true;
+            await saved.save();
+        }
+    }
+
     res.status(201).json(saved);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -58,15 +72,60 @@ export const getCertificateByVerification = async (req: Request, res: Response) 
       return res.status(404).json({ error: 'Certificate not found' });
     }
     
-    const trees = await BulkTreeEntry.find({
+    // 1. Fetch the user to get their full identity markers (Parity with UserDashboard logic)
+    const user = await User.findOne({ id: cert.userId }).lean();
+    
+    // 2. Build identity filter for robust matching
+    const identityFilter: any[] = [{ userId: cert.userId }];
+    
+    if (user) {
+        if (user.name) identityFilter.push({ userName: { $regex: new RegExp(`^${user.name}$`, 'i') } });
+        if (user.token) identityFilter.push({ userToken: user.token });
+        if (user.phone) identityFilter.push({ phone: user.phone });
+        if (user.email) identityFilter.push({ email: user.email });
+    }
+
+    // Include submissionId and userId from the certificate itself in search
+    const searchFilter = {
       $or: [
-        { userId: cert.userId },
+        ...identityFilter,
+        { orderId: cert.submissionId },
         { orderId: cert.userId }
       ]
-    }).lean();
+    };
 
-    console.log(`[VERIFY] Found certificate for: ${cert.userName} with ${trees.length} trees`);
-    res.json({ ...cert, trees });
+    // Fetch trees from BulkTreeEntry
+    const trees = await BulkTreeEntry.find(searchFilter).lean();
+
+    // Fetch proof images from Submission
+    const submissions = await Submission.find(searchFilter).lean();
+
+    // Combine images from both sources
+    let finalImageUrl = cert.imageUrl;
+    
+    // First check certificate itself
+    // Then check submissions (proofs)
+    if (!finalImageUrl) {
+        for (const sub of submissions) {
+            if (sub.proofs && sub.proofs.length > 0) {
+                finalImageUrl = sub.proofs[0];
+                break;
+            }
+        }
+    }
+
+    // Then check bulk tree entries (images)
+    if (!finalImageUrl) {
+      for (const tree of trees) {
+        if (tree.images && tree.images.length > 0) {
+          finalImageUrl = tree.images[0];
+          break;
+        }
+      }
+    }
+
+    console.log(`[VERIFY] Found certificate for: ${cert.userName} with ${trees.length} trees and ${submissions.length} submissions. Image: ${finalImageUrl}`);
+    res.json({ ...cert, trees, submissions, displayImage: finalImageUrl });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

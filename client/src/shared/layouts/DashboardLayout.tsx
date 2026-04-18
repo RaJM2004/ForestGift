@@ -10,6 +10,7 @@ interface LayoutProps {
   subtitle?: string;
   lastUpdated?: Date;
   notifications?: any[];
+  onLogout?: () => void;
 }
 
 const ForecastTree = ({ className, size = 300, z = 0, opacity = 0.2, delay = 0, speed = "animate-sway" }: any) => (
@@ -60,8 +61,8 @@ const ForestBackground = () => (
   </div>
 );
 
-export const DashboardLayout = ({ children, navItems, activeSection, setActiveSection, title, subtitle, lastUpdated, notifications = [] }: LayoutProps) => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+export const DashboardLayout = ({ children, navItems, activeSection, setActiveSection, title, subtitle, lastUpdated, notifications = [], onLogout }: LayoutProps) => {
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [lastSeenCount, setLastSeenCount] = useState(0);
   const notificationRef = useRef<HTMLDivElement | null>(null);
@@ -87,16 +88,27 @@ export const DashboardLayout = ({ children, navItems, activeSection, setActiveSe
   }, [isNotificationOpen, notifications.length]);
 
   return (
-    <div className="flex h-screen bg-gray-50 font-sans text-gray-900 overflow-hidden">
+    <div className="flex h-screen bg-gray-50 font-sans text-gray-900 overflow-hidden relative">
+      {/* Mobile Sidebar Overlay Backdrop */}
+      {sidebarOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity" 
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* SIDEBAR */}
-      <aside className={`${sidebarOpen ? 'w-60' : 'w-16'} bg-black flex flex-col transition-all duration-300 shadow-xl z-20 overflow-hidden relative`}>
+      <aside className={`
+        fixed md:relative h-full z-50 bg-black flex flex-col transition-all duration-300 shadow-xl overflow-hidden
+        ${sidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0 md:w-16 w-64'}
+      `}>
         {/* Realistic 3D Forest Elements in Sidebar */}
         <div className="absolute inset-0 pointer-events-none opacity-[0.05] perspective-forest overflow-hidden">
           <ForecastTree z={-100} size={200} opacity={0.5} className="-bottom-10 -right-5 text-white" speed="animate-sway" />
           <ForecastTree z={-50} size={150} opacity={0.3} className="top-20 -left-10 text-white" speed="animate-sway-slow" delay={1} />
         </div>
 
-        <div className="p-4 border-b border-white/10 relative z-10">
+        <div className="p-4 border-b border-white/10 relative z-10 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-white rounded-lg flex items-center justify-center shrink-0 shadow-lg">
               <Icon name="tree" size={20} className="stroke-black" />
@@ -107,15 +119,22 @@ export const DashboardLayout = ({ children, navItems, activeSection, setActiveSe
                 <div className="text-[8px] text-gray-400 tracking-widest uppercase">{subtitle ?? 'Gifting Solutions'}</div>
               </div>
             )}
-
           </div>
+          {sidebarOpen && (
+            <button className="md:hidden p-1 text-white hover:bg-white/20 rounded" onClick={() => setSidebarOpen(false)}>
+              <Icon name="x" size={16} />
+            </button>
+          )}
         </div>
 
         <nav className="flex-1 p-2 space-y-1 overflow-y-auto relative z-10">
           {navItems.map(item => (
             <button 
               key={item.label}
-              onClick={() => setActiveSection(item.label)}
+              onClick={() => {
+                 setActiveSection(item.label);
+                 if (window.innerWidth <= 768) setSidebarOpen(false);
+              }}
               className={`w-full flex items-center gap-3 p-2.5 rounded-lg transition-all group relative ${activeSection === item.label ? 'bg-white text-black' : 'text-gray-400 hover:bg-white/10 hover:text-white'}`}
             >
               <Icon name={item.icon} size={18} className={activeSection === item.label ? 'stroke-black' : 'stroke-gray-400 group-hover:stroke-white'} />
@@ -125,28 +144,39 @@ export const DashboardLayout = ({ children, navItems, activeSection, setActiveSe
           ))}
         </nav>
 
-        <div className="p-4 border-t border-white/10 flex items-center gap-3 relative z-10">
-          <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-xs font-black text-black uppercase shrink-0">A</div>
-          {sidebarOpen && (
-            <div className="overflow-hidden">
-              <div className="text-xs font-bold text-white truncate">Authorized User</div>
-              <div className="text-[10px] text-gray-400 truncate tracking-widest uppercase">Admin Level</div>
-            </div>
+        <div className="p-4 border-t border-white/10 flex items-center justify-between relative z-10 w-full">
+          <div className="flex items-center gap-3 truncate">
+            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-xs font-black text-black uppercase shrink-0">A</div>
+            {sidebarOpen && (
+              <div className="overflow-hidden">
+                <div className="text-xs font-bold text-white truncate">Authorized User</div>
+                <div className="text-[10px] text-gray-400 truncate tracking-widest uppercase">Admin Level</div>
+              </div>
+            )}
+          </div>
+          {sidebarOpen && onLogout && (
+             <button 
+                onClick={onLogout}
+                className="p-2 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white transition-colors rounded-lg flex items-center justify-center shrink-0 ml-2"
+                title="Logout"
+             >
+                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+             </button>
           )}
         </div>
       </aside>
 
       {/* MAIN CONTENT AREA WITH 3D FOREST BACKGROUND */}
-      <div className="flex-1 flex flex-col overflow-x-hidden overflow-y-visible relative z-0 bg-white">
+      <div className="flex-1 flex flex-col overflow-x-hidden overflow-y-auto relative z-0 bg-transparent min-w-0">
         <ForestBackground />
 
         {/* HEADER */}
-        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 flex items-center justify-between z-30">
-          <div className="flex items-center gap-6 flex-1">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-200 px-4 md:px-6 flex items-center justify-between z-30 sticky top-0">
+          <div className="flex items-center gap-4 flex-1 min-w-0">
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors shrink-0">
               <Icon name="filter" size={18} className="text-black" />
             </button>
-            <div className="text-lg font-black text-black tracking-tight uppercase">{activeSection}</div>
+            <div className="text-sm md:text-lg font-black text-black tracking-tight uppercase truncate">{activeSection}</div>
           </div>
           
           <div className="flex items-center gap-4">
@@ -193,7 +223,7 @@ export const DashboardLayout = ({ children, navItems, activeSection, setActiveSe
         </header>
 
         {/* PAGE BODY */}
-        <main className="flex-1 overflow-y-auto p-6 space-y-6 relative z-10 w-full max-w-7xl mx-auto">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-6 space-y-6 relative z-10 w-full max-w-7xl mx-auto min-w-0">
           {children}
         </main>
       </div>

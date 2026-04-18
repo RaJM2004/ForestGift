@@ -38,7 +38,7 @@ const navItems = [
   { label: 'Volunteers', icon: 'users' },
 ];
 
-export const NGODashboard = ({ user }: { user: any }) => {
+export const NGODashboard = ({ user, handleLogout }: { user: any, handleLogout?: () => void }) => {
   const [activeSection, setActiveSection] = useState('Dashboard');
   const [ngoData, setNgoData] = useState<any>(user);
   const [orders, setOrders] = useState<any[]>([]);
@@ -367,6 +367,7 @@ export const NGODashboard = ({ user }: { user: any }) => {
       activeSection={activeSection}
       setActiveSection={setActiveSection}
       notifications={activities}
+      onLogout={handleLogout}
     >
       {getSectionContent()}
     </DashboardLayout>

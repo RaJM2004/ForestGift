@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { DashboardLayout } from '../../shared/layouts/DashboardLayout';
 import { Badge, Icon, StatCard } from '../../shared/components/UI';
-import { fetchUsers, fetchNGOs, fetchActivities, createUser, assignNGO, createNGO, fetchCakeVendors, createCakeVendor, updateCakeStatus, fetchAllSubmissions, createCertificate, fetchAllBulkTreeEntries } from '../../api';
+import { fetchUsers, fetchNGOs, fetchActivities, createUser, assignNGO, createNGO, fetchCakeVendors, createCakeVendor, updateCakeStatus, fetchAllSubmissions, createCertificate, fetchCertificates, fetchAllBulkTreeEntries, deleteUser, updateUser, deleteNGO, updateAdminNGO, deleteCakeVendor, updateCakeVendor, fetchAdminSettings, updateAdminSettings, resendWelcomeEmail } from '../../api';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts';
 import { CertificateModal } from './CertificateModal';
+import * as XLSX from 'xlsx';
+import { toast } from 'sonner';
 
 const customIcon = new L.Icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -36,7 +38,7 @@ const getCakeVendor = (location: string, vendorList: any[]) => {
 };
 
 
-export const AdminDashboard = () => {
+export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) => {
   const [activeSection, setActiveSection] = useState("Dashboard Overview");
   const [users, setUsers] = useState<any[]>([]);
   const [ngos, setNgos] = useState<any[]>([]);
@@ -44,6 +46,7 @@ export const AdminDashboard = () => {
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [cakeVendors, setCakeVendors] = useState<any[]>([]);
   const [treeEntries, setTreeEntries] = useState<any[]>([]);
+  const [certificates, setCertificates] = useState<any[]>([]);
   const [ngoFilter, setNgoFilter] = useState("All NGOs");
   const [userSearch, setUserSearch] = useState("");
   const [lastUpdated, setLastUpdated] = useState(new Date());
@@ -79,6 +82,15 @@ export const AdminDashboard = () => {
   const [vendorFormData, setVendorFormData] = useState({
     name: '', email: '', contact: '', phone: '', area: 'Satellite Block A', costPerCake: 500
   });
+  const [bulkDataPreview, setBulkDataPreview] = useState<any[] | null>(null);
+  const [bulkImportStatus, setBulkImportStatus] = useState<any | null>(null);
+  const [roleManageTab, setRoleManageTab] = useState<'users' | 'ngos' | 'vendors'>('users');
+  const [editingRoleItem, setEditingRoleItem] = useState<{type: 'user' | 'ngo' | 'vendor', data: any} | null>(null);
+  const [deleteConfirmationItem, setDeleteConfirmationItem] = useState<{type: string, id: string} | null>(null);
+
+  const [adminSettings, setAdminSettings] = useState<any>(null);
+  const [localSettingsForm, setLocalSettingsForm] = useState<any>({ platformName: '', supportEmail: '', supportPhone: '', treeUnitPrice: 0, maintenanceMode: false });
+  const [savingSettings, setSavingSettings] = useState(false);
 
   // NGO Color Palette for map segregation
   const ngoColorMap = useMemo(() => {
@@ -132,14 +144,23 @@ export const AdminDashboard = () => {
   }, [users, submissions]);
 
   const refreshData = () => {
-    Promise.all([fetchUsers(), fetchNGOs(), fetchActivities(), fetchCakeVendors(), fetchAllSubmissions(), fetchAllBulkTreeEntries()])
-      .then(([u, n, a, cv, s, te]) => {
+    Promise.all([
+      fetchUsers(), 
+      fetchNGOs(), 
+      fetchActivities(), 
+      fetchCakeVendors(), 
+      fetchAllSubmissions(), 
+      fetchAllBulkTreeEntries(), 
+      fetchAdminSettings(),
+      fetchCertificates()
+    ])
+      .then(([u, n, a, cv, s, te, as, certs]) => {
         console.log("SYNC SUCCESS:", { 
           users: u?.length || 0, 
           ngos: n?.length || 0, 
           submissions: s?.length || 0,
           treeEntries: te?.length || 0,
-          rawLastSub: s?.[0] || 'none'
+          certificates: certs?.length || 0
         });
         
         setUsers(Array.isArray(u) ? u : []);
@@ -148,7 +169,19 @@ export const AdminDashboard = () => {
         setCakeVendors(Array.isArray(cv) ? cv : []);
         setSubmissions(Array.isArray(s) ? s : []);
         setTreeEntries(Array.isArray(te) ? te : []);
+        setCertificates(Array.isArray(certs) ? certs : []);
         setLastUpdated(new Date());
+
+        if (as && !adminSettings) {
+          setAdminSettings(as);
+          setLocalSettingsForm({
+             platformName: as.platformName || '',
+             supportEmail: as.supportEmail || '',
+             supportPhone: as.supportPhone || '',
+             treeUnitPrice: as.treeUnitPrice || 0,
+             maintenanceMode: as.maintenanceMode || false,
+          });
+        }
       })
       .catch(err => {
         console.error("SYNC FAILED:", err);
@@ -176,7 +209,7 @@ export const AdminDashboard = () => {
     setLoading(true);
     try {
       await createUser(formData);
-      alert("Citizen Registered Successfully! ID and Token generated.");
+      toast.success("Citizen Registered Successfully! ID and Token generated.");
       setShowAddModal(false);
       refreshData();
       setFormData({
@@ -185,7 +218,67 @@ export const AdminDashboard = () => {
       });
     } catch (error: any) {
       console.error("Submission Error:", error);
-      alert(error.message || "Error adding user");
+      toast.error(error.message || "Error adding user");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setLoading(true);
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet) as any[];
+
+      const validatedData = jsonData.map(row => {
+        let amount = parseInt(row.Amount || row.amount || row.AMOUNT) || 1000;
+        return {
+          name: row.Name || row.name || row.NAME || 'Citizen',
+          email: row.Email || row.email || row.EMAIL || `citizen${Math.floor(Math.random()*10000)}@example.com`,
+          phone: String(row.Phone || row.phone || row.PHONE || ''),
+          address: row.Address || row.address || row.ADDRESS || 'Unknown',
+          dob: row.DOB || row.dob || new Date().toISOString().split('T')[0],
+          amount: amount,
+          trees: Math.floor(amount / 1000) || 1,
+          ngo: 'Not Assigned',
+          location: row.Location || row.location || row.LOCATION || 'Satellite Block A',
+        };
+      });
+
+      setBulkDataPreview(validatedData);
+    } catch (error) {
+      console.error(error);
+      toast.error("Error parsing or uploading file. Ensure it's a valid CSV/Excel format.");
+    } finally {
+      e.target.value = ''; // reset file input
+      setLoading(false);
+    }
+  };
+
+  const confirmBulkImport = async () => {
+    if (!bulkDataPreview) return;
+    setLoading(true);
+    let successCount = 0;
+    try {
+      for (const payload of bulkDataPreview) {
+        try {
+          await createUser(payload);
+          successCount++;
+        } catch(err) {
+          console.error("Failed to insert bulk user:", payload, err);
+        }
+      }
+      setBulkImportStatus({ success: successCount, total: bulkDataPreview.length });
+      refreshData();
+    } catch(err) {
+      console.error(err);
+      toast.error("Error during bulk import execution.");
     } finally {
       setLoading(false);
     }
@@ -196,7 +289,7 @@ export const AdminDashboard = () => {
     setLoading(true);
     try {
       await createNGO(ngoFormData);
-      alert("NGO Registered Successfully!");
+      toast.success("NGO Registered Successfully!");
       setShowAddNgoModal(false);
       refreshData();
       setNgoFormData({
@@ -204,7 +297,7 @@ export const AdminDashboard = () => {
       });
     } catch (error: any) {
       console.error("NGO Submission Error:", error);
-      alert(error.message || "Error adding NGO");
+      toast.error(error.message || "Error adding NGO");
     } finally {
       setLoading(false);
     }
@@ -216,13 +309,13 @@ export const AdminDashboard = () => {
     setLoading(true);
     try {
       await assignNGO(selectedUser.id, selectedNgoId);
-      alert("Order assigned successfully!");
+      toast.success("Order assigned successfully!");
       setShowAssignModal(false);
       setSelectedUser(null);
       setSelectedNgoId("");
       refreshData();
     } catch (error) {
-      alert("Error assigning NGO");
+      toast.error("Error assigning NGO");
     } finally {
       setLoading(false);
     }
@@ -233,7 +326,7 @@ export const AdminDashboard = () => {
     setLoading(true);
     try {
       await createCakeVendor(vendorFormData);
-      alert("Cake Vendor Registered Successfully!");
+      toast.success("Cake Vendor Registered Successfully!");
       setShowAddVendorModal(false);
       refreshData();
       setVendorFormData({
@@ -242,7 +335,7 @@ export const AdminDashboard = () => {
 
     } catch (error: any) {
       console.error("Vendor Submission Error:", error);
-      alert(error.message || "Error adding Vendor");
+      toast.error(error.message || "Error adding Vendor");
     } finally {
       setLoading(false);
     }
@@ -255,9 +348,63 @@ export const AdminDashboard = () => {
       refreshData();
     } catch (error: any) {
       console.error("Status Update Error:", error);
-      alert(error.message || "Error updating status");
+      toast.error(error.message || "Error updating status");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const executeDeleteRoleItem = async () => {
+    if(!deleteConfirmationItem) return;
+    const { type, id } = deleteConfirmationItem;
+    setLoading(true);
+    try {
+      if (type === 'user') await deleteUser(id);
+      else if (type === 'ngo') await deleteNGO(id);
+      else if (type === 'vendor') await deleteCakeVendor(id);
+      toast.success(`${type} deleted successfully.`);
+      refreshData();
+      setDeleteConfirmationItem(null);
+    } catch (e: any) {
+      toast.error(e.message || `Failed to delete ${type}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteRoleItem = (type: string, id: string) => {
+    setDeleteConfirmationItem({type, id});
+  };
+
+  const handleUpdateRoleItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if(!editingRoleItem) return;
+    setLoading(true);
+    const { type, data } = editingRoleItem;
+    try {
+      if (type === 'user') await updateUser(data.id, data);
+      else if (type === 'ngo') await updateAdminNGO(data.id, data);
+      else if (type === 'vendor') await updateCakeVendor(data.id, data);
+      toast.success(`${type} updated successfully.`);
+      setEditingRoleItem(null);
+      refreshData();
+    } catch (e: any) {
+      toast.error(e.message || `Failed to update ${type}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingSettings(true);
+    try {
+      const updated = await updateAdminSettings(localSettingsForm);
+      setAdminSettings(updated);
+      toast.success('Core Framework Settings updated successfully.');
+    } catch (err: any) {
+      toast.error(err.message || 'Error updating settings');
+    } finally {
+      setSavingSettings(false);
     }
   };
 
@@ -282,6 +429,7 @@ export const AdminDashboard = () => {
       setActiveSection={setActiveSection}
       lastUpdated={lastUpdated}
       notifications={activities}
+      onLogout={handleLogout}
     >
       {activeSection === "Dashboard Overview" && (() => {
         const totalTreesPlanted = submissions.reduce((sum, s) => sum + (s.count || 0), 0);
@@ -382,7 +530,7 @@ export const AdminDashboard = () => {
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
             {/* Top Level Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex items-center justify-between hover:border-black transition-colors">
                 <div>
                   <div className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mb-1">Total Network</div>
@@ -421,21 +569,21 @@ export const AdminDashboard = () => {
               </div>
             </div>
 
-            <div className="flex justify-between items-center bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-4 rounded-3xl border border-gray-100 shadow-sm gap-4">
               <div className="pl-2">
                 <h2 className="text-xl font-black text-gray-900">Citizen Directory</h2>
                 <p className="text-xs text-gray-400 font-medium italic">Managing {enrichedUsers.length} active contributors</p>
               </div>
-              <div className="flex gap-3">
-                <div className="relative">
+              <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                <div className="relative flex-1 sm:flex-none">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                     <Icon name="search" size={14} />
                   </div>
-                  <input type="text" placeholder="Search Citizens..." className="bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-4 py-2.5 text-xs font-bold focus:bg-white focus:border-black outline-none transition-all w-64" />
+                  <input type="text" placeholder="Search Citizens..." className="bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-4 py-2.5 text-xs font-bold focus:bg-white focus:border-black outline-none transition-all w-full sm:w-64" />
                 </div>
                 <button 
                   onClick={() => setShowAddModal(true)}
-                  className="bg-black text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:bg-gray-900 transition-all shadow-sm"
+                  className="bg-black text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-gray-900 transition-all shadow-sm w-full sm:w-auto shrink-0"
                 >
                   <Icon name="plus" size={14} /> Add New Citizen
                 </button>
@@ -451,6 +599,7 @@ export const AdminDashboard = () => {
                       <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Digital Token</th>
                       <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Contribution</th>
                       <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">NGO Assignment</th>
+                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Email Status</th>
                       <th className="px-6 py-4 pr-8 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Progress Status</th>
                     </tr>
                   </thead>
@@ -471,6 +620,34 @@ export const AdminDashboard = () => {
                             <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border ${u.ngo === 'Not Assigned' ? 'bg-gray-50 text-gray-500 border-gray-200' : 'bg-black text-white border-black'}`}>
                                {u.ngo === 'Not Assigned' ? <Icon name="activity" size={12} /> : <Icon name="check" size={12} />}
                                {u.ngo}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
+                              <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${u.welcomeEmailSent ? 'text-emerald-500' : 'text-gray-400'}`}>
+                                <div className={`w-1.5 h-1.5 rounded-full ${u.welcomeEmailSent ? 'bg-emerald-500' : 'bg-gray-300'}`}></div>
+                                {u.welcomeEmailSent ? 'Delivered' : 'Not Sent'}
+                              </div>
+                              {!u.welcomeEmailSent && (
+                                <button 
+                                  onClick={async () => {
+                                    try {
+                                      setLoading(true);
+                                      await resendWelcomeEmail(u.id);
+                                      toast.success("Welcome email sent successfully.");
+                                      refreshData();
+                                    } catch (e: any) {
+                                      toast.error(e.message || "Failed to resend email.");
+                                    } finally {
+                                      setLoading(false);
+                                    }
+                                  }}
+                                  className="p-1 hover:bg-gray-100 rounded text-black transition-colors"
+                                  title="Retry Send Email"
+                                >
+                                  <Icon name="reports" size={12} />
+                                </button>
+                              )}
                             </div>
                           </td>
                           <td className="px-6 py-4 pr-8 text-right flex items-center justify-end gap-3">
@@ -495,7 +672,7 @@ export const AdminDashboard = () => {
                                           submissionId: sub._id || sub.id,
                                           lat: sub.lat || 0,
                                           lng: sub.lng || 0,
-                                          imageUrl: sub.fileNames?.[0] || '',
+                                          imageUrl: sub.proofs?.[0] || sub.fileNames?.[0] || '',
                                           verificationCode: `CERT-${u.id}-${Date.now()}`
                                         };
                                         console.log("[DEBUG] Syncing to MongoDB with payload:", payload);
@@ -504,12 +681,12 @@ export const AdminDashboard = () => {
                                         setShowCertificateModal(true);
                                       } catch (e) {
                                         console.error("Cert save failed:", e);
-                                        alert("Backend error: Could not sync certificate record to MongoDB.");
+                                        toast.error("Backend error: Could not sync certificate record to MongoDB.");
                                       } finally {
                                         setLoading(false);
                                       }
                                     } else {
-                                      alert("Error: No plantation submission found for this user. The certificate cannot be verified without proof-of-plantation data.");
+                                      toast.error("Error: No plantation submission found for this user. The certificate cannot be verified without proof-of-plantation data.");
                                     }
                                   }}
                                   className="p-2 hover:bg-emerald-50 text-emerald-600 rounded-lg transition-colors group/cert"
@@ -776,7 +953,11 @@ export const AdminDashboard = () => {
         );
       })()}
 
-      {activeSection === "Tree Map" && (
+      {activeSection === "Tree Map" && (() => {
+        const filteredSubmissions = submissions.filter(s => s.lat && s.lng && (ngoFilter === 'All NGOs' || s.ngoId === ngoFilter || s.ngoId === ngos.find(n => n.id === ngoFilter)?.name));
+        const filteredTreeEntries = treeEntries.filter(te => te.lat && te.lng && (ngoFilter === 'All NGOs' || te.ngoId === ngoFilter || te.ngoId === ngos.find(n => n.id === ngoFilter)?.name));
+
+        return (
         <div className="h-[calc(100vh-180px)] flex flex-col gap-4 animate-in fade-in duration-700">
           <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm flex justify-between items-center group hover:border-black transition-colors">
             <div className="flex items-center gap-4">
@@ -789,6 +970,14 @@ export const AdminDashboard = () => {
               </div>
             </div>
             <div className="flex gap-4 items-center">
+               <select 
+                 value={ngoFilter} 
+                 onChange={e => setNgoFilter(e.target.value)}
+                 className="bg-gray-50 border border-gray-200 text-[10px] font-black px-3 py-2 rounded-xl outline-none uppercase tracking-widest cursor-pointer"
+               >
+                 <option value="All NGOs">All NGOs</option>
+                 {ngos.map(n => <option key={n.id} value={n.id}>{n.name}</option>)}
+               </select>
                <div className="flex -space-x-3 overflow-hidden p-2">
                  {enrichedNgos.map((n, i) => (
                    <div key={i} className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-black text-white shadow-md hover:z-10 transition-all hover:scale-110" style={{ backgroundColor: ngoColorMap[n.id] }} title={n.name}>
@@ -797,7 +986,7 @@ export const AdminDashboard = () => {
                  ))}
                </div>
                <div className="bg-gray-100 text-[10px] font-black px-4 py-2.5 rounded-xl border border-gray-200 uppercase tracking-widest shadow-inner">
-                 Total Markers: {treeEntries.length + submissions.length}
+                 Total Markers: {filteredTreeEntries.length + filteredSubmissions.length}
                </div>
             </div>
           </div>
@@ -817,8 +1006,7 @@ export const AdminDashboard = () => {
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
-                {submissions
-                  .filter(s => s.lat && s.lng)
+                {filteredSubmissions
                   .map((s, idx) => {
                     const user = users.find(u => {
                       const uid = u.id ? String(u.id).trim().toLowerCase() : '';
@@ -834,10 +1022,14 @@ export const AdminDashboard = () => {
                     const ngo = ngos.find(n => n.id === s.ngoId || n.name === s.ngoId);
                     const markerColor = ngoColorMap[s.ngoId] || '#10b981';
                     
+                    const offsetStr = s.userId || s.orderId || s._id || idx.toString();
+                    const offset = getOffset(offsetStr);
+                    const position: [number, number] = [s.lat + offset.lat, s.lng + offset.lng];
+                    
                     return (
                       <Marker 
                         key={`sub-${idx}`} 
-                        position={[s.lat, s.lng]} 
+                        position={position} 
                         icon={L.divIcon({
                           className: 'custom-div-icon',
                           html: `<div style="background-color: ${markerColor}; width: 14px; height: 14px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 15px ${markerColor}66;"></div>`,
@@ -880,8 +1072,7 @@ export const AdminDashboard = () => {
                     );
                   })}
                   
-                {treeEntries
-                  .filter(te => te.lat && te.lng)
+                {filteredTreeEntries
                   .map((te, idx) => {
                     const user = users.find(u => {
                       const uid = u.id ? String(u.id).trim().toLowerCase() : '';
@@ -896,11 +1087,15 @@ export const AdminDashboard = () => {
                     });
                     const ngo = ngos.find(n => n.id === te.ngoId || n.name === te.ngoId);
                     const markerColor = ngoColorMap[te.ngoId] || '#10b981';
+
+                    const offsetStr = te.userId || te.orderId || te._id || idx.toString();
+                    const offset = getOffset(offsetStr);
+                    const position: [number, number] = [te.lat + offset.lat, te.lng + offset.lng];
                     
                     return (
                       <Marker 
                         key={`te-${idx}`} 
-                        position={[te.lat, te.lng]} 
+                        position={position} 
                         icon={L.divIcon({
                           className: 'custom-div-icon',
                           html: `<div style="background-color: ${markerColor}; width: 14px; height: 14px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 15px ${markerColor}66;"></div>`,
@@ -946,7 +1141,8 @@ export const AdminDashboard = () => {
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {showCertificateModal && selectedCertificateUser && (
         <CertificateModal 
@@ -958,74 +1154,147 @@ export const AdminDashboard = () => {
 
       {showAddModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border border-white/20">
-            <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+          <div className="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border border-white/20 flex flex-col max-h-[90vh]">
+            <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
               <div>
                 <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Register New Citizen</h3>
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Onboarding to the ForestGift Network</p>
               </div>
               <button 
-                onClick={() => setShowAddModal(false)}
+                onClick={() => { setShowAddModal(false); setBulkDataPreview(null); setBulkImportStatus(null); }}
                 className="p-3 hover:bg-white rounded-2xl text-gray-400 hover:text-rose-500 transition-all border border-transparent hover:border-gray-100 shadow-sm"
               >
                 <Icon name="x" size={24} />
               </button>
             </div>
             
-            <form onSubmit={handleSubmit} className="p-8 space-y-6">
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Full Name</label>
-                  <input required className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black focus:bg-white focus:border-black outline-none transition-all shadow-inner" placeholder="e.g. Rahul Sharma" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+            <div className="overflow-y-auto no-scrollbar">
+              {bulkImportStatus ? (
+                <div className="p-16 text-center animate-in fade-in zoom-in duration-500">
+                  <div className="w-24 h-24 bg-emerald-50 text-emerald-500 rounded-[32px] flex items-center justify-center mx-auto mb-6 border border-emerald-100 shadow-inner">
+                    <Icon name="check" size={48} />
+                  </div>
+                  <h2 className="text-2xl font-black text-gray-900 mb-2 uppercase tracking-tight">Import Successful</h2>
+                  <p className="text-sm font-bold text-gray-500 mb-8 uppercase tracking-widest leading-relaxed">Successfully imported<br/><span className="text-emerald-600 font-black">{bulkImportStatus.success}</span> out of <span className="text-black font-black">{bulkImportStatus.total}</span> citizens into the network.</p>
+                  <button onClick={() => { setShowAddModal(false); setBulkDataPreview(null); setBulkImportStatus(null); }} className="bg-black text-white px-10 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] hover:bg-gray-900 transition-colors shadow-xl">
+                    Close Registration
+                  </button>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Email Address</label>
-                  <input required type="email" className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black focus:bg-white focus:border-black outline-none transition-all shadow-inner" placeholder="rahul@domain.com" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+              ) : bulkDataPreview ? (
+                <div className="p-8 flex flex-col gap-6 animate-in fade-in duration-300">
+                  <div>
+                    <h4 className="text-xl font-black text-gray-900 uppercase tracking-tight">Review Data Before Processing</h4>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Please verify the <span className="text-black">{bulkDataPreview.length} records</span> extracted from the uploaded sheet.</p>
+                  </div>
+                  <div className="border border-gray-100 rounded-3xl overflow-hidden max-h-72 overflow-y-auto shadow-inner bg-gray-50">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="bg-white text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 sticky top-0 shadow-sm">
+                          <th className="px-5 py-4">Citizen Name</th>
+                          <th className="px-5 py-4">Contact Email</th>
+                          <th className="px-5 py-4">Target Zone</th>
+                          <th className="px-5 py-4 text-right">Trees</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 text-sm font-bold text-gray-700 bg-white">
+                        {bulkDataPreview.map((row, i) => (
+                          <tr key={i} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-5 py-3 text-black font-black">{row.name}</td>
+                            <td className="px-5 py-3 text-xs">{row.email}</td>
+                            <td className="px-5 py-3 text-[11px] font-black uppercase tracking-widest text-gray-500">{row.location}</td>
+                            <td className="px-5 py-3 text-emerald-600 font-black text-right">{row.trees}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="flex gap-4 pt-2">
+                    <button onClick={() => setBulkDataPreview(null)} disabled={loading} className="flex-1 bg-gray-100 text-gray-600 py-4 rounded-[20px] text-[10px] font-black uppercase tracking-[0.2em] hover:bg-gray-200 transition-colors">
+                      Cancel Import
+                    </button>
+                    <button onClick={confirmBulkImport} disabled={loading} className="flex-[2] bg-emerald-600 text-white py-4 rounded-[20px] text-[10px] font-black uppercase tracking-[0.2em] hover:bg-emerald-700 transition-colors shadow-xl disabled:opacity-50">
+                      {loading ? 'Processing Batch...' : `Confirm & Import ${bulkDataPreview.length} Citizens`}
+                    </button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <>
+                  <div className="p-8 pb-0 flex flex-col gap-4 border-b border-gray-50">
+                    <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between gap-4">
+                      <div>
+                        <h4 className="text-sm font-black text-emerald-900 uppercase tracking-widest">Bulk Import Citizens</h4>
+                        <p className="text-[10px] text-emerald-600 font-bold leading-tight mt-1">Upload an Excel (.xlsx) or CSV file with headers: Name, Email, Phone, Address, DOB, Amount, Location.</p>
+                      </div>
+                      <div>
+                        <input type="file" id="bulk-upload" accept=".xlsx, .xls, .csv" className="hidden" onChange={handleBulkUpload} disabled={loading} />
+                        <label htmlFor="bulk-upload" className="cursor-pointer bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-colors shadow-sm inline-block whitespace-nowrap">
+                           {loading ? 'Reading...' : 'Upload File'}
+                        </label>
+                      </div>
+                    </div>
+                    <div className="relative text-center my-2">
+                      <span className="absolute inset-x-0 top-1/2 -mt-px bg-gray-100 h-px"></span>
+                      <span className="relative bg-white px-2 py-1 text-[10px] uppercase font-black tracking-widest text-gray-400">OR REGISTER SINGLE</span>
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-2 gap-6">
-                 <div className="space-y-2">
-                  <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Mobile Number</label>
-                  <input required className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black focus:bg-white focus:border-black outline-none transition-all shadow-inner" placeholder="+91 XXXXX XXXXX" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Date of Birth</label>
-                  <input required type="date" className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black focus:bg-white focus:border-black outline-none transition-all shadow-inner" value={formData.dob} onChange={e => setFormData({...formData, dob: e.target.value})} />
-                </div>
-              </div>
+                  <form onSubmit={handleSubmit} className="p-8 pt-4 space-y-6">
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Full Name</label>
+                        <input required className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black focus:bg-white focus:border-black outline-none transition-all shadow-inner" placeholder="e.g. Rahul Sharma" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Email Address</label>
+                        <input required type="email" className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black focus:bg-white focus:border-black outline-none transition-all shadow-inner" placeholder="rahul@domain.com" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                      </div>
+                    </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Permanent Address</label>
-                <input required className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black focus:bg-white focus:border-black outline-none transition-all shadow-inner" placeholder="Full residential address..." value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
-              </div>
+                    <div className="grid grid-cols-2 gap-6">
+                       <div className="space-y-2">
+                        <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Mobile Number</label>
+                        <input required className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black focus:bg-white focus:border-black outline-none transition-all shadow-inner" placeholder="+91 XXXXX XXXXX" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Date of Birth</label>
+                        <input required type="date" className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black focus:bg-white focus:border-black outline-none transition-all shadow-inner" value={formData.dob} onChange={e => setFormData({...formData, dob: e.target.value})} />
+                      </div>
+                    </div>
 
-              <div className="grid grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Contribution (₹)</label>
-                  <input required type="number" className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black focus:bg-white focus:border-black outline-none transition-all shadow-inner" value={formData.amount} onChange={e => setFormData({...formData, amount: parseInt(e.target.value), trees: Math.floor(parseInt(e.target.value)/1000) || 1})} />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Tree Count</label>
-                  <input readOnly className="w-full bg-gray-100 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black text-emerald-600 cursor-not-allowed" value={formData.trees} />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Plantation Zone</label>
-                  <select className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black focus:bg-white focus:border-black outline-none transition-all shadow-inner" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})}>
-                    <option>Satellite Block A</option>
-                    <option>Satellite Block B</option>
-                    <option>Narmada Zone</option>
-                    <option>Satpura Zone</option>
-                    <option>Malwa Zone</option>
-                    <option>Central Zone</option>
-                  </select>
-                </div>
-              </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Permanent Address</label>
+                      <input required className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black focus:bg-white focus:border-black outline-none transition-all shadow-inner" placeholder="Full residential address..." value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
+                    </div>
 
-              <button type="submit" disabled={loading} className="w-full bg-black text-white py-5 rounded-[20px] text-[10px] font-black uppercase tracking-[0.4em] hover:bg-gray-900 transition-all shadow-2xl disabled:opacity-50 mt-4 border border-white/10">
-                {loading ? 'Processing Transaction...' : 'Establish Citizen Record'}
-              </button>
-            </form>
+                    <div className="grid grid-cols-3 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Contribution (₹)</label>
+                        <input required type="number" className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black focus:bg-white focus:border-black outline-none transition-all shadow-inner" value={formData.amount} onChange={e => setFormData({...formData, amount: parseInt(e.target.value), trees: Math.floor(parseInt(e.target.value)/1000) || 1})} />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Tree Count</label>
+                        <input readOnly className="w-full bg-gray-100 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black text-emerald-600 cursor-not-allowed" value={formData.trees} />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Plantation Zone</label>
+                        <select className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black focus:bg-white focus:border-black outline-none transition-all shadow-inner" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})}>
+                          <option>Satellite Block A</option>
+                          <option>Satellite Block B</option>
+                          <option>Narmada Zone</option>
+                          <option>Satpura Zone</option>
+                          <option>Malwa Zone</option>
+                          <option>Central Zone</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <button type="submit" disabled={loading} className="w-full bg-black text-white py-5 rounded-[20px] text-[10px] font-black uppercase tracking-[0.4em] hover:bg-gray-900 transition-all shadow-2xl disabled:opacity-50 mt-4 border border-white/10">
+                      {loading ? 'Processing Transaction...' : 'Establish Citizen Record'}
+                    </button>
+                  </form>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -1184,20 +1453,392 @@ export const AdminDashboard = () => {
 
       {/* REMAINDER MODALS (Reports, Settings) MOCKED FOR BREVITY BUT ENSURING SYNTAX COMPLETION */}
       {activeSection === "Reports & Analytics" && (
-        <div className="p-8 text-center bg-white rounded-3xl border border-gray-100 font-black text-gray-400 uppercase tracking-[0.3em]">
-          Analytical Module Initializing...
+        <div className="p-8 space-y-8 animate-in fade-in duration-500">
+           {/* Header */}
+           <div>
+             <h2 className="text-3xl font-black text-gray-900 uppercase tracking-tight">Ecosystem Impact Analytics</h2>
+             <p className="text-xs text-gray-500 font-bold tracking-widest uppercase mt-2">Real-time telemetry and growth metrics</p>
+           </div>
+           
+           {/* High level stats map */}
+           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+              {(() => {
+                const totalRequestedTrees = users.reduce((acc, u) => acc + (u.trees || 1), 0);
+                const totalPlantedTrees = submissions.reduce((acc, s) => acc + (Number(s.count) || s.fileNames?.length || 1), 0);
+                const carbonSavedKg = totalPlantedTrees * 21; 
+                const thisMonthUsers = users.filter(u => !u.createdAt || (new Date(u.createdAt).getMonth() === new Date().getMonth())).length;
+                
+                return (
+                  <>
+                    <div className="bg-emerald-600 text-white p-6 rounded-3xl shadow-xl shadow-emerald-500/20 relative overflow-hidden flex flex-col justify-between">
+                       <div className="relative z-10">
+                         <div className="text-[10px] font-black uppercase tracking-widest text-emerald-200 mb-2">Total Carbon Saved</div>
+                         <div className="text-4xl font-black tracking-tighter">{carbonSavedKg.toLocaleString()} <span className="text-lg">kg</span></div>
+                       </div>
+                       <Icon name="check" size={120} className="absolute -right-6 -bottom-6 text-emerald-500 opacity-50" />
+                    </div>
+                    <div className="bg-white border border-gray-100 p-6 rounded-3xl shadow-sm flex flex-col justify-between">
+                       <div>
+                         <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Trees Planted</div>
+                         <div className="text-4xl font-black text-gray-900 tracking-tighter">{totalPlantedTrees}</div>
+                       </div>
+                    </div>
+                    <div className="bg-white border border-gray-100 p-6 rounded-3xl shadow-sm flex flex-col justify-between">
+                       <div>
+                         <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Partnering NGOs</div>
+                         <div className="text-4xl font-black text-gray-900 tracking-tighter">{ngos.length}</div>
+                       </div>
+                    </div>
+                    <div className="bg-white border border-gray-100 p-6 rounded-3xl shadow-sm flex flex-col justify-between">
+                       <div>
+                         <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">New Citizens (Month)</div>
+                         <div className="text-4xl font-black text-emerald-600 tracking-tighter">+{thisMonthUsers}</div>
+                       </div>
+                    </div>
+                  </>
+                );
+              })()}
+           </div>
+
+           {/* Charts */}
+           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+             <div className="col-span-1 lg:col-span-2 bg-white border border-gray-100 p-8 rounded-3xl shadow-sm">
+               <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-6 border-b border-gray-50 pb-4">Forest & Revenue Growth Trajectory</h3>
+               <div className="h-72 w-full">
+                  {(() => {
+                    const timelineData = [];
+                    let sortedUsers = [...users].sort((a,b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
+                    if(sortedUsers.length === 0) timelineData.push({name: 'Launch', trees: 0, revenue: 0});
+                    else {
+                      let cumulativeTrees = 0;
+                      let cumulativeRevenue = 0;
+                      const segmentSize = Math.max(1, Math.ceil(sortedUsers.length / 5));
+                      for(let i=0; i<sortedUsers.length; i+=segmentSize) {
+                        const chunk = sortedUsers.slice(i, i+segmentSize);
+                        chunk.forEach(u => {
+                           cumulativeTrees += (u.trees || 1);
+                           cumulativeRevenue += (u.amount || 1000);
+                        });
+                        timelineData.push({
+                           name: `Cohort ${i/segmentSize + 1}`,
+                           trees: cumulativeTrees,
+                           revenue: cumulativeRevenue
+                        });
+                      }
+                    }
+                    return (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={timelineData} margin={{top: 5, right: 5, bottom: 5, left: 5}}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#9ca3af', fontWeight: 900}} dy={10} />
+                          <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#9ca3af', fontWeight: 900}} />
+                          <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#9ca3af', fontWeight: 900}} tickFormatter={(v) => `₹${v}`} />
+                          <RechartsTooltip cursor={{stroke: '#e5e7eb', strokeWidth: 2}} contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}} />
+                          <Line yAxisId="left" type="monotone" dataKey="trees" stroke="#059669" strokeWidth={4} dot={{r: 6, strokeWidth: 2, fill: '#fff'}} activeDot={{r: 8}} name="Total Trees" />
+                          <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={4} dot={{r: 6, strokeWidth: 2, fill: '#fff'}} activeDot={{r: 8}} name="Revenue" />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    );
+                  })()}
+               </div>
+             </div>
+             
+             <div className="col-span-1 bg-white border border-gray-100 p-8 rounded-3xl shadow-sm flex flex-col justify-between">
+               <div>
+                  <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-6 border-b border-gray-50 pb-4">Operational Summary</h3>
+                  <div className="space-y-6">
+                    {(() => {
+                      const totalCakes = users.length;
+                      const deliveredCakes = users.filter(u => u.status === 'Delivered' || u.status === 'Planted').length;
+                      const pendingOrders = users.reduce((acc, u) => acc + (u.trees || 1), 0) - submissions.reduce((acc, s) => acc + (Number(s.count) || s.fileNames?.length || 1), 0);
+                      
+                      return (
+                        <>
+                          <div>
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Cakes Ordered</span>
+                              <span className="text-xs font-black text-gray-900">{totalCakes}</span>
+                            </div>
+                            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="h-full bg-blue-500 rounded-full" style={{width: `${Math.min(100, Math.max(5, (totalCakes / (totalCakes+10)) * 100))}%`}}></div>
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Cakes Delivered</span>
+                              <span className="text-xs font-black text-gray-900">{deliveredCakes}</span>
+                            </div>
+                            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="h-full bg-indigo-500 rounded-full" style={{width: `${Math.min(100, totalCakes === 0 ? 0 : (deliveredCakes / totalCakes) * 100)}%`}}></div>
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Pending Blockers</span>
+                              <span className="text-xs font-black text-amber-500 font-mono">{Math.max(0, pendingOrders)} Trees</span>
+                            </div>
+                            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="h-full bg-amber-400 rounded-full" style={{width: `${Math.min(100, pendingOrders > 0 ? 100 : 0)}%`}}></div>
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+               </div>
+               <div className="mt-8 bg-emerald-50 p-4 rounded-2xl flex items-center justify-center gap-3">
+                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                 <span className="text-[9px] font-black uppercase tracking-widest text-emerald-700">Live Backend Stream</span>
+               </div>
+             </div>
+           </div>
+
+           {/* Certificate Registry Section */}
+           <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm">
+             <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
+               <div>
+                 <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">Registry of Issued Certificates</h3>
+                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Immutable Digital Environmental Credentials</p>
+               </div>
+               <div className="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-widest border border-emerald-100">
+                  Total Issued: {certificates.length}
+               </div>
+             </div>
+             <div className="overflow-x-auto">
+               <table className="w-full text-left">
+                 <thead>
+                   <tr className="bg-gray-50/50 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100">
+                     <th className="px-8 py-4">Recipient Name</th>
+                     <th className="px-8 py-4">Verification Code</th>
+                     <th className="px-8 py-4">Verifying NGO</th>
+                     <th className="px-8 py-4">Issue Date</th>
+                     <th className="px-8 py-4 text-center">Deliverability</th>
+                   </tr>
+                 </thead>
+                 <tbody className="divide-y divide-gray-50 text-xs">
+                   {certificates.map(c => (
+                     <tr key={c._id} className="hover:bg-gray-50/80 transition-colors group">
+                       <td className="px-8 py-4">
+                         <div className="font-black text-black group-hover:text-emerald-600 transition-colors uppercase tracking-tight">{c.userName}</div>
+                         <div className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">ID: {c.userId}</div>
+                       </td>
+                       <td className="px-8 py-4 font-mono font-bold text-gray-600 tracking-tighter">{c.verificationCode}</td>
+                       <td className="px-8 py-4">
+                         <div className="flex items-center gap-2">
+                           <div className="w-1.5 h-1.5 rounded-full bg-black"></div>
+                           <span className="font-black text-gray-900 text-[10px] uppercase">{c.ngoName}</span>
+                         </div>
+                       </td>
+                       <td className="px-8 py-4 text-gray-500 font-bold">
+                         {new Date(c.issueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                       </td>
+                       <td className="px-8 py-4">
+                          <div className={`flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest ${c.emailSent ? 'text-emerald-500' : 'text-gray-400'}`}>
+                            <div className={`w-1.5 h-1.5 rounded-full ${c.emailSent ? 'bg-emerald-500' : 'bg-gray-300'}`}></div>
+                            {c.emailSent ? 'Link Delivred' : 'Pending'}
+                          </div>
+                       </td>
+                     </tr>
+                   ))}
+                   {certificates.length === 0 && (
+                     <tr>
+                       <td colSpan={5} className="py-12 text-center text-[10px] font-black uppercase tracking-widest text-gray-400">
+                         No certificates issued in current epoch
+                       </td>
+                     </tr>
+                   )}
+                 </tbody>
+               </table>
+             </div>
+           </div>
         </div>
       )}
       
       {activeSection === "Role Management" && (
-        <div className="p-8 text-center bg-white rounded-3xl border border-gray-100 font-black text-gray-400 uppercase tracking-[0.3em]">
-          Governance Controls Loading...
+        <div className="animate-in fade-in duration-500 bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
+          <div className="p-4 sm:p-8 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center bg-gray-50/50 gap-4">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-black text-gray-900 uppercase tracking-tight">Role Management</h2>
+              <p className="text-[10px] sm:text-xs text-gray-500 font-bold tracking-widest uppercase mt-2">Manage Citizens, NGOs & Cake Vendors</p>
+            </div>
+            <div className="flex bg-gray-200/50 p-1 rounded-2xl w-full sm:w-auto overflow-x-auto no-scrollbar snap-x">
+               <button onClick={() => setRoleManageTab('users')} className={`flex-1 sm:flex-none whitespace-nowrap snap-center px-4 sm:px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${roleManageTab === 'users' ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-black'}`}>Citizens</button>
+               <button onClick={() => setRoleManageTab('ngos')} className={`flex-1 sm:flex-none whitespace-nowrap snap-center px-4 sm:px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${roleManageTab === 'ngos' ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-black'}`}>NGOs</button>
+               <button onClick={() => setRoleManageTab('vendors')} className={`flex-1 sm:flex-none whitespace-nowrap snap-center px-4 sm:px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${roleManageTab === 'vendors' ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-black'}`}>Vendors</button>
+            </div>
+          </div>
+          
+          <div className="p-4 sm:p-8 overflow-x-auto min-w-0">
+            <table className="w-full text-left border-collapse min-w-[500px]">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  <th className="pb-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">ID</th>
+                  <th className="pb-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Name</th>
+                  <th className="pb-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Email</th>
+                  <th className="pb-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Zone / Area</th>
+                  <th className="pb-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {roleManageTab === 'users' && users.map(u => (
+                  <tr key={u.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                    <td className="py-4 font-mono text-xs font-bold text-gray-500">{u.id}</td>
+                    <td className="py-4 text-sm font-black text-gray-900">{u.name}</td>
+                    <td className="py-4 text-xs font-bold text-gray-500 w-1/4 truncate">{u.email}</td>
+                    <td className="py-4 text-xs font-bold text-gray-500">{u.location}</td>
+                    <td className="py-4 text-right space-x-2">
+                       <button onClick={() => setEditingRoleItem({type: 'user', data: u})} className="px-3 py-1.5 bg-gray-100 hover:bg-black hover:text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-colors text-black">Edit</button>
+                       <button onClick={() => handleDeleteRoleItem('user', u.id)} className="px-3 py-1.5 bg-rose-50 hover:bg-rose-500 hover:text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-colors text-rose-600">Del</button>
+                    </td>
+                  </tr>
+                ))}
+                {roleManageTab === 'ngos' && ngos.map(n => (
+                  <tr key={n.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                    <td className="py-4 font-mono text-xs font-bold text-gray-500">{n.id}</td>
+                    <td className="py-4 text-sm font-black text-gray-900">{n.name}</td>
+                    <td className="py-4 text-xs font-bold text-gray-500">{n.email}</td>
+                    <td className="py-4 text-xs font-bold text-gray-500">{n.area}</td>
+                    <td className="py-4 text-right space-x-2">
+                       <button onClick={() => setEditingRoleItem({type: 'ngo', data: n})} className="px-3 py-1.5 bg-gray-100 hover:bg-black hover:text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-colors text-black">Edit</button>
+                       <button onClick={() => handleDeleteRoleItem('ngo', n.id)} className="px-3 py-1.5 bg-rose-50 hover:bg-rose-500 hover:text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-colors text-rose-600">Del</button>
+                    </td>
+                  </tr>
+                ))}
+                {roleManageTab === 'vendors' && cakeVendors.map(v => (
+                  <tr key={v.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                    <td className="py-4 font-mono text-xs font-bold text-gray-500">{v.id}</td>
+                    <td className="py-4 text-sm font-black text-gray-900">{v.name}</td>
+                    <td className="py-4 text-xs font-bold text-gray-500">{v.email}</td>
+                    <td className="py-4 text-xs font-bold text-gray-500">{v.area}</td>
+                    <td className="py-4 text-right space-x-2">
+                       <button onClick={() => setEditingRoleItem({type: 'vendor', data: v})} className="px-3 py-1.5 bg-gray-100 hover:bg-black hover:text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-colors text-black">Edit</button>
+                       <button onClick={() => handleDeleteRoleItem('vendor', v.id)} className="px-3 py-1.5 bg-rose-50 hover:bg-rose-500 hover:text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-colors text-rose-600">Del</button>
+                    </td>
+                  </tr>
+                ))}
+                {((roleManageTab === 'users' && users.length === 0) || 
+                  (roleManageTab === 'ngos' && ngos.length === 0) || 
+                  (roleManageTab === 'vendors' && cakeVendors.length === 0)) && (
+                  <tr>
+                    <td colSpan={5} className="py-12 text-center text-[10px] font-black uppercase tracking-widest text-gray-400">
+                      No Records Found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Editing Modal */}
+      {editingRoleItem && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight">Edit {editingRoleItem.type}</h3>
+              <button onClick={() => setEditingRoleItem(null)} className="p-2 hover:bg-white rounded-xl text-gray-400 hover:text-rose-500 transition-colors">
+                <Icon name="x" size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleUpdateRoleItem} className="p-6 space-y-4">
+               <div className="space-y-1">
+                 <label className="text-[10px] font-black p-1 text-gray-400 uppercase tracking-widest">Name</label>
+                 <input required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm font-bold focus:bg-white focus:border-black outline-none transition-all" value={editingRoleItem.data.name} onChange={e => setEditingRoleItem({...editingRoleItem, data: {...editingRoleItem.data, name: e.target.value}})} />
+               </div>
+               <div className="space-y-1">
+                 <label className="text-[10px] font-black p-1 text-gray-400 uppercase tracking-widest">Email</label>
+                 <input type="email" required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm font-bold focus:bg-white focus:border-black outline-none transition-all" value={editingRoleItem.data.email} onChange={e => setEditingRoleItem({...editingRoleItem, data: {...editingRoleItem.data, email: e.target.value}})} />
+               </div>
+               {(editingRoleItem.type === 'ngo' || editingRoleItem.type === 'vendor') && (
+                 <div className="space-y-1">
+                   <label className="text-[10px] font-black p-1 text-gray-400 uppercase tracking-widest">Area</label>
+                   <input required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm font-bold focus:bg-white focus:border-black outline-none transition-all" value={editingRoleItem.data.area} onChange={e => setEditingRoleItem({...editingRoleItem, data: {...editingRoleItem.data, area: e.target.value}})} />
+                 </div>
+               )}
+               {editingRoleItem.type === 'user' && (
+                 <div className="space-y-1">
+                   <label className="text-[10px] font-black p-1 text-gray-400 uppercase tracking-widest">Location / Address</label>
+                   <input required className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm font-bold focus:bg-white focus:border-black outline-none transition-all" value={editingRoleItem.data.location} onChange={e => setEditingRoleItem({...editingRoleItem, data: {...editingRoleItem.data, location: e.target.value}})} />
+                 </div>
+               )}
+               <button type="submit" disabled={loading} className="w-full bg-black text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] hover:bg-gray-900 transition-all shadow-xl disabled:opacity-50 mt-4">
+                 {loading ? 'Processing...' : 'Save Changes'}
+               </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmationItem && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-rose-50/50">
+              <h3 className="text-lg font-black text-rose-600 uppercase tracking-tight">Confirm Deletion</h3>
+              <button disabled={loading} onClick={() => setDeleteConfirmationItem(null)} className="p-2 hover:bg-white rounded-xl text-gray-400 hover:text-rose-500 transition-colors">
+                <Icon name="x" size={20} />
+              </button>
+            </div>
+            <div className="p-6 space-y-6">
+               <p className="text-sm font-bold text-gray-600">Are you sure you want to permanently delete this {deleteConfirmationItem.type}? This action cannot be undone.</p>
+               <div className="flex gap-3">
+                 <button disabled={loading} onClick={() => setDeleteConfirmationItem(null)} className="flex-1 bg-gray-100 text-gray-600 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] hover:bg-gray-200 transition-colors">Cancel</button>
+                 <button disabled={loading} onClick={executeDeleteRoleItem} className="flex-1 bg-rose-600 text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] hover:bg-rose-700 transition-shadow shadow-xl shadow-rose-500/20">{loading ? 'Deleting...' : 'Delete'}</button>
+               </div>
+            </div>
+          </div>
         </div>
       )}
       
       {activeSection === "Settings" && (
-        <div className="p-8 text-center bg-white rounded-3xl border border-gray-100 font-black text-gray-400 uppercase tracking-[0.3em]">
-          Core Framework Settings...
+        <div className="animate-in fade-in duration-500 bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
+          <div className="p-8 border-b border-gray-100 bg-gray-50/50">
+            <h2 className="text-3xl font-black text-gray-900 uppercase tracking-tight">Core Framework Settings</h2>
+            <p className="text-xs text-gray-500 font-bold tracking-widest uppercase mt-2">Manage Global Parameters & Platform Health</p>
+          </div>
+          
+          <div className="p-8">
+            <form onSubmit={handleSaveSettings} className="w-full max-w-2xl space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <div className="space-y-2">
+                   <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Platform Name</label>
+                   <input disabled={savingSettings} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:bg-white focus:border-black outline-none transition-all" value={localSettingsForm.platformName} onChange={e => setLocalSettingsForm({...localSettingsForm, platformName: e.target.value})} />
+                 </div>
+                 <div className="space-y-2">
+                   <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Tree Unit Price (₹)</label>
+                   <input type="number" disabled={savingSettings} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:bg-white focus:border-black outline-none transition-all font-mono" value={localSettingsForm.treeUnitPrice} onChange={e => setLocalSettingsForm({...localSettingsForm, treeUnitPrice: Number(e.target.value)})} />
+                 </div>
+                 <div className="space-y-2">
+                   <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Support Email</label>
+                   <input type="email" disabled={savingSettings} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:bg-white focus:border-black outline-none transition-all" value={localSettingsForm.supportEmail} onChange={e => setLocalSettingsForm({...localSettingsForm, supportEmail: e.target.value})} />
+                 </div>
+                 <div className="space-y-2">
+                   <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Support Phone</label>
+                   <input disabled={savingSettings} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:bg-white focus:border-black outline-none transition-all font-mono" value={localSettingsForm.supportPhone} onChange={e => setLocalSettingsForm({...localSettingsForm, supportPhone: e.target.value})} />
+                 </div>
+              </div>
+
+              <div className="pt-6 mt-6 border-t border-gray-100 space-y-4">
+                 <div className="flex items-center justify-between p-6 bg-rose-50/50 rounded-2xl border border-rose-100">
+                    <div>
+                      <h4 className="text-sm font-black text-rose-900 uppercase tracking-wide">Maintenance Mode</h4>
+                      <p className="text-xs text-rose-600/70 font-bold mt-1 max-w-md">Forces the application offline for users and cake vendors. Admins bypass this block.</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" disabled={savingSettings} className="sr-only peer" checked={localSettingsForm.maintenanceMode} onChange={e => setLocalSettingsForm({...localSettingsForm, maintenanceMode: e.target.checked})} />
+                      <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-rose-500"></div>
+                    </label>
+                 </div>
+              </div>
+
+              <div className="pt-8">
+                 <button type="submit" disabled={savingSettings} className="bg-black text-white px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] hover:bg-gray-900 transition-all shadow-xl disabled:opacity-50 min-w-[200px]">
+                   {savingSettings ? 'Writing to Node...' : 'Commit Settings'}
+                 </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

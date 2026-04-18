@@ -2,6 +2,9 @@ import { Request, Response } from 'express';
 import User from '../models/User';
 import NGO from '../models/NGO';
 import Activity from '../models/Activity';
+import Vendor from '../models/Vendor';
+import AdminSetting from '../models/AdminSetting';
+import { sendWelcomeEmail } from '../services/emailService';
 
 export const getAdminOverview = async (req: Request, res: Response) => {
   try {
@@ -55,6 +58,17 @@ export const createUser = async (req: Request, res: Response) => {
     }
 
     await newUser.save();
+
+    // Trigger Welcome Email
+    console.log(`[EMAIL] Attempting to send welcome email to: ${newUser.email}`);
+    const emailResult = await sendWelcomeEmail(newUser.email, newUser.name, newUser.token);
+    if (emailResult.success) {
+      console.log(`[EMAIL] Welcome email sent successfully to: ${newUser.email}`);
+      newUser.welcomeEmailSent = true;
+      await newUser.save();
+    } else {
+      console.error(`[EMAIL] Failed to send welcome email to: ${newUser.email}. Error:`, emailResult.error);
+    }
 
     // Log the activity
     await new Activity({
@@ -134,4 +148,98 @@ export const createNGO = async (req: Request, res: Response) => {
     console.error("NGO Creation Error:", error);
     res.status(500).json({ message: "Error creating NGO", error });
   }
+};
+
+export const deleteUser = async (req: Request, res: Response) => {
+  try {
+    await User.findOneAndDelete({ id: req.params.id });
+    res.json({ message: 'User deleted' });
+  } catch (error) { res.status(500).json({ message: "Error deleting user", error }); }
+};
+
+export const updateUser = async (req: Request, res: Response) => {
+  try {
+    const updated = await User.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+    res.json(updated);
+  } catch (error) { res.status(500).json({ message: "Error updating user", error }); }
+};
+
+export const resendWelcomeEmailController = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.body;
+    console.log(`[RETRY] Manual refresh for user: ${userId}`);
+    
+    const user = await User.findOne({ id: userId });
+    if (!user) return res.status(404).json({ message: `User ${userId} not found in nodes.` });
+
+    const emailResult = await sendWelcomeEmail(user.email, user.name, user.token);
+    
+    if (emailResult.success) {
+      user.welcomeEmailSent = true;
+      await user.save();
+      return res.json({ message: "Credential packet transmitted successfully." });
+    } else {
+      const errorDetail = emailResult.error;
+      console.error(`[RETRY] Transmission Failure for ${user.email}:`, errorDetail);
+      return res.status(500).json({ 
+        message: "Network transmission failed", 
+        error: errorDetail,
+        suggestion: "Ensure recipient is an authorized developer or verify your domain in Resend dashboard."
+      });
+    }
+  } catch (error: any) {
+    console.error("[RETRY] Internal Engine Exception:", error);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+};
+
+export const deleteNGO = async (req: Request, res: Response) => {
+  try {
+    await NGO.findOneAndDelete({ id: req.params.id });
+    res.json({ message: 'NGO deleted' });
+  } catch (error) { res.status(500).json({ message: "Error deleting NGO", error }); }
+};
+
+export const updateNGOProfile = async (req: Request, res: Response) => {
+  try {
+    const updated = await NGO.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+    res.json(updated);
+  } catch (error) { res.status(500).json({ message: "Error updating NGO", error }); }
+};
+
+export const deleteVendor = async (req: Request, res: Response) => {
+  try {
+    await Vendor.findOneAndDelete({ id: req.params.id });
+    res.json({ message: 'Vendor deleted' });
+  } catch (error) { res.status(500).json({ message: "Error deleting vendor", error }); }
+};
+
+export const updateVendor = async (req: Request, res: Response) => {
+  try {
+    const updated = await Vendor.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+    res.json(updated);
+  } catch (error) { res.status(500).json({ message: "Error updating vendor", error }); }
+};
+
+export const getSettings = async (req: Request, res: Response) => {
+  try {
+    let config = await AdminSetting.findOne();
+    if (!config) {
+      config = await new AdminSetting().save();
+    }
+    res.json(config);
+  } catch (error) { res.status(500).json({ message: "Error fetching settings", error }); }
+};
+
+export const updateSettings = async (req: Request, res: Response) => {
+  try {
+    let config = await AdminSetting.findOne();
+    if (!config) {
+      config = new AdminSetting(req.body);
+      await config.save();
+    } else {
+      config = await AdminSetting.findOneAndUpdate({}, req.body, { new: true });
+    }
+    res.json(config);
+  } catch (error) { res.status(500).json({ message: "Error updating settings", error }); }
 };

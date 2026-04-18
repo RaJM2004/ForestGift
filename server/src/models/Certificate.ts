@@ -11,6 +11,7 @@ export interface ICertificate extends Document {
   imageUrl?: string;
   verificationCode: string;
   issueDate: Date;
+  emailSent: boolean;
 }
 
 const CertificateSchema: Schema = new Schema(
@@ -25,6 +26,7 @@ const CertificateSchema: Schema = new Schema(
     imageUrl: { type: String },
     verificationCode: { type: String, required: true, unique: true },
     issueDate: { type: Date, default: Date.now },
+    emailSent: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
