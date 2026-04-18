@@ -3,16 +3,6 @@ import type { Map as LeafletMap } from 'leaflet';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import { createBulkTreeEntry, fetchBulkTreeEntries } from '../../../api';
 
-interface ImportMetaEnv {
-  readonly VITE_GOOGLE_MAPS_API_KEY: string;
-}
-
-declare global {
-  interface ImportMeta {
-    readonly env: ImportMetaEnv;
-  }
-}
-
 export type BulkEntryPageProps = {
   ngoData: any;
   orders: any[];

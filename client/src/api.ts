@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5000/api';
+const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') || 'http://localhost:5000/api';
 
 export const fetchUsers = async () => {
   const res = await fetch(`${API_URL}/users`);
@@ -95,17 +95,107 @@ export const createCakeVendor = async (vendorData: any) => {
   return res.json();
 };
 
-export const updateCakeStatus = async (userId: string, status: string) => {
+export type ServerCakeDeliveryStatus =
+  | 'Ordered'
+  | 'Accepted'
+  | 'OutForDelivery'
+  | 'Delivered'
+  | 'Rejected';
+
+export const updateCakeStatus = async (userId: string, status: string, vendorId?: string) => {
   const res = await fetch(`${API_URL}/cake/status`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId, status }),
+    body: JSON.stringify({ userId, status, vendorId }),
   });
   if (!res.ok) {
     const error = await res.json();
     throw new Error(error.message || 'Failed to update cake status');
   }
   return res.json();
+};
+
+export type CakeVendorDeliveryDto = {
+  id: string;
+  orderId: string;
+  recipientName: string;
+  dob: string;
+  phoneNumber: string;
+  deliveryDate: string;
+  deliveryTime: string;
+  /** Home / formatted drop-off line */
+  location: string;
+  /** User profile `location` (NGO zone / block / service area) */
+  zoneLocation: string;
+  cakeSize: string;
+  cakeFlavor: string;
+  treeCount: number;
+  status: string;
+};
+
+export type CakeVendorDashboardResponse = {
+  vendor: {
+    id: string;
+    name: string;
+    email: string;
+    contact: string;
+    phone: string;
+    area: string;
+    costPerCake: number;
+  };
+  deliveries: CakeVendorDeliveryDto[];
+  summary: {
+    totalRevenue: number;
+    totalTrees: number;
+    pendingCount: number;
+    activePipelineCount: number;
+    deliveredCount: number;
+    rejectedCount: number;
+    successRate: number;
+    monthlyDeliveries: number;
+    onTimeDeliveries: number;
+    averageRating: number;
+    todayIso: string;
+  };
+};
+
+export const fetchCakeVendorDashboard = async (vendorId: string): Promise<CakeVendorDashboardResponse> => {
+  const res = await fetch(`${API_URL}/cake/vendor/${encodeURIComponent(vendorId)}/data`);
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error.message || 'Failed to load cake vendor data');
+  }
+  return res.json();
+};
+
+export const fetchCakeVendorCustomers = async (
+  vendorId: string,
+): Promise<{ deliveries: CakeVendorDeliveryDto[] }> => {
+  const res = await fetch(
+    `${API_URL}/user/cake-vendor/${encodeURIComponent(vendorId)}/customers`,
+  );
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error.message || 'Failed to load cake customers');
+  }
+  return res.json();
+};
+
+export const patchCakeVendorDelivery = async (
+  vendorId: string,
+  userId: string,
+  cakeStatus: ServerCakeDeliveryStatus,
+) => {
+  const res = await fetch(`${API_URL}/cake/vendor/delivery`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ vendorId, userId, cakeStatus }),
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error.message || 'Failed to update delivery');
+  }
+  return res.json() as Promise<{ delivery: CakeVendorDeliveryDto }>;
 };
 
 export const createSubmission = async (submission: any) => {

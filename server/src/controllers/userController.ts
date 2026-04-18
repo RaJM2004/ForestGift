@@ -1,9 +1,43 @@
 import { Request, Response } from 'express';
 import User from '../models/User';
+import Vendor from '../models/Vendor';
 import BulkTreeEntry from '../models/BulkTreeEntry';
 import Submission from '../models/Submission';
 import Order from '../models/Order';
 import { syncGlobalRanks } from '../utils/rankingEngine';
+import { mapUserToDelivery } from '../utils/cakeDeliveryMapper';
+
+/** Cake partner: citizens assigned to this vendor (name, DOB, home + zone location). */
+export const getCakeVendorCustomers = async (req: Request, res: Response) => {
+  try {
+    const { vendorId } = req.params;
+    if (!vendorId) {
+      return res.status(400).json({ message: 'vendorId is required' });
+    }
+    const vendor = await Vendor.findOne({ id: vendorId });
+    if (!vendor) {
+      return res.status(404).json({ message: 'Vendor not found' });
+    }
+    const users = await User.find({ cakeVendor: vendorId }).sort({ updatedAt: -1 });
+    const deliveries = users.map((u) =>
+      mapUserToDelivery({
+        id: u.id,
+        name: u.name,
+        dob: u.dob,
+        phone: u.phone,
+        address: u.address,
+        date: u.date,
+        location: u.location,
+        trees: u.trees,
+        cakeStatus: u.cakeStatus,
+        token: u.token,
+      }),
+    );
+    res.json({ deliveries });
+  } catch (error) {
+    res.status(500).json({ message: 'Error loading cake customers', error });
+  }
+};
 
 export const getImpactStats = async (req: Request, res: Response) => {
   try {

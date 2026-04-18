@@ -41,9 +41,18 @@ export const login = async (req: Request, res: Response) => {
     // Check Cake (Vendor)
     const vendor = await Vendor.findOne({ email });
     if (vendor) {
+      const v = vendor.toObject({ virtuals: false });
       return res.json({
         role: 'cake',
-        user: vendor
+        user: {
+          id: v.id,
+          name: v.name,
+          email: v.email,
+          contact: v.contact,
+          phone: v.phone,
+          area: v.area,
+          costPerCake: v.costPerCake,
+        },
       });
     }
 
