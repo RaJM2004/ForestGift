@@ -1,4 +1,5 @@
-export const API_BASE_URL = (import.meta.env as any).VITE_API_URL || 'http://localhost:5000';
+const RAW_BASE = ((import.meta.env as any).VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+export const API_BASE_URL = RAW_BASE.endsWith('/api') ? RAW_BASE.replace(/\/api$/, '') : RAW_BASE;
 export const API_ENDPOINTS = {
   USER_IMPACT: (userId: string) => `${API_BASE_URL}/api/user/${userId}/impact`,
   CERTIFICATES: `${API_BASE_URL}/api/certificates`,
