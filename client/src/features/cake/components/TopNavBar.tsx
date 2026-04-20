@@ -1,4 +1,4 @@
-import { Bell } from 'lucide-react';
+import { Bell, LogOut } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { Badge } from '../../../shared/components/ui/badge';
 import { Avatar, AvatarFallback } from '../../../shared/components/ui/avatar';
@@ -21,7 +21,7 @@ const NAV_ITEMS: { path: CakePathname; label: string }[] = [
   { path: '/profile', label: 'Profile' },
 ];
 
-export function TopNavBar() {
+export function TopNavBar({ onLogout }: { onLogout?: () => void }) {
   const { pathname, navigate } = useCakeNav();
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState(createInitialCakeNotifications);
@@ -66,6 +66,17 @@ export function TopNavBar() {
             </button>
 
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              {onLogout ? (
+                <button
+                  type="button"
+                  onClick={onLogout}
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-red-100 bg-white px-2.5 sm:px-3 text-red-600 shadow-sm transition-colors hover:border-red-200 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2"
+                  aria-label="Log out"
+                >
+                  <LogOut className="h-5 w-5 shrink-0" strokeWidth={2.25} aria-hidden />
+                  <span className="hidden sm:inline text-sm font-semibold">Log out</span>
+                </button>
+              ) : null}
               <button
                 type="button"
                 onClick={() => setShowNotifications(!showNotifications)}

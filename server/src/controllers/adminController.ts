@@ -35,6 +35,14 @@ export const createUser = async (req: Request, res: Response) => {
     const referralCode = `FOREST-${req.body.name.split(' ')[0].toUpperCase()}-${nextIdNum.toString().padStart(3, '0')}`;
     const referredByCode = req.body.referredBy;
 
+    const location = req.body.location as string | undefined;
+    let cakeVendor = req.body.cakeVendor as string | undefined;
+    if (!cakeVendor || cakeVendor === 'Unassigned') {
+      const vendorDoc = location ? await Vendor.findOne({ area: location }) : null;
+      cakeVendor = vendorDoc?.id ?? 'Unassigned';
+    }
+    const cakeStatus = req.body.cakeStatus ?? 'Ordered';
+
     const newUser = new User({
       ...req.body,
       id: nextId,
@@ -43,7 +51,9 @@ export const createUser = async (req: Request, res: Response) => {
       referredBy: null,
       ngo: 'Not Assigned', // Strictly unassigned upon registration
       status: 'Initial',   // Awaiting Admin assignment
-      date: new Date().toISOString().split('T')[0]
+      date: new Date().toISOString().split('T')[0],
+      cakeVendor,
+      cakeStatus,
     });
 
     // Handle referral attribution if provided

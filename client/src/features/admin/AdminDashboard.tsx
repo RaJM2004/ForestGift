@@ -37,6 +37,21 @@ const getCakeVendor = (location: string, vendorList: any[]) => {
   return { name: fallbackVendors[location] || 'Regional State Bakers', costPerCake: 500 };
 };
 
+/** Vendor id for API/DB; only real vendors (matched by service area) get an id. */
+const resolveCakeVendorId = (location: string, vendorList: any[]) => {
+  const vendor = vendorList.find((v) => v.area === location);
+  return vendor?.id ?? 'Unassigned';
+};
+
+const getDisplayedCakeVendor = (u: any, vendorList: any[]) => {
+  const id = u.cakeVendor && u.cakeVendor !== 'Unassigned' ? u.cakeVendor : null;
+  if (id) {
+    const match = vendorList.find((v) => v.id === id);
+    if (match) return { name: match.name, costPerCake: match.costPerCake };
+  }
+  return getCakeVendor(u.location || 'Satellite Block A', vendorList);
+};
+
 
 export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) => {
   const [activeSection, setActiveSection] = useState("Dashboard Overview");
@@ -208,7 +223,11 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
     e.preventDefault();
     setLoading(true);
     try {
-      await createUser(formData);
+      await createUser({
+        ...formData,
+        cakeVendor: resolveCakeVendorId(formData.location, cakeVendors),
+        cakeStatus: 'Ordered',
+      });
       toast.success("Citizen Registered Successfully! ID and Token generated.");
       setShowAddModal(false);
       refreshData();
@@ -238,6 +257,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
 
       const validatedData = jsonData.map(row => {
         let amount = parseInt(row.Amount || row.amount || row.AMOUNT) || 1000;
+        const location = row.Location || row.location || row.LOCATION || 'Satellite Block A';
         return {
           name: row.Name || row.name || row.NAME || 'Citizen',
           email: row.Email || row.email || row.EMAIL || `citizen${Math.floor(Math.random()*10000)}@example.com`,
@@ -247,7 +267,9 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
           amount: amount,
           trees: Math.floor(amount / 1000) || 1,
           ngo: 'Not Assigned',
-          location: row.Location || row.location || row.LOCATION || 'Satellite Block A',
+          location,
+          cakeVendor: resolveCakeVendorId(location, cakeVendors),
+          cakeStatus: 'Ordered',
         };
       });
 
@@ -915,7 +937,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                    </thead>
                    <tbody className="divide-y divide-gray-100">
                      {enrichedUsers.map(u => {
-                       const v = getCakeVendor(u.location || 'Satellite Block A', cakeVendors);
+                       const v = getDisplayedCakeVendor(u, cakeVendors);
                        return (
                          <tr key={u.id} className="text-sm hover:bg-gray-50/50 transition-colors group">
                            <td className="px-6 py-4">

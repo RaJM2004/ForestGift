@@ -8,7 +8,7 @@ import { Dashboard } from '../pages/Dashboard';
 import { AllDeliveries } from '../pages/AllDeliveries';
 import { Profile } from '../pages/Profile';
 
-export function CakeRootLayout() {
+export function CakeRootLayout({ onLogout }: { onLogout?: () => void }) {
   const { pathname } = useCakeNav();
 
   const content =
@@ -30,7 +30,7 @@ export function CakeRootLayout() {
       </div>
 
       <div className="relative z-10 flex flex-col flex-1 min-h-0">
-        <TopNavBar />
+        <TopNavBar onLogout={onLogout} />
         <main className="flex-1 min-h-0 overflow-y-auto max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 md:pb-8">
           {content}
         </main>

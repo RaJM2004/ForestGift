@@ -3,11 +3,16 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resendApiKey = process.env.RESEND_API_KEY?.trim();
+const resend = resendApiKey ? new Resend(resendApiKey) : null;
 const FROM_NAME = process.env.SMTP_FROM_NAME || 'YUGMA';
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 
 export const sendWelcomeEmail = async (userEmail: string, userName: string, token: string) => {
+    if (!resend) {
+        console.warn('RESEND_API_KEY is not set; welcome email was not sent.');
+        return { success: false, error: new Error('Email is not configured') };
+    }
     try {
         const { data, error } = await resend.emails.send({
             from: `${FROM_NAME} <${FROM_EMAIL}>`,
@@ -55,8 +60,12 @@ export const sendWelcomeEmail = async (userEmail: string, userName: string, toke
 };
 
 export const sendCertificateEmail = async (userEmail: string, userName: string, verificationCode: string) => {
+    if (!resend) {
+        console.warn('RESEND_API_KEY is not set; certificate email was not sent.');
+        return { success: false, error: new Error('Email is not configured') };
+    }
     const verifyUrl = `http://localhost:5173/verify/${verificationCode}`;
-    
+
     try {
         const { data, error } = await resend.emails.send({
             from: `${FROM_NAME} <${FROM_EMAIL}>`,
