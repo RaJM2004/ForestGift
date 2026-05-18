@@ -109,3 +109,29 @@ export const sendCertificateEmail = async (userEmail: string, userName: string, 
         return { success: false, error: err };
     }
 };
+
+export const sendSupportNotificationEmail = async (subject: string, htmlContent: string) => {
+    if (!resend) {
+        console.warn('RESEND_API_KEY is not set; support email was logged in console instead.');
+        console.log(`\n========================================\n[SUPPORT EMAIL DISPATCH]\nTo: Support@forestgift.in\nSubject: ${subject}\nContent:\n${htmlContent}\n========================================\n`);
+        return { success: true, data: { mock: true } };
+    }
+
+    try {
+        const { data, error } = await resend.emails.send({
+            from: `${FROM_NAME} <${FROM_EMAIL}>`,
+            to: ['Support@forestgift.in'],
+            subject: subject,
+            html: htmlContent
+        });
+
+        if (error) {
+            console.error('Resend Error (Support):', error);
+            return { success: false, error };
+        }
+        return { success: true, data };
+    } catch (err) {
+        console.error('Internal Email Error (Support):', err);
+        return { success: false, error: err };
+    }
+};

@@ -4,4 +4,5 @@ export interface NavigationProps {
   onStoriesClick: () => void;
   onPlantClick: () => void;
   onLoginClick: () => void;
+  onContactClick?: () => void;
 }

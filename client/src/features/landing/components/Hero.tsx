@@ -7,19 +7,18 @@ interface HeroProps {
 
 export const Hero: React.FC<HeroProps> = ({ onPlantClick }) => {
   return (
-    <section className="relative min-h-[750px] md:h-screen md:max-h-[900px] overflow-hidden bg-white">
-      {/* Background Image - Restored for both Mobile & Desktop */}
-      {/* Background Image - Zoomed in for immersive detail */}
+    <section className="relative min-h-[640px] md:min-h-[980px] md:h-[120vh] md:max-h-[1200px] overflow-hidden bg-white">
+      {/* Background Image - Entirely visible at full natural height & width */}
       <div className="absolute inset-x-0 bottom-0 z-0 select-none pointer-events-none flex items-end justify-center">
         <img 
-          src="https://assets.zyrosite.com/AE0r4EWz6LuN9z6g/untitled-design-mvAyLyvlrkGlzy4H.svg" 
+          src="/web animation forestgift.gif" 
           alt="Forest background" 
-          className="w-full h-full md:h-auto object-cover md:object-contain object-bottom scale-[1.8] md:scale-100 origin-bottom"
+          className="w-full h-auto object-contain object-bottom scale-100 translate-y-0 origin-bottom"
         />
       </div>
 
       {/* Content Layer */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 text-center flex flex-col pt-[140px] md:pt-[145px] h-full">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 text-center flex flex-col pt-[120px] md:pt-[150px] h-full">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -53,4 +52,5 @@ export const Hero: React.FC<HeroProps> = ({ onPlantClick }) => {
     </section>
   );
 };
+
 

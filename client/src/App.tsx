@@ -16,6 +16,9 @@ import { ExplorePage } from './features/landing/pages/ExplorePage';
 import { WhatsAppButton } from './shared/components/WhatsAppButton';
 import { VerifyPage } from './shared/pages/VerifyPage';
 import { PaymentSuccessPage } from './features/landing/pages/PaymentSuccessPage';
+import { ContactPage } from './features/landing/pages/ContactPage';
+import { TermsPage } from './features/landing/pages/TermsPage';
+import { PrivacyPage } from './features/landing/pages/PrivacyPage';
 
 type Role = 'admin' | 'ngo' | 'cake' | 'user';
 
@@ -71,7 +74,8 @@ function App() {
     onAboutClick: () => navigate('/about'),
     onStoriesClick: () => navigate('/stories'),
     onPlantClick: () => navigate('/plant'),
-    onLoginClick: () => navigate('/login')
+    onLoginClick: () => navigate('/login'),
+    onContactClick: () => navigate('/contact')
   };
 
   if (!isAuthenticated) {
@@ -93,6 +97,9 @@ function App() {
           <Route path="/plant" element={<PlantPage {...commonProps} />} />
           <Route path="/explore/:type" element={<ExploreWrapper {...commonProps} />} />
           <Route path="/payment-success" element={<PaymentSuccessPage />} />
+          <Route path="/contact" element={<ContactPage {...commonProps} />} />
+          <Route path="/terms-and-conditions" element={<TermsPage {...commonProps} />} />
+          <Route path="/privacy-policy" element={<PrivacyPage {...commonProps} />} />
           <Route path="/login" element={<LoginPage onLogin={handleLogin} onBack={() => navigate('/')} />} />
         </Routes>
       </>

@@ -129,6 +129,79 @@ router.post('/verify', async (req, res) => {
   }
 });
 
+router.post('/bank-transfer', async (req, res) => {
+  try {
+    const { userDetails, planDetails } = req.body;
+    const { name, email, dob, phone, address } = userDetails;
+    const { amount, label, trees } = planDetails;
+
+    // 1. Find or Create User
+    let user = await User.findOne({ email: email.toLowerCase() });
+    
+    if (!user) {
+      const userCount = await User.countDocuments();
+      const newUserId = `USR${(userCount + 1).toString().padStart(3, '0')}`;
+      const newToken = `TKN-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+      
+      user = new User({
+        id: newUserId,
+        name,
+        email: email.toLowerCase(),
+        dob,
+        phone,
+        address: address || 'Not Provided',
+        token: newToken,
+        amount: amount,
+        trees: trees,
+        status: 'Initial',
+        ngo: 'Not Assigned',
+        location: 'TBD',
+        date: new Date().toISOString().split('T')[0],
+        referralCode: `FOREST-${name.split(' ')[0].toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`,
+        impactPoints: 50,
+        globalRank: 0
+      });
+    } else {
+      user.amount += amount;
+      user.trees += trees;
+      if (!user.phone) user.phone = phone;
+      if (!user.address || user.address === 'Not Provided') user.address = address;
+    }
+    
+    await user.save();
+
+    // 2. Create Order Record (starts as Pending Verification)
+    const newOrder = new Order({
+      orderId: `FG-${Math.floor(10000 + Math.random() * 90000)}`,
+      userId: user.id,
+      trees: trees,
+      status: 'Pending Verification',
+      progress: 5,
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      location: 'Central Plantation',
+      amount: `₹${amount.toLocaleString()}`,
+      species: 'Native Species Mix'
+    });
+    await newOrder.save();
+
+    // 3. Add Activity Record
+    const activity = new Activity({
+      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+      msg: `Bank Transfer initiated by ${name} — ₹${amount.toLocaleString()} pending verification`,
+      type: 'payment'
+    });
+    await activity.save();
+
+    return res.status(200).json({ 
+      message: 'Bank transfer order recorded successfully',
+      userId: user.id 
+    });
+  } catch (error: any) {
+    console.error('Error recording bank transfer:', error);
+    res.status(500).json({ message: 'Error recording bank transfer', error: error.message });
+  }
+});
+
 router.get('/key', (req, res) => {
   res.status(200).json({ key: process.env.RAZORPAY_KEY_ID });
 });

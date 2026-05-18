@@ -8,6 +8,7 @@ import { Gifts } from '../components/Gifts';
 import { Memories } from '../components/Memories';
 import { How } from '../components/How';
 import { Why } from '../components/Why';
+import { ImpactCalculator } from '../components/ImpactCalculator';
 
 import { NavigationProps } from '../types';
 
@@ -28,6 +29,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onHomeClick, onAboutCl
         <Why />
 
         <Gifts onExploreClick={onExploreClick} />
+        <ImpactCalculator onPlantClick={onPlantClick} />
         <Memories />
       </main>
       <Footer />

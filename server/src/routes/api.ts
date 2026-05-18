@@ -12,6 +12,7 @@ import User from '../models/User';
 import NGO from '../models/NGO';
 import Activity from '../models/Activity';
 import paymentRoutes from './paymentRoutes';
+import supportRoutes from './supportRoutes';
 
 const router = express.Router();
 
@@ -28,6 +29,7 @@ router.use('/bulk-tree-entries', bulkTreeEntryRoutes);
 router.use('/certificates', certificateRoutes);
 router.use('/orders', orderRoutes);
 router.use('/payment', paymentRoutes);
+router.use('/support', supportRoutes);
 
 // Generic fallback routes for backward compatibility/simplicity
 router.get('/users', async (req, res) => res.json(await User.find().sort({ createdAt: -1 })));

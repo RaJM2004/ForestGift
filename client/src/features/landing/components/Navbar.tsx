@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NavigationProps } from '../types';
 
-export const Navbar: React.FC<NavigationProps> = ({ onLoginClick, onAboutClick, onStoriesClick, onPlantClick, onHomeClick }) => {
+export const Navbar: React.FC<NavigationProps> = ({ onLoginClick, onAboutClick, onStoriesClick, onPlantClick, onHomeClick, onContactClick }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const linkClass = "relative py-2 group hover:text-[#247114] transition-colors cursor-pointer";
   const underlineClass = "absolute bottom-0 left-0 w-0 h-[2px] bg-[#247114] transition-all duration-300 group-hover:w-full";
@@ -35,9 +35,13 @@ export const Navbar: React.FC<NavigationProps> = ({ onLoginClick, onAboutClick, 
             Plant
             <div className={underlineClass}></div>
           </div>
+          <div onClick={onContactClick} className={linkClass}>
+            Contact Us
+            <div className={underlineClass}></div>
+          </div>
           <div className="relative group cursor-pointer py-2">
             <div className="flex items-center group-hover:text-[#247114] transition-colors">
-              <span>challenges</span>
+              <span>Challenges</span>
               <svg className="w-3 h-3 ml-1 transformation group-hover:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
@@ -91,6 +95,7 @@ export const Navbar: React.FC<NavigationProps> = ({ onLoginClick, onAboutClick, 
             <div onClick={() => { onAboutClick(); setIsMenuOpen(false); }} className="text-[18px] font-medium text-gray-900 py-4 border-b border-gray-100">About Us</div>
             <div onClick={() => { onStoriesClick(); setIsMenuOpen(false); }} className="text-[18px] font-medium text-gray-900 py-4 border-b border-gray-100">Stories</div>
             <div onClick={() => { onPlantClick(); setIsMenuOpen(false); }} className="text-[18px] font-medium text-gray-900 py-4 border-b border-gray-100">Plant Today</div>
+            <div onClick={() => { onContactClick && onContactClick(); setIsMenuOpen(false); }} className="text-[18px] font-medium text-gray-900 py-4 border-b border-gray-100">Contact Us</div>
             
             <div className="py-4 border-b border-gray-100">
               <div className="text-[18px] font-medium text-gray-900 mb-4">Challenges</div>
