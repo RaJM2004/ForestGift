@@ -1,0 +1,129 @@
+@import "tailwindcss";
+
+@theme {
+  --color-forest-900: #000000;
+  --color-forest-700: #1a1a1a;
+  --color-forest-500: #333333;
+  --color-forest-300: #666666;
+  --color-forest-100: #f0f0f0;
+
+  --color-primary: #247114;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #f1f5f9;
+  --color-secondary-foreground: #0f172a;
+  --color-accent: #f1f5f9;
+  --color-accent-foreground: #0f172a;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+  --color-muted: #f1f5f9;
+  --color-muted-foreground: #64748b;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #0f172a;
+  --color-card: #ffffff;
+  --color-card-foreground: #0f172a;
+  --color-border: #e2e8f0;
+  --color-input: #e2e8f0;
+  --color-ring: #247114;
+}
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --primary: 104 71% 26%; /* #247114 approx in HSL */
+  --primary-foreground: 355.7 100% 97.3%;
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 104 71% 26%;
+  --radius: 0.5rem;
+}
+
+:root {
+  font-family: 'League Spartan', system-ui, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light;
+  color: #1a1a1a;
+  background-color: #ffffff;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Hide scrollbars project-wide for a premium look, while keeping scroll functionality intact */
+*::-webkit-scrollbar {
+  display: none !important;
+}
+
+* {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+#root {
+  width: 100%;
+}
+
+@keyframes sway {
+  0% { transform: rotate(0deg) translateX(0); }
+  25% { transform: rotate(1deg) translateX(2px); }
+  75% { transform: rotate(-1deg) translateX(-2px); }
+  100% { transform: rotate(0deg) translateX(0); }
+}
+
+@keyframes sway-slow {
+  0% { transform: rotate(0deg) translateX(0); }
+  25% { transform: rotate(0.5deg) translateX(1px); }
+  75% { transform: rotate(-0.5deg) translateX(-1px); }
+  100% { transform: rotate(0deg) translateX(0); }
+}
+
+@keyframes pulse-fog {
+  0% { opacity: 0.02; transform: scale(1); }
+  50% { opacity: 0.05; transform: scale(1.1); }
+  100% { opacity: 0.02; transform: scale(1); }
+}
+
+.animate-sway {
+  animation: sway 8s ease-in-out infinite;
+}
+
+.animate-sway-slow {
+  animation: sway-slow 12s ease-in-out infinite;
+}
+
+.animate-fog {
+  animation: pulse-fog 15s ease-in-out infinite;
+}
+
+.perspective-forest {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+.bg-forest-pattern {
+  background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+  background-size: 30px 30px;
+}
