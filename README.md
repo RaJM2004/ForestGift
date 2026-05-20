@@ -46,6 +46,8 @@ cd ForestGift
 MONGODB_URI=mongodb+srv://rajmangezerokost_db_user:G3qiTG5iVGwtkNLS@cluster0.uxlc4cn.mongodb.net/forest_dashboard?retryWrites=true&w=majority&appName=Cluster0
 RAZORPAY_KEY_ID=rzp_test_Sokf2g61PuLoiU
 RAZORPAY_KEY_SECRET=9cS69f2j4khZddvefRWkbbD1
+RESEND_API_KEY=re_AkRw4SEj_EH7sq8mF4jKTxueoNtDvCiAx
+RESEND_FROM_EMAIL=support@forestgift.in
    ```
 4. Start the server:
    ```bash
