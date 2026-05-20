@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import User from '../models/User';
 import Order from '../models/Order';
 import Activity from '../models/Activity';
+import { sendWelcomeEmail, sendSupportNotificationEmail } from '../services/emailService';
 
 const router = express.Router();
 
@@ -115,6 +116,61 @@ router.post('/verify', async (req, res) => {
         type: 'payment'
       });
       await activity.save();
+
+      // 4. Trigger Emails (Welcome email to user, Support notification to support@forestgift.in)
+      try {
+        console.log(`[EMAIL] Triggering notification emails for payment by user ${user.email}`);
+        
+        // Support email
+        const supportSubject = `🌿 Successful Payment: ₹${amount.toLocaleString()} from ${name}`;
+        const supportHtml = `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 40px; border: 1px solid #e2e8f0; border-radius: 24px; color: #1a202c; background-color: #fcfdfa;">
+            <div style="text-align: center; margin-bottom: 32px;">
+              <img src="http://localhost:5173/forest_gift_logo.png" alt="ForestGift Logo" style="height: 55px; display: block; margin: 0 auto 16px auto; border-radius: 8px;" />
+              <h1 style="color: #059669; margin: 0; font-size: 28px; text-transform: uppercase; letter-spacing: 0.1em;">ForestGift</h1>
+              <p style="color: #718096; font-size: 12px; font-weight: bold; margin-top: 8px; text-transform: uppercase; letter-spacing: 0.2em;">Successful Payment Notification</p>
+            </div>
+            
+            <h2 style="font-size: 20px; color: #247114; margin-bottom: 16px; border-bottom: 1px solid #edf2f7; padding-bottom: 12px;">Payment Confirmed</h2>
+            <p style="line-height: 1.6; color: #4a5568; font-size: 14px;">A successful payment has been processed and verified via Razorpay.</p>
+            
+            <div style="background-color: #f8fafc; padding: 20px; border-radius: 16px; margin: 24px 0; border: 1px solid #edf2f7; font-size: 14px;">
+              <h3 style="margin-top: 0; font-size: 14px; color: #718096; text-transform: uppercase;">Customer Profile</h3>
+              <p style="margin: 6px 0;"><strong>Name:</strong> ${name}</p>
+              <p style="margin: 6px 0;"><strong>Email:</strong> <a href="mailto:${email}" style="color: #059669; font-weight: bold; text-decoration: none;">${email}</a></p>
+              <p style="margin: 6px 0;"><strong>Phone:</strong> ${phone}</p>
+              <p style="margin: 6px 0;"><strong>Address:</strong> ${address || 'Not Provided'}</p>
+              <p style="margin: 6px 0;"><strong>DOB:</strong> ${dob}</p>
+            </div>
+
+            <div style="background-color: #f8fafc; padding: 20px; border-radius: 16px; margin: 24px 0; border: 1px solid #edf2f7; font-size: 14px;">
+              <h3 style="margin-top: 0; font-size: 14px; color: #718096; text-transform: uppercase;">Transaction Details</h3>
+              <p style="margin: 6px 0;"><strong>Amount Paid:</strong> ₹${amount.toLocaleString()}</p>
+              <p style="margin: 6px 0;"><strong>Trees Planted:</strong> ${trees}</p>
+              <p style="margin: 6px 0;"><strong>Razorpay Order ID:</strong> ${razorpay_order_id}</p>
+              <p style="margin: 6px 0;"><strong>Razorpay Payment ID:</strong> ${razorpay_payment_id}</p>
+              <p style="margin: 6px 0;"><strong>Date:</strong> ${new Date().toLocaleString()}</p>
+            </div>
+            
+            <p style="font-size: 11px; color: #a0aec0; text-align: center; margin-top: 42px;">
+              This notification was automatically dispatched to support@forestgift.in from the ForestGift payment gateway node.
+            </p>
+          </div>
+        `;
+        await sendSupportNotificationEmail(supportSubject, supportHtml);
+
+        // Welcome email with credentials to user
+        const emailResult = await sendWelcomeEmail(user.email, user.name, user.token, user.password || 'forestgift123');
+        if (emailResult.success) {
+          user.welcomeEmailSent = true;
+          await user.save();
+          console.log(`[EMAIL] Welcome email sent successfully to: ${user.email}`);
+        } else {
+          console.error(`[EMAIL] Failed to send welcome email:`, emailResult.error);
+        }
+      } catch (emailErr) {
+        console.error(`[EMAIL] Error occurred during email notifications:`, emailErr);
+      }
 
       return res.status(200).json({ 
         message: 'Payment verified and records updated successfully',
