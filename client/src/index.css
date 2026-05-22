@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 @theme {
+  --font-sans: "League Spartan", ui-sans-serif, system-ui, sans-serif;
+  
   --color-forest-900: #000000;
   --color-forest-700: #1a1a1a;
   --color-forest-500: #333333;
