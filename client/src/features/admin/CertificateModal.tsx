@@ -117,12 +117,9 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({ user, submis
             <div style={{ flex: '1 1 0%', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', position: 'relative', zIndex: '10', justifyContent: 'space-between', padding: '48px 64px 32px 64px' }}>
               {/* Header Area */}
               <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '128px', marginBottom: '16px' }}>
-                <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: '-64px', marginBottom: '80px', paddingLeft: '24px', paddingRight: '24px' }}>
+                <div style={{ width: '100%', display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start', marginTop: '-64px', marginBottom: '80px', paddingLeft: '24px', paddingRight: '24px' }}>
                    <div style={{ padding: '16px', backgroundColor: 'rgba(255, 255, 255, 0.6)', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}>
-                     <img src="/forest_dept_logo_premium.png" style={{ height: '128px', objectFit: 'contain' }} alt="MP Forest Dept" />
-                   </div>
-                   <div style={{ padding: '16px', backgroundColor: 'rgba(255, 255, 255, 0.6)', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.8)', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}>
-                     <img src="/forest_gift_logo.png" style={{ height: '112px', objectFit: 'contain' }} alt="ForestGift" />
+                     <img src="https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=768,fit=crop/AE0r4EWz6LuN9z6g/title-IA5qPxoWCRTW532I.jpg" style={{ height: '112px', objectFit: 'contain' }} alt="ForestGift" crossOrigin="anonymous" />
                    </div>
                 </div>
 
