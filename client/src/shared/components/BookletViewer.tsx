@@ -11,7 +11,7 @@ export const BookletViewer: React.FC<BookletViewerProps> = ({ title, imageFolder
   const pages = Array.from({ length: pageCount }, (_, i) => i + 1);
 
   return (
-    <div className="min-h-screen bg-gray-100 pt-24 pb-20">
+    <div className="min-h-screen bg-gray-100 pt-28 md:pt-40 pb-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-10">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 font-['League_Spartan']">{title}</h1>

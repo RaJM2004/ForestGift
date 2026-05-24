@@ -1,10 +1,49 @@
 import React from 'react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { NavigationProps } from '../types';
+import { Send, MessageSquare } from 'lucide-react';
+import { submitContactForm } from '../../../api';
+import { useState } from 'react';
 
 export const AboutPage: React.FC<NavigationProps> = ({ onHomeClick, onAboutClick, onStoriesClick, onPlantClick, onLoginClick }) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    subject: 'Contact from About Page',
+    message: ''
+  });
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorOccurred, setErrorOccurred] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.email || !formData.message) return;
+
+    setIsSubmitting(true);
+    setErrorOccurred(false);
+
+    try {
+      const res = await submitContactForm(formData);
+      if (res.success) {
+        setIsSubmitted(true);
+        setFormData({ name: '', email: '', subject: 'Contact from About Page', message: '' });
+        setTimeout(() => setIsSubmitted(false), 5000);
+      } else {
+        setErrorOccurred(true);
+        setTimeout(() => setErrorOccurred(false), 4000);
+      }
+    } catch (err) {
+      console.error(err);
+      setErrorOccurred(true);
+      setTimeout(() => setErrorOccurred(false), 4000);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white text-[#1a1a1a] selection:bg-[#247114] selection:text-white">
       <main className="pt-32 pb-20">
@@ -104,7 +143,7 @@ export const AboutPage: React.FC<NavigationProps> = ({ onHomeClick, onAboutClick
                 <img 
                   src="https://assets.zyrosite.com/AE0r4EWz6LuN9z6g/my-forest-3-YQuvkdlFcHwwPz5M.svg" 
                   alt="Mission interaction" 
-                  className="w-full max-w-sm h-auto object-contain"
+                  className="w-full max-w-lg md:max-w-xl h-auto object-contain scale-110"
                 />
               </div>
               <div className="order-1 md:order-2 space-y-8">
@@ -139,28 +178,88 @@ export const AboutPage: React.FC<NavigationProps> = ({ onHomeClick, onAboutClick
           </section>
 
           {/* Contact Section: Want to connect with Vrinda & Family */}
-          <section className="bg-[#fafafa] rounded-[40px] p-12 md:p-20 grid md:grid-cols-2 gap-16 items-center">
+          <section id="contact" className="bg-[#fafafa] rounded-[40px] p-12 md:p-20 grid md:grid-cols-2 gap-16 items-center">
             <div className="space-y-8">
               <h2 className="text-5xl md:text-7xl font-bold tracking-tighter leading-tight">
                 Want to connect with <span className="text-[#247114]">Vrinda</span> & Family
               </h2>
+              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm mt-8">
+                <h3 className="text-xl font-bold mb-4 text-[#247114]">Registered Address</h3>
+                <address className="not-italic text-gray-600 font-medium">
+                  M/s. FOREST<br />
+                  Madhya Pradesh, India<br />
+                  <span className="mt-2 block">Email: support@forestgift.in</span>
+                </address>
+              </div>
             </div>
             <div className="bg-white rounded-3xl p-8 shadow-xl space-y-6">
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-gray-400">Your First Name</label>
-                <input type="text" placeholder="Enter your first name" className="w-full p-4 border border-gray-100 rounded-xl bg-gray-50 focus:outline-none focus:border-[#247114]" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-gray-400">Your Email Address *</label>
-                <input type="email" placeholder="Enter your email address" className="w-full p-4 border border-gray-100 rounded-xl bg-gray-50 focus:outline-none focus:border-[#247114]" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-gray-400">Your Message *</label>
-                <textarea rows={4} placeholder="Share your thoughts here..." className="w-full p-4 border border-gray-100 rounded-xl bg-gray-50 focus:outline-none focus:border-[#247114]"></textarea>
-              </div>
-              <button className="w-full py-4 bg-[#247114] text-white rounded-full font-black text-xs tracking-[0.2em] uppercase hover:bg-black transition-all">
-                SUBMIT YOUR REQUEST
-              </button>
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-gray-400">Your First Name</label>
+                  <input 
+                    required
+                    type="text" 
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    placeholder="Enter your first name" 
+                    className="w-full p-4 border border-gray-100 rounded-xl bg-gray-50 focus:outline-none focus:border-[#247114]" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-gray-400">Your Email Address *</label>
+                  <input 
+                    required
+                    type="email" 
+                    value={formData.email}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    placeholder="Enter your email address" 
+                    className="w-full p-4 border border-gray-100 rounded-xl bg-gray-50 focus:outline-none focus:border-[#247114]" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-gray-400">Your Message *</label>
+                  <textarea 
+                    required
+                    rows={4} 
+                    value={formData.message}
+                    onChange={(e) => setFormData({...formData, message: e.target.value})}
+                    placeholder="Share your thoughts here..." 
+                    className="w-full p-4 border border-gray-100 rounded-xl bg-gray-50 focus:outline-none focus:border-[#247114] resize-none"
+                  ></textarea>
+                </div>
+                <button 
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full py-4 bg-[#247114] text-white rounded-full font-black text-xs tracking-[0.2em] uppercase hover:bg-black transition-all flex items-center justify-center gap-2 group"
+                >
+                  {isSubmitting ? 'SUBMITTING...' : 'SUBMIT YOUR REQUEST'}
+                  {!isSubmitting && <Send size={14} className="transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />}
+                </button>
+              </form>
+
+              <AnimatePresence>
+                {isSubmitted && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="mt-6 p-4 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center gap-3 text-emerald-800"
+                  >
+                    <MessageSquare size={16} className="text-[#247114]" />
+                    <div className="text-xs font-semibold">Message sent successfully to support!</div>
+                  </motion.div>
+                )}
+                {errorOccurred && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="mt-6 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3 text-rose-800"
+                  >
+                    <div className="text-xs font-semibold">❌ Failed to send message. Please try again.</div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </section>
 

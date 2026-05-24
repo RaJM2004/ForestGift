@@ -82,7 +82,6 @@ const PlanCard = ({
 
       {/* Pricing Tag */}
       <div className="mb-4 bg-emerald-50/50 py-3 rounded-2xl border border-emerald-100/30">
-        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Contribution</span>
         <div className="text-xl md:text-2xl font-bold text-gray-900 mt-0.5">
           ₹{price}
         </div>

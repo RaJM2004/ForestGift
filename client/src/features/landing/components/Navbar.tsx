@@ -48,10 +48,7 @@ export const Navbar: React.FC<NavigationProps> = ({
             Plant
             <div className={underlineClass}></div>
           </div>
-          <div onClick={onContactClick} className={linkClass}>
-            Contact Us
-            <div className={underlineClass}></div>
-          </div>
+
           <div className="relative group cursor-pointer py-2">
             <div className="flex items-center group-hover:text-[#247114] transition-colors">
               <span>Challenges</span>
@@ -91,7 +88,7 @@ export const Navbar: React.FC<NavigationProps> = ({
               onClick={onLoginClick}
               className="hidden lg:block px-10 py-3 bg-black text-white rounded-full text-sm font-bold tracking-widest hover:bg-[#247114] transition-all active:scale-95 uppercase"
             >
-              LOGIN
+              MY FOREST
             </button>
           )}
           
@@ -125,7 +122,7 @@ export const Navbar: React.FC<NavigationProps> = ({
             <div onClick={() => { onAboutClick(); setIsMenuOpen(false); }} className="text-[18px] font-medium text-gray-900 py-4 border-b border-gray-100">About Us</div>
             <div onClick={() => { onStoriesClick(); setIsMenuOpen(false); }} className="text-[18px] font-medium text-gray-900 py-4 border-b border-gray-100">Stories</div>
             <div onClick={() => { onPlantClick(); setIsMenuOpen(false); }} className="text-[18px] font-medium text-gray-900 py-4 border-b border-gray-100">Plant Today</div>
-            <div onClick={() => { onContactClick && onContactClick(); setIsMenuOpen(false); }} className="text-[18px] font-medium text-gray-900 py-4 border-b border-gray-100">Contact Us</div>
+
             
             <div className="py-4 border-b border-gray-100">
               <div className="text-[18px] font-medium text-gray-900 mb-4">Challenges</div>
@@ -156,7 +153,7 @@ export const Navbar: React.FC<NavigationProps> = ({
                 onClick={() => { onLoginClick(); setIsMenuOpen(false); }}
                 className="w-full py-4 bg-black text-white rounded-xl text-sm font-bold tracking-widest uppercase mt-8 shadow-lg active:scale-95 transition-all"
               >
-                LOGIN
+                MY FOREST
               </button>
             )}
           </div>
