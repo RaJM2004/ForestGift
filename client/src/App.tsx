@@ -19,6 +19,9 @@ import { PaymentSuccessPage } from './features/landing/pages/PaymentSuccessPage'
 import { ContactPage } from './features/landing/pages/ContactPage';
 import { TermsPage } from './features/landing/pages/TermsPage';
 import { PrivacyPage } from './features/landing/pages/PrivacyPage';
+import { IndividualPage } from './features/landing/pages/IndividualPage';
+import { IndustriesPage } from './features/landing/pages/IndustriesPage';
+import { InstitutesPage } from './features/landing/pages/InstitutesPage';
 
 type Role = 'admin' | 'ngo' | 'cake' | 'user';
 
@@ -78,7 +81,10 @@ function App() {
     onContactClick: () => navigate('/contact'),
     isAuthenticated,
     onDashboardClick: () => navigate('/dashboard'),
-    onLogoutClick: handleLogout
+    onLogoutClick: handleLogout,
+    onIndividualClick: () => navigate('/challenges/individual'),
+    onIndustriesClick: () => navigate('/challenges/industries'),
+    onInstitutesClick: () => navigate('/challenges/institutes')
   };
 
   const isLoginPage = location.pathname === '/login';
@@ -107,6 +113,9 @@ function App() {
         <Route path="/contact" element={<ContactPage {...commonProps} />} />
         <Route path="/terms-and-conditions" element={<TermsPage {...commonProps} />} />
         <Route path="/privacy-policy" element={<PrivacyPage {...commonProps} />} />
+        <Route path="/challenges/individual" element={<IndividualPage />} />
+        <Route path="/challenges/industries" element={<IndustriesPage />} />
+        <Route path="/challenges/institutes" element={<InstitutesPage />} />
         
         <Route path="/login" element={
           isAuthenticated ? (
