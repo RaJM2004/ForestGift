@@ -51,6 +51,7 @@ export const getVendorDashboardData = async (req: Request, res: Response) => {
     const activePipeline = users.filter(
       (u) =>
         u.cakeStatus === 'Accepted' ||
+        u.cakeStatus === 'Preparing' ||
         u.cakeStatus === 'OutForDelivery' ||
         u.cakeStatus === 'Delivered',
     ).length;

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Cake, CalendarDays } from 'lucide-react';
-import type { DeliveryRequest } from '../data/mockData';
+import type { DeliveryRequest } from '../types/delivery';
 import { daysUntilNextBirthday, formatDate, formatDobDisplay, getNextBirthdayDate } from '../utils/helpers';
 
 type Row = DeliveryRequest & { daysUntil: number };

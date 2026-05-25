@@ -1,7 +1,8 @@
+import path from 'path';
 import { Resend } from 'resend';
 import dotenv from 'dotenv';
 
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 const resendApiKey = process.env.RESEND_API_KEY?.trim();
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
@@ -139,6 +140,52 @@ export const sendSupportNotificationEmail = async (subject: string, htmlContent:
         return { success: true, data };
     } catch (err) {
         console.error('Internal Email Error (Support):', err);
+        return { success: false, error: err };
+    }
+};
+
+/** OTP only — invoice is not attached (invoice lives in vendor Invoice dashboard). */
+export const sendCakeDeliveryOtpEmail = async (
+    userEmail: string,
+    userName: string,
+    otp: string,
+    orderId: string,
+) => {
+    const html = `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; border: 1px solid #fbcfe8; border-radius: 20px; color: #1f2937;">
+            <h1 style="color: #ec4899; margin: 0 0 8px 0; font-size: 22px;">ForestGift Cake Delivery</h1>
+            <p style="color: #6b7280; font-size: 13px; margin: 0 0 24px 0;">Order ${orderId}</p>
+            <p style="line-height: 1.6;">Hi ${userName},</p>
+            <p style="line-height: 1.6;">Your celebration cake is <strong>out for delivery</strong>. Share this one-time code with our delivery partner when you receive your order:</p>
+            <div style="background: #fdf2f8; border: 2px solid #ec4899; border-radius: 16px; padding: 24px; text-align: center; margin: 24px 0;">
+                <p style="margin: 0; font-size: 12px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">Delivery OTP</p>
+                <p style="margin: 8px 0 0 0; font-size: 36px; font-weight: bold; letter-spacing: 0.3em; color: #ec4899;">${otp}</p>
+            </div>
+            <p style="font-size: 13px; color: #6b7280;">This code expires in 24 hours. Do not share it publicly.</p>
+            <p style="font-size: 12px; color: #9ca3af; margin-top: 32px;">— ForestGift · Planting trees, celebrating birthdays</p>
+        </div>
+    `;
+
+    if (!resend) {
+        console.warn('RESEND_API_KEY not set; OTP email logged to console.');
+        console.log(`\n[CAKE OTP] To: ${userEmail}\nOTP: ${otp}\nOrder: ${orderId}\n`);
+        return { success: true, data: { mock: true } };
+    }
+
+    try {
+        const { data, error } = await resend.emails.send({
+            from: `${FROM_NAME} <${FROM_EMAIL}>`,
+            to: [userEmail],
+            subject: `Your ForestGift delivery code — ${orderId}`,
+            html,
+        });
+        if (error) {
+            console.error('Resend Error (Cake OTP):', error);
+            return { success: false, error };
+        }
+        return { success: true, data };
+    } catch (err) {
+        console.error('Internal Email Error (Cake OTP):', err);
         return { success: false, error: err };
     }
 };

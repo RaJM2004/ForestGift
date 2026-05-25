@@ -240,7 +240,7 @@ export const BulkEntryPage = ({ ngoData, orders }: BulkEntryPageProps) => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white rounded-3xl border border-gray-100 shadow-xl p-6">
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-[#b2d8d0]/50 shadow-sm p-6">
           <h2 className="text-lg font-bold text-gray-900 mb-4">Bulk Submission Map</h2>
           <p className="text-sm text-gray-500 mb-6">Select locations on the map for your bulk plantation report.</p>
           <div className="h-96 rounded-2xl overflow-hidden">
@@ -276,7 +276,7 @@ export const BulkEntryPage = ({ ngoData, orders }: BulkEntryPageProps) => {
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-xl p-6">
+        <div className="bg-white rounded-2xl border border-[#b2d8d0]/50 shadow-sm p-6">
           <h2 className="text-lg font-bold text-gray-900 mb-4">Bulk Plantation Entry</h2>
           <p className="text-sm text-gray-500 mb-6">Submit bulk tree data directly to the database.</p>
           
@@ -369,7 +369,7 @@ export const BulkEntryPage = ({ ngoData, orders }: BulkEntryPageProps) => {
       </div>
 
       {bulkEntries.length > 0 && (
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-xl p-6">
+        <div className="bg-white rounded-2xl border border-[#b2d8d0]/50 shadow-sm p-6">
           <h3 className="text-lg font-bold text-gray-900 mb-4">Saved Bulk Tree Data</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {bulkEntries.map((item) => (

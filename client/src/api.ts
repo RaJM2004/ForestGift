@@ -99,6 +99,7 @@ export const createCakeVendor = async (vendorData: any) => {
 export type ServerCakeDeliveryStatus =
   | 'Ordered'
   | 'Accepted'
+  | 'Preparing'
   | 'OutForDelivery'
   | 'Delivered'
   | 'Rejected';
@@ -131,7 +132,10 @@ export type CakeVendorDeliveryDto = {
   cakeSize: string;
   cakeFlavor: string;
   treeCount: number;
+  amount?: number;
   status: string;
+  statusUpdatedAt?: string;
+  orderPlacedAt?: string;
 };
 
 export type CakeVendorDashboardResponse = {

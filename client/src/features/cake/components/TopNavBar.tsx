@@ -11,13 +11,15 @@ import type { CakePathname } from '../CakeNavContext';
 import { initialsFromName } from '../utils/helpers';
 
 const navLinkClass = (active: boolean) =>
-  `shrink-0 text-sm font-medium transition-colors border-0 bg-transparent cursor-pointer py-2 px-1 sm:px-0 rounded-md sm:rounded-none ${
+  `shrink-0 text-base sm:text-lg font-semibold transition-colors border-0 bg-transparent cursor-pointer py-2.5 px-2 sm:px-1 rounded-md sm:rounded-none ${
     active ? 'text-[#EC4899]' : 'text-gray-600 hover:text-[#EC4899]'
   }`;
 
 const NAV_ITEMS: { path: CakePathname; label: string }[] = [
   { path: '/', label: 'Dashboard' },
-  { path: '/deliveries', label: 'All Deliveries' },
+  { path: '/deliveries', label: 'Deliveries' },
+  { path: '/earnings', label: 'Earnings' },
+  { path: '/invoices', label: 'Invoices' },
   { path: '/profile', label: 'Profile' },
 ];
 
@@ -58,10 +60,10 @@ export function TopNavBar({ onLogout }: { onLogout?: () => void }) {
                 </span>
               </div>
               <div className="flex flex-col min-w-0 text-left">
-                <span className="text-base sm:text-lg font-semibold text-[#1F2937] truncate" title={shopName}>
+                <span className="text-lg sm:text-xl font-bold text-[#1F2937] truncate" title={shopName}>
                   {shopName}
                 </span>
-                <span className="text-xs text-gray-500 truncate">{subtitle}</span>
+                <span className="text-sm text-gray-500 truncate">{subtitle}</span>
               </div>
             </button>
 
@@ -108,7 +110,7 @@ export function TopNavBar({ onLogout }: { onLogout?: () => void }) {
           </div>
 
           <div
-            className="flex flex-wrap items-stretch sm:items-center gap-x-4 gap-y-1 sm:gap-x-6 border-t border-[#FBCFE8] pt-3 sm:border-t-0 sm:pt-0 -mx-1 px-1 sm:mx-0 sm:px-0"
+            className="hidden md:flex flex-wrap items-center gap-x-6 lg:gap-x-8 gap-y-2 border-t border-[#FBCFE8] pt-4 sm:border-t-0 sm:pt-2 -mx-1 px-1 sm:mx-0 sm:px-0"
             role="navigation"
             aria-label="Main"
           >

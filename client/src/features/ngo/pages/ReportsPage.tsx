@@ -1,16 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { toast } from 'sonner';
+import { downloadNgoMonthlyPdf, downloadNgoReportCsv, type NgoReportChartData, type NgoReportMetrics } from '../utils/reportExport';
 
 export type ReportsPageProps = {
-  activities?: any[];
-  ngoData?: any;
-  submissions?: any[];
+  ngoData?: Record<string, unknown> | null;
+  submissions?: Record<string, unknown>[];
+  orders?: Record<string, unknown>[];
+  bulkEntries?: Record<string, unknown>[];
 };
 
-export const ReportsPage = ({ activities, ngoData, submissions }: ReportsPageProps) => {
-  const [metrics, setMetrics] = useState<any>(null);
-  const [chartData, setChartData] = useState<any>({ trees_over_time: [], regional_breakdown: [] });
+export const ReportsPage = ({ ngoData, submissions = [], orders = [], bulkEntries = [] }: ReportsPageProps) => {
+  const [metrics, setMetrics] = useState<NgoReportMetrics | null>(null);
+  const [chartData, setChartData] = useState<NgoReportChartData>({ trees_over_time: [], regional_breakdown: [] });
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState<'pdf' | 'csv' | null>(null);
 
   useEffect(() => {
     const computeMetrics = () => {
@@ -63,6 +67,47 @@ export const ReportsPage = ({ activities, ngoData, submissions }: ReportsPagePro
     setLoading(false);
   }, [submissions]);
 
+  const reportContext = useMemo(
+    () =>
+      metrics
+        ? {
+            ngoData,
+            submissions,
+            orders,
+            bulkEntries,
+            metrics,
+            chartData,
+          }
+        : null,
+    [ngoData, submissions, orders, bulkEntries, metrics, chartData],
+  );
+
+  const handleDownloadPdf = useCallback(() => {
+    if (!reportContext) return;
+    setExporting('pdf');
+    try {
+      downloadNgoMonthlyPdf(reportContext);
+      toast.success('Monthly PDF downloaded');
+    } catch {
+      toast.error('Could not generate PDF');
+    } finally {
+      setExporting(null);
+    }
+  }, [reportContext]);
+
+  const handleDownloadCsv = useCallback(() => {
+    if (!reportContext) return;
+    setExporting('csv');
+    try {
+      downloadNgoReportCsv(reportContext);
+      toast.success('Report spreadsheet downloaded');
+    } catch {
+      toast.error('Could not export report');
+    } finally {
+      setExporting(null);
+    }
+  }, [reportContext]);
+
   if (loading) {
     return <div className="text-center py-20">Loading...</div>;
   }
@@ -70,26 +115,26 @@ export const ReportsPage = ({ activities, ngoData, submissions }: ReportsPagePro
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-xl p-6">
+        <div className="bg-white rounded-2xl border border-[#b2d8d0]/50 shadow-sm p-6">
           <div className="text-sm font-semibold text-gray-500 uppercase tracking-widest">Total Trees Planted</div>
           <div className="text-2xl font-black text-gray-900 mt-2">{metrics.total_trees_planted}</div>
         </div>
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-xl p-6">
+        <div className="bg-white rounded-2xl border border-[#b2d8d0]/50 shadow-sm p-6">
           <div className="text-sm font-semibold text-gray-500 uppercase tracking-widest">Avg Submission Time</div>
           <div className="text-2xl font-black text-gray-900 mt-2">{metrics.avg_submission_time} days</div>
         </div>
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-xl p-6">
+        <div className="bg-white rounded-2xl border border-[#b2d8d0]/50 shadow-sm p-6">
           <div className="text-sm font-semibold text-gray-500 uppercase tracking-widest">On-Time Rate</div>
           <div className="text-2xl font-black text-gray-900 mt-2">{metrics.on_time_rate}%</div>
         </div>
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-xl p-6">
+        <div className="bg-white rounded-2xl border border-[#b2d8d0]/50 shadow-sm p-6">
           <div className="text-sm font-semibold text-gray-500 uppercase tracking-widest">Survival Rate</div>
           <div className="text-2xl font-black text-gray-900 mt-2">{metrics.survival_rate}%</div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-xl p-6">
+        <div className="bg-white rounded-2xl border border-[#b2d8d0]/50 shadow-sm p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Tree Plantation Over Time</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -111,7 +156,7 @@ export const ReportsPage = ({ activities, ngoData, submissions }: ReportsPagePro
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-xl p-6">
+        <div className="bg-white rounded-2xl border border-[#b2d8d0]/50 shadow-sm p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Regional Breakdown</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -134,12 +179,28 @@ export const ReportsPage = ({ activities, ngoData, submissions }: ReportsPagePro
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-xl p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Export Reports</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button className="py-3 px-4 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700">Download Monthly PDF</button>
-          <button className="py-3 px-4 rounded-xl bg-gray-100 text-gray-700 font-bold hover:bg-gray-200">Download CSV</button>
-          <button className="py-3 px-4 rounded-xl bg-gray-100 text-gray-700 font-bold hover:bg-gray-200">Download Certificates</button>
+      <div className="bg-white rounded-2xl border border-[#b2d8d0]/50 shadow-sm p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Export Reports</h3>
+        <p className="text-sm text-gray-500 mb-4">
+          PDF covers this month&apos;s plantation activity. Spreadsheet includes summary, orders, and all plantation records from your dashboard data.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <button
+            type="button"
+            disabled={!reportContext || exporting !== null}
+            onClick={handleDownloadPdf}
+            className="py-3 px-4 rounded-xl bg-[#5a9e94] text-white font-bold hover:bg-[#4a8e84] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {exporting === 'pdf' ? 'Generating PDF…' : 'Download Monthly PDF'}
+          </button>
+          <button
+            type="button"
+            disabled={!reportContext || exporting !== null}
+            onClick={handleDownloadCsv}
+            className="py-3 px-4 rounded-xl bg-[#eef8f6] text-[#2d6a62] font-bold border border-[#b2d8d0] hover:bg-[#b2d8d0]/40 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {exporting === 'csv' ? 'Exporting…' : 'Download CSV'}
+          </button>
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 
-export const CAKE_PATHS = ['/', '/deliveries', '/profile'] as const;
+export const CAKE_PATHS = ['/', '/deliveries', '/earnings', '/invoices', '/profile'] as const;
 export type CakePathname = (typeof CAKE_PATHS)[number];
 
 type CakeNavContextValue = {

@@ -1,8 +1,9 @@
-/** Maps Mongo `User` records to the cake partner dashboard delivery shape (same fields as client). */
+/** Maps Mongo `User` records to the cake partner dashboard delivery shape. */
 
 export type ServerCakeStatus =
   | 'Ordered'
   | 'Accepted'
+  | 'Preparing'
   | 'OutForDelivery'
   | 'Delivered'
   | 'Rejected';
@@ -10,6 +11,7 @@ export type ServerCakeStatus =
 const SERVER_STATUSES: ServerCakeStatus[] = [
   'Ordered',
   'Accepted',
+  'Preparing',
   'OutForDelivery',
   'Delivered',
   'Rejected',
@@ -21,12 +23,11 @@ export function isServerCakeStatus(value: unknown): value is ServerCakeStatus {
 
 export type ClientCakeDeliveryStatus =
   | 'PENDING'
-  | 'ACCEPTED'
+  | 'PREPARING'
   | 'OUT_FOR_DELIVERY'
   | 'DELIVERED'
   | 'REJECTED';
 
-/** One ForestGift user = one cake order; stable order id per citizen. */
 export function formatCakeDeliveryHomeLocation(address: string, location: string): string {
   const a = (address || '').trim();
   const l = (location || '').trim();
@@ -49,7 +50,8 @@ export function mapServerStatusToClient(s: string): ClientCakeDeliveryStatus {
     case 'Ordered':
       return 'PENDING';
     case 'Accepted':
-      return 'ACCEPTED';
+    case 'Preparing':
+      return 'PREPARING';
     case 'OutForDelivery':
       return 'OUT_FOR_DELIVERY';
     case 'Delivered':
@@ -64,7 +66,7 @@ export function mapServerStatusToClient(s: string): ClientCakeDeliveryStatus {
 export function mapClientStatusToServer(s: ClientCakeDeliveryStatus): ServerCakeStatus {
   const m: Record<ClientCakeDeliveryStatus, ServerCakeStatus> = {
     PENDING: 'Ordered',
-    ACCEPTED: 'Accepted',
+    PREPARING: 'Preparing',
     OUT_FOR_DELIVERY: 'OutForDelivery',
     DELIVERED: 'Delivered',
     REJECTED: 'Rejected',
@@ -81,14 +83,18 @@ export type UserFieldsForCakeDelivery = {
   date: string;
   location: string;
   trees: number;
+  amount?: number;
   cakeStatus?: string;
   token?: string;
+  updatedAt?: Date;
+  createdAt?: Date;
 };
 
 export function mapUserToDelivery(user: UserFieldsForCakeDelivery) {
   const status = mapServerStatusToClient(user.cakeStatus || 'Ordered');
   const orderId = `FG-${user.id}`;
   const zone = (user.location || '').trim();
+  const deliveryDate = normalizeDeliveryDate(user.date);
 
   return {
     id: user.id,
@@ -96,15 +102,21 @@ export function mapUserToDelivery(user: UserFieldsForCakeDelivery) {
     recipientName: user.name,
     dob: user.dob,
     phoneNumber: user.phone,
-    deliveryDate: normalizeDeliveryDate(user.date),
+    deliveryDate,
     deliveryTime: '12:00',
-    /** Full home / mailing line for drop-off */
     location: formatCakeDeliveryHomeLocation(user.address, user.location),
-    /** User model `location` — NGO / block / service zone (may overlap home line; shown separately in UI) */
     zoneLocation: zone,
     cakeSize: user.trees >= 7 ? '10 inch' : user.trees >= 4 ? '8 inch' : '6 inch',
     cakeFlavor: 'ForestGift Celebration',
     treeCount: user.trees,
+    amount: user.amount ?? 0,
+    paymentStatus: user.cakeStatus === 'Delivered' ? 'Paid' : 'Pending',
     status,
+    statusUpdatedAt: user.updatedAt
+      ? new Date(user.updatedAt).toISOString()
+      : new Date().toISOString(),
+    orderPlacedAt: user.createdAt
+      ? new Date(user.createdAt).toISOString()
+      : deliveryDate,
   };
 }

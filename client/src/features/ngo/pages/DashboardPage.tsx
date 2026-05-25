@@ -1,15 +1,15 @@
 import React, { useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Tooltip } from 'react-leaflet';
-import { Icon, StatCard } from '../../../shared/components/UI';
+import { TreePine, Activity, CheckCircle } from 'lucide-react';
+import { NgoMetricCard } from '../components/NgoMetricCard';
 
 export type DashboardPageProps = {
   orders: any[];
   submissions: any[];
   bulkEntries: any[];
-  activities: any[];
 };
 
-export const DashboardPage = ({ orders, submissions, bulkEntries, activities }: DashboardPageProps) => {
+export const DashboardPage = ({ orders, submissions, bulkEntries }: DashboardPageProps) => {
   const orderUserNameById = useMemo(() => {
     const map = new Map<string, string>();
     (orders || []).forEach((order) => {
@@ -30,7 +30,6 @@ export const DashboardPage = ({ orders, submissions, bulkEntries, activities }: 
   );
   const totalTrees = totalOrderTrees + totalBulkTrees;
 
-  // Rough estimate in kg/year.
   const CO2_KG_PER_TREE_PER_YEAR = 21;
   const estimatedCO2Kg = totalTrees * CO2_KG_PER_TREE_PER_YEAR;
 
@@ -89,15 +88,30 @@ export const DashboardPage = ({ orders, submissions, bulkEntries, activities }: 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard label="Total Trees (Bulk + Orders)" value={totalTrees} icon="tree" colorClass="bg-emerald-50 text-emerald-600" />
-        <StatCard label="CO2 Absorption Estimate (kg/year)" value={estimatedCO2Kg} icon="activity" colorClass="bg-blue-50 text-blue-600" />
-        <StatCard label="Total Order Completed" value={totalOrderCompleted} icon="check" colorClass="bg-indigo-50 text-indigo-600" />
+        <NgoMetricCard
+          icon={TreePine}
+          title="Total Trees (Bulk + Orders)"
+          value={totalTrees}
+          gradient="from-[#b2d8d0] to-white"
+        />
+        <NgoMetricCard
+          icon={Activity}
+          title="CO2 Absorption Estimate (kg/year)"
+          value={estimatedCO2Kg}
+          gradient="from-[#b2d8d0]/80 to-[#d4ebe6]"
+        />
+        <NgoMetricCard
+          icon={CheckCircle}
+          title="Total Order Completed"
+          value={totalOrderCompleted}
+          gradient="from-[#5a9e94] to-[#b2d8d0]"
+        />
       </div>
 
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-xl p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">NGO Map Showcase</h3>
+      <div className="bg-white rounded-2xl border border-[#b2d8d0]/50 shadow-sm p-6">
+        <h3 className="text-lg font-semibold text-[#1F2937] mb-2">NGO Map Showcase</h3>
         <p className="text-sm text-gray-500 mb-4">Tree mapping from submission database and bulk tree entries.</p>
-        <div className="h-96 rounded-2xl overflow-hidden">
+        <div className="h-96 rounded-2xl overflow-hidden border border-[#b2d8d0]/30">
           <MapContainer center={[mapCenter.lat, mapCenter.lng]} zoom={7} scrollWheelZoom={false} className="h-full w-full">
             <TileLayer
               attribution='&copy; <a href="https://maps.google.com">Google Maps</a>'
@@ -128,24 +142,6 @@ export const DashboardPage = ({ orders, submissions, bulkEntries, activities }: 
           </MapContainer>
         </div>
         {mapPins.length === 0 && <div className="mt-3 text-sm text-gray-500">No tree mapping records found yet.</div>}
-      </div>
-
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-xl p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
-        <ul className="space-y-3">
-          {activities.slice(0, 8).map((item) => (
-            <li key={item._id || item.time} className="flex items-start gap-3 p-4 rounded-2xl border border-gray-100 hover:bg-gray-50">
-              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                <Icon name={item.type === 'report' ? 'reports' : item.type === 'payment' ? 'finance' : item.type === 'token' ? 'tree' : 'activity'} />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-900">{item.msg}</p>
-                <p className="text-xs text-gray-500">{item.time}</p>
-              </div>
-            </li>
-          ))}
-          {activities.length === 0 && <li className="text-sm text-gray-500">No recent activity available.</li>}
-        </ul>
       </div>
     </div>
   );

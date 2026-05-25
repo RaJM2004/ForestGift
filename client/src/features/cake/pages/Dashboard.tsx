@@ -1,49 +1,59 @@
 import { useMemo } from 'react';
-import { Cake, Truck, CalendarCheck, Target } from 'lucide-react';
+import { Cake, Truck, CalendarCheck, Target, TrendingUp, FileText, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { MetricCard } from '../components/MetricCard';
 import { DeliveryRequestCard } from '../components/DeliveryRequestCard';
 import { BirthdayAlerts } from '../components/BirthdayAlerts';
-import { performanceStats } from '../data/mockData';
 import { getGreeting } from '../utils/helpers';
 import { useCakeUser } from '../CakeUserContext';
 import { useCakeData } from '../CakeDataContext';
+import { useCakeNav } from '../CakeNavContext';
+
+const QUICK_LINKS = [
+  { path: '/deliveries' as const, label: 'All orders', icon: Truck, desc: 'Search & filter' },
+  { path: '/earnings' as const, label: 'Earnings', icon: TrendingUp, desc: 'Verified deliveries' },
+  { path: '/invoices' as const, label: 'Invoices', icon: FileText, desc: 'PDF download' },
+];
 
 export function Dashboard() {
   const { name, area } = useCakeUser();
-  const { deliveries, summary, loading, error, updateDelivery } = useCakeData();
+  const { deliveries, summary, loading, error, runWorkflow } = useCakeData();
+  const { navigate } = useCakeNav();
   const displayName = name ?? 'Partner';
 
   const pendingCount = summary?.pendingCount ?? deliveries.filter((d) => d.status === 'PENDING').length;
 
   const activePipeline = useMemo(
-    () => deliveries.filter((d) => d.status !== 'PENDING' && d.status !== 'REJECTED'),
+    () =>
+      deliveries.filter(
+        (d) => d.status === 'PREPARING' || d.status === 'OUT_FOR_DELIVERY',
+      ),
     [deliveries],
   );
 
-  const completedThisMonth = summary?.deliveredCount ?? deliveries.filter((d) => d.status === 'DELIVERED').length;
+  const completedCount = summary?.deliveredCount ?? deliveries.filter((d) => d.status === 'DELIVERED').length;
+  const successRateDisplay = summary?.successRate ?? 0;
 
-  const successRateDisplay = summary?.successRate ?? performanceStats.successRate;
-
-  const handleAccept = async (id: string) => {
+  const handleWorkflow = async (id: string, action: Parameters<typeof runWorkflow>[1], otp?: string) => {
     try {
-      await updateDelivery(id, 'ACCEPTED');
-      toast.success('Request accepted!');
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Update failed');
-    }
-  };
-
-  const handleReject = async (id: string) => {
-    try {
-      await updateDelivery(id, 'REJECTED');
-      toast.success('Request rejected');
+      await runWorkflow(id, action, otp);
+      const messages: Record<string, string> = {
+        accept: 'Order accepted — preparing started',
+        reject: 'Order rejected',
+        preparing: 'Preparing your cake',
+        out_for_delivery: 'Out for delivery — OTP sent to customer',
+        complete_delivery: 'Delivered — added to earnings',
+      };
+      toast.success(messages[action] || 'Updated');
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Update failed');
     }
   };
 
   const newRequestsToShow = deliveries.filter((d) => d.status === 'PENDING');
+  const inProgress = deliveries.filter(
+    (d) => d.status === 'PREPARING' || d.status === 'OUT_FOR_DELIVERY',
+  );
 
   if (loading) {
     return (
@@ -54,7 +64,6 @@ export function Dashboard() {
             <div key={i} className="h-28 bg-white border border-gray-100 rounded-2xl" />
           ))}
         </div>
-        <div className="h-40 bg-white border border-gray-100 rounded-xl" />
       </div>
     );
   }
@@ -64,10 +73,6 @@ export function Dashboard() {
       <div className="rounded-xl border border-red-200 bg-red-50 text-red-800 p-6">
         <p className="font-semibold">Could not load dashboard</p>
         <p className="text-sm mt-1">{error}</p>
-        <p className="text-sm mt-2 text-red-700">
-          Check that the API server is running and <code className="bg-red-100 px-1 rounded">VITE_API_URL</code> points
-          to it (default <code className="bg-red-100 px-1 rounded">http://localhost:5000/api</code>).
-        </p>
       </div>
     );
   }
@@ -79,84 +84,95 @@ export function Dashboard() {
           {getGreeting()}, {displayName}!
         </h1>
         <p className="text-gray-600">
-          {area ? `Here is what is happening with deliveries in ${area}.` : 'Here is your delivery overview.'}
+          {area ? `Deliveries in ${area} — live data from your database.` : 'Your delivery overview.'}
         </p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        <MetricCard
-          icon={Cake}
-          title="Pending Requests"
-          value={pendingCount}
-          gradient="from-[#F59E0B] to-[#FCD34D]"
-        />
+        <MetricCard icon={Cake} title="Pending" value={pendingCount} gradient="from-[#F59E0B] to-[#FCD34D]" />
         <MetricCard
           icon={Truck}
-          title="Active pipeline"
+          title="In progress"
           value={activePipeline.length}
           gradient="from-[#EC4899] to-[#FBCFE8]"
         />
         <MetricCard
           icon={CalendarCheck}
-          title="Completed (assigned)"
-          value={completedThisMonth}
+          title="Delivered"
+          value={completedCount}
           gradient="from-[#10B981] to-[#34D399]"
         />
         <MetricCard
           icon={Target}
-          title="Success Rate"
+          title="Success rate"
           value={`${successRateDisplay}%`}
           gradient="from-[#8B5CF6] to-[#C4B5FD]"
         />
       </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {QUICK_LINKS.map((link) => {
+          const Icon = link.icon;
+          return (
+            <button
+              key={link.path}
+              type="button"
+              onClick={() => navigate(link.path)}
+              className="group flex items-center justify-between bg-white rounded-2xl border border-[#FBCFE8]/60 p-4 shadow-sm hover:shadow-md transition-all text-left"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#FDF2F8] flex items-center justify-center text-[#EC4899] group-hover:bg-[#EC4899] group-hover:text-white transition-colors">
+                  <Icon className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="font-semibold">{link.label}</p>
+                  <p className="text-xs text-gray-500">{link.desc}</p>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-[#EC4899]" />
+            </button>
+          );
+        })}
+      </div>
+
       <BirthdayAlerts deliveries={deliveries} />
 
       <div>
-        <h2 className="text-xl font-semibold">New delivery requests</h2>
-        <p className="text-sm text-gray-500 mb-4 mt-1">
-          One ForestGift member = one cake order. Use their name and home address for delivery.
-        </p>
+        <h2 className="text-xl font-semibold">New requests</h2>
+        <p className="text-sm text-gray-500 mb-4 mt-1">Accept or reject — then manage the full workflow on each card.</p>
         {newRequestsToShow.length > 0 ? (
           <div className="space-y-4">
             {newRequestsToShow.map((request) => (
-              <DeliveryRequestCard
-                key={request.id}
-                request={request}
-                onAccept={handleAccept}
-                onReject={handleReject}
-              />
+              <DeliveryRequestCard key={request.id} request={request} onWorkflow={handleWorkflow} />
             ))}
           </div>
         ) : (
-          <p className="text-gray-500 text-sm">
-            No pending requests right now.
-            {deliveries.length === 0 ? (
-              <>
-                {' '}
-                If the whole dashboard is empty, assign{' '}
-                <code className="text-xs bg-gray-100 px-1 rounded">cakeVendor</code> on users to your shop id (for
-                example <code className="text-xs bg-gray-100 px-1 rounded">VND001</code>), or run{' '}
-                <code className="text-xs bg-gray-100 px-1 rounded">npm run assign-cake-vendors</code> in the server
-                folder.
-              </>
-            ) : null}
-          </p>
+          <p className="text-gray-500 text-sm">No pending requests.</p>
         )}
       </div>
 
       <div>
-        <h2 className="text-xl font-semibold">In progress &amp; completed</h2>
-        <p className="text-sm text-gray-500 mb-4 mt-1">Same rule: each row is one customer and one cake order.</p>
-        {activePipeline.length > 0 ? (
-          <div className="space-y-4">
-            {activePipeline.map((request) => (
-              <DeliveryRequestCard key={request.id} request={request} showActions={false} />
+        <h2 className="text-xl font-semibold">In progress</h2>
+        {inProgress.length > 0 ? (
+          <div className="space-y-4 mt-4">
+            {inProgress.map((request) => (
+              <DeliveryRequestCard key={request.id} request={request} onWorkflow={handleWorkflow} />
             ))}
           </div>
         ) : (
-          <p className="text-gray-500 text-sm">No active deliveries.</p>
+          <p className="text-gray-500 text-sm mt-2">No orders in the kitchen or on the road.</p>
         )}
+      </div>
+
+      <div>
+        <h2 className="text-xl font-semibold">Completed & rejected</h2>
+        <div className="space-y-4 mt-4">
+          {deliveries
+            .filter((d) => d.status === 'DELIVERED' || d.status === 'REJECTED')
+            .map((request) => (
+              <DeliveryRequestCard key={request.id} request={request} />
+            ))}
+        </div>
       </div>
     </div>
   );

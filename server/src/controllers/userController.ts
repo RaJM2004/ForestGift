@@ -29,8 +29,11 @@ export const getCakeVendorCustomers = async (req: Request, res: Response) => {
         date: u.date,
         location: u.location,
         trees: u.trees,
+        amount: u.amount,
         cakeStatus: u.cakeStatus,
         token: u.token,
+        updatedAt: u.updatedAt,
+        createdAt: u.createdAt,
       }),
     );
     res.json({ deliveries });
@@ -153,9 +156,21 @@ export const getImpactStats = async (req: Request, res: Response) => {
        else topPercent = `Global Rank #${user.globalRank} • Top ${user.globalRank <= 300 ? '20%' : '50%'}`;
     }
 
+    const cakeOrder =
+      user.cakeVendor && user.cakeVendor !== 'Unassigned'
+        ? {
+            orderId: `FG-${user.id}`,
+            status: user.cakeStatus || 'Ordered',
+            vendorId: user.cakeVendor,
+            deliveryDate: user.date,
+            deliveredAt: user.cakeDeliveredAt || null,
+          }
+        : null;
+
     res.json({
       user: {
         ...user.toJSON(),
+        cakeOrder,
         rank: rankLabel,
         topPercent: topPercent,
         referrals: referralsCount,

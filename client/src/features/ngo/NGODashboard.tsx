@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { DashboardLayout } from '../../shared/layouts/DashboardLayout';
 import { fetchActivities, fetchUsers, fetchSubmissions, fetchBulkTreeEntries, updateNGO } from '../../api';
+import { NgoNavProvider, type NgoSection } from './NgoNavContext';
+import { NgoRootLayout } from './layouts/NgoRootLayout';
 
 import { DashboardPage } from './pages/DashboardPage';
 import { OrdersPage } from './pages/OrdersPage';
@@ -28,18 +29,8 @@ const areaCoordinates: Record<string, { lat: number; lng: number }> = {
   'Narmada Zone': { lat: 22.6347, lng: 75.8120 },
 };
 
-const navItems = [
-  { label: 'Dashboard', icon: 'dashboard' },
-  { label: 'Orders', icon: 'tree' },
-  { label: 'Plantation', icon: 'map' },
-  { label: 'Bulk Entry', icon: 'list' },
-  { label: 'Profile', icon: 'users' },
-  { label: 'Reports', icon: 'reports' },
-  { label: 'Volunteers', icon: 'users' },
-];
-
 export const NGODashboard = ({ user, handleLogout }: { user: any, handleLogout?: () => void }) => {
-  const [activeSection, setActiveSection] = useState('Dashboard');
+  const [activeSection, setActiveSection] = useState<NgoSection>('Dashboard');
   const [ngoData, setNgoData] = useState<any>(user);
   const [orders, setOrders] = useState<any[]>([]);
   const [submissions, setSubmissions] = useState<any[]>([]);
@@ -297,8 +288,6 @@ export const NGODashboard = ({ user, handleLogout }: { user: any, handleLogout?:
       case 'Dashboard':
         return (
           <DashboardPage
-            ngoData={ngoData}
-            activities={activities}
             orders={orders}
             submissions={submissions}
             bulkEntries={bulkEntries}
@@ -332,7 +321,14 @@ export const NGODashboard = ({ user, handleLogout }: { user: any, handleLogout?:
         return <BulkEntryPage ngoData={ngoData} orders={orders} />;
 
       case 'Reports':
-        return <ReportsPage activities={activities} orders={orders} ngoData={ngoData} submissions={submissions} />;
+        return (
+          <ReportsPage
+            ngoData={ngoData}
+            orders={orders}
+            submissions={submissions}
+            bulkEntries={bulkEntries}
+          />
+        );
 
       case 'Profile':
         return <ProfilePage ngoData={ngoData} onUpdate={handleSettingsSave} />;
@@ -343,8 +339,6 @@ export const NGODashboard = ({ user, handleLogout }: { user: any, handleLogout?:
       default:
         return (
           <DashboardPage
-            ngoData={ngoData}
-            activities={activities}
             orders={orders}
             submissions={submissions}
             bulkEntries={bulkEntries}
@@ -360,17 +354,16 @@ export const NGODashboard = ({ user, handleLogout }: { user: any, handleLogout?:
   const brandSubtitle = ngoData ? 'NGO Partner' : 'Gifting Solutions';
 
   return (
-    <DashboardLayout
-      title={brandName}
-      subtitle={brandSubtitle}
-      navItems={navItems}
+    <NgoNavProvider
       activeSection={activeSection}
       setActiveSection={setActiveSection}
+      title={brandName}
+      subtitle={brandSubtitle}
       notifications={activities}
       onLogout={handleLogout}
     >
-      {getSectionContent()}
-    </DashboardLayout>
+      <NgoRootLayout>{getSectionContent()}</NgoRootLayout>
+    </NgoNavProvider>
   );
 };
 
