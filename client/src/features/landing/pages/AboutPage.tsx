@@ -186,8 +186,8 @@ export const AboutPage: React.FC<NavigationProps> = ({ onHomeClick, onAboutClick
               <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm mt-8">
                 <h3 className="text-xl font-bold mb-4 text-[#247114]">Registered Address</h3>
                 <address className="not-italic text-gray-600 font-medium">
-                  M/s. FOREST<br />
-                  Madhya Pradesh, India<br />
+                  SHOP 18, SAHYADRI AVENUE, OPPOSITE MANUSHA MASJID,<br />
+                  Rasta Peth, Pune, Pune City, Maharastra, India, 411011<br />
                   <span className="mt-2 block">Email: support@forestgift.in</span>
                 </address>
               </div>
