@@ -145,27 +145,29 @@ export const NGODashboard = ({ user, handleLogout }: { user: any, handleLogout?:
           return false;
         });
 
-        const ordersWithLocation = await Promise.all(
-          matched.map(async (user: any) => {
-            const locationQuery = user.location || user.address || ngoData.area || '';
-            const coords = (await geocodeLocation(locationQuery)) || {
-              lat: areaCoordinates[ngoData.area]?.lat ?? 22.9734,
-              lng: areaCoordinates[ngoData.area]?.lng ?? 78.6569,
-            };
+        const ordersWithLocation = [];
+        for (const user of matched) {
+          const locationQuery = user.location || user.address || ngoData.area || '';
+          const coords = (await geocodeLocation(locationQuery)) || {
+            lat: areaCoordinates[ngoData.area]?.lat ?? 22.9734,
+            lng: areaCoordinates[ngoData.area]?.lng ?? 78.6569,
+          };
 
-            return {
-              id: user.id,
-              name: user.name,
-              status: mapUserStatusToOrderStatus(user.status),
-              location: locationQuery,
-              region: ngoData.area,
-              tree_count: user.trees ?? 0,
-              deadline: user.date ?? undefined,
-              lat: coords.lat,
-              lng: coords.lng,
-            };
-          })
-        );
+          ordersWithLocation.push({
+            id: user.id,
+            name: user.name,
+            status: mapUserStatusToOrderStatus(user.status),
+            location: locationQuery,
+            region: ngoData.area,
+            tree_count: user.trees ?? 0,
+            deadline: user.date ?? undefined,
+            lat: coords.lat,
+            lng: coords.lng,
+          });
+          
+          // Add delay to prevent rate limiting (429) from Nominatim
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
 
         setOrders(ordersWithLocation);
       } catch {
