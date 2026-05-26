@@ -21,6 +21,10 @@ import { PrivacyPage } from './features/landing/pages/PrivacyPage';
 import { IndividualPage } from './features/landing/pages/IndividualPage';
 import { IndustriesPage } from './features/landing/pages/IndustriesPage';
 import { InstitutesPage } from './features/landing/pages/InstitutesPage';
+import { configureLeafletIcons } from './shared/utils/leaflet-icons';
+
+// Initialize global Leaflet icon fix
+configureLeafletIcons();
 
 type Role = 'admin' | 'ngo' | 'cake' | 'user';
 
