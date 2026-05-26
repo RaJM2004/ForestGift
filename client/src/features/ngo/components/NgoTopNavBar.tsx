@@ -1,4 +1,4 @@
-import { Bell, LogOut, TreePine } from 'lucide-react';
+import { Bell, LogOut, TreePine, Menu, X } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { Badge } from '../../../shared/components/ui/badge';
 import { Avatar, AvatarFallback } from '../../../shared/components/ui/avatar';
@@ -22,6 +22,7 @@ const NAV_ITEMS: { section: NgoSection; label: string }[] = [
 export function NgoTopNavBar() {
   const { activeSection, setActiveSection, title, subtitle, notifications, onLogout } = useNgoNav();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false);
 
   const unreadCount = useMemo(() => notifications.length, [notifications]);
 
@@ -39,19 +40,29 @@ export function NgoTopNavBar() {
       <div className="max-w-[1400px] mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-3 py-3 sm:py-2">
           <div className="flex items-center justify-between gap-3 min-h-[44px]">
-            <button
-              type="button"
-              onClick={() => setActiveSection('Dashboard')}
-              className="flex items-center gap-2 sm:gap-3 hover:opacity-90 text-left min-w-0"
-            >
-              <div className="w-10 h-10 shrink-0 bg-gradient-to-br from-[#b2d8d0] to-white rounded-lg flex items-center justify-center shadow-sm border border-[#b2d8d0]/50">
-                <TreePine className="w-5 h-5 text-[#2d6a62]" />
-              </div>
-              <div className="min-w-0">
-                <span className="text-lg sm:text-xl font-bold text-[#1F2937] truncate block">{title}</span>
-                <span className="text-xs text-gray-500 truncate block">{subtitle}</span>
-              </div>
-            </button>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                type="button"
+                className="lg:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                onClick={() => setShowSidebar(true)}
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setActiveSection('Dashboard')}
+                className="flex items-center gap-2 sm:gap-3 hover:opacity-90 text-left min-w-0"
+              >
+                <div className="w-10 h-10 shrink-0 bg-gradient-to-br from-[#b2d8d0] to-white rounded-lg flex items-center justify-center shadow-sm border border-[#b2d8d0]/50">
+                  <TreePine className="w-5 h-5 text-[#2d6a62]" />
+                </div>
+                <div className="min-w-0 hidden sm:block">
+                  <span className="text-lg sm:text-xl font-bold text-[#1F2937] truncate block">{title}</span>
+                  <span className="text-xs text-gray-500 truncate block">{subtitle}</span>
+                </div>
+              </button>
+            </div>
 
             <div className="flex items-center gap-2 shrink-0">
               {onLogout ? (
@@ -130,6 +141,73 @@ export function NgoTopNavBar() {
             </button>
           </div>
         </>
+      ) : null}
+
+      {/* Mobile Sidebar Overlay */}
+      {showSidebar ? (
+        <div className="lg:hidden fixed inset-0 z-50 flex">
+          <div 
+            className="fixed inset-0 bg-black/40 transition-opacity" 
+            onClick={() => setShowSidebar(false)} 
+            aria-label="Close sidebar"
+          />
+          <div className="relative w-64 max-w-sm bg-white h-full flex flex-col shadow-2xl animate-in slide-in-from-left duration-200 border-r border-[#b2d8d0]">
+            <div className="flex items-center justify-between px-4 py-4 border-b border-[#b2d8d0]/40 bg-gradient-to-r from-[#eef8f6] to-white">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-[#5a9e94] rounded-lg flex items-center justify-center shadow-inner">
+                  <TreePine className="w-4 h-4 text-white" />
+                </div>
+                <span className="font-bold text-[#1F2937]">Menu</span>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setShowSidebar(false)}
+                className="p-1 rounded-full hover:bg-gray-100 text-gray-500"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+              {NAV_ITEMS.map((item) => {
+                const isActive = activeSection === item.section;
+                return (
+                  <button
+                    key={item.section}
+                    type="button"
+                    onClick={() => {
+                      setActiveSection(item.section);
+                      setShowSidebar(false);
+                    }}
+                    className={`w-full flex items-center px-4 py-3 text-left rounded-xl font-medium transition-all ${
+                      isActive 
+                        ? 'bg-[#eef8f6] text-[#5a9e94] shadow-sm border border-[#b2d8d0]/50' 
+                        : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+            
+            {onLogout && (
+              <div className="p-4 border-t border-[#b2d8d0]/40 bg-gray-50">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSidebar(false);
+                    onLogout();
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-semibold text-red-600 hover:bg-red-50 transition-colors border border-red-100"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Log out
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       ) : null}
     </nav>
   );
