@@ -411,3 +411,25 @@ export const submitContactForm = async (data: { name: string; email: string; sub
   return res.json();
 };
 
+export const fetchStories = async () => {
+  const res = await fetch(`${API_URL}/stories`);
+  if (!res.ok) throw new Error('Failed to fetch stories');
+  return res.json();
+};
+
+export const createStory = async (data: any) => {
+  const res = await fetch(`${API_URL}/stories`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to create story');
+  return res.json();
+};
+
+export const deleteStory = async (id: string) => {
+  const res = await fetch(`${API_URL}/stories/${id}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Failed to delete story');
+  return res.json();
+};
+

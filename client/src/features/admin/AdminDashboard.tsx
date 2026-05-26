@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { DashboardLayout } from '../../shared/layouts/DashboardLayout';
 import { Badge, Icon, StatCard } from '../../shared/components/UI';
-import { fetchUsers, fetchNGOs, fetchActivities, createUser, assignNGO, createNGO, fetchCakeVendors, createCakeVendor, updateCakeStatus, fetchAllSubmissions, createCertificate, fetchCertificates, fetchAllBulkTreeEntries, deleteUser, updateUser, deleteNGO, updateAdminNGO, deleteCakeVendor, updateCakeVendor, fetchAdminSettings, updateAdminSettings, resendWelcomeEmail } from '../../api';
+import { fetchUsers, fetchNGOs, fetchActivities, createUser, assignNGO, createNGO, fetchCakeVendors, createCakeVendor, updateCakeStatus, fetchAllSubmissions, createCertificate, fetchCertificates, fetchAllBulkTreeEntries, deleteUser, updateUser, deleteNGO, updateAdminNGO, deleteCakeVendor, updateCakeVendor, fetchAdminSettings, updateAdminSettings, resendWelcomeEmail, fetchStories, createStory, deleteStory } from '../../api';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts';
@@ -62,6 +62,9 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
   const [cakeVendors, setCakeVendors] = useState<any[]>([]);
   const [treeEntries, setTreeEntries] = useState<any[]>([]);
   const [certificates, setCertificates] = useState<any[]>([]);
+  const [stories, setStories] = useState<any[]>([]);
+  const [showAddStoryModal, setShowAddStoryModal] = useState(false);
+  const [storyFormData, setStoryFormData] = useState({ title: '', content: '', imageUrl: '', linkUrl: '' });
   const [ngoFilter, setNgoFilter] = useState("All NGOs");
   const [userSearch, setUserSearch] = useState("");
   const [lastUpdated, setLastUpdated] = useState(new Date());
@@ -167,15 +170,17 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
       fetchAllSubmissions(), 
       fetchAllBulkTreeEntries(), 
       fetchAdminSettings(),
-      fetchCertificates()
+      fetchCertificates(),
+      fetchStories()
     ])
-      .then(([u, n, a, cv, s, te, as, certs]) => {
+      .then(([u, n, a, cv, s, te, as, certs, st]) => {
         console.log("SYNC SUCCESS:", { 
           users: u?.length || 0, 
           ngos: n?.length || 0, 
           submissions: s?.length || 0,
           treeEntries: te?.length || 0,
-          certificates: certs?.length || 0
+          certificates: certs?.length || 0,
+          stories: st?.length || 0
         });
         
         setUsers(Array.isArray(u) ? u : []);
@@ -185,6 +190,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
         setSubmissions(Array.isArray(s) ? s : []);
         setTreeEntries(Array.isArray(te) ? te : []);
         setCertificates(Array.isArray(certs) ? certs : []);
+        setStories(Array.isArray(st) ? st : []);
         setLastUpdated(new Date());
 
         if (as && !adminSettings) {
@@ -437,6 +443,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
     { label: "Cake Management", icon: "cake" },
     { label: "Tree Map", icon: "map" },
     { label: "Reports & Analytics", icon: "reports" },
+    { label: "Stories Management", icon: "reports" },
     { label: "Role Management", icon: "roles" },
     { label: "Settings", icon: "settings" },
   ];
@@ -1861,6 +1868,104 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {activeSection === "Stories Management" && (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <div className="flex justify-between items-center bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
+            <div className="pl-2">
+              <h2 className="text-xl font-black text-gray-900">Stories Management</h2>
+              <p className="text-xs text-gray-400 font-medium italic">Manage stories displayed on the public landing page</p>
+            </div>
+            <button 
+              onClick={() => setShowAddStoryModal(true)}
+              className="bg-black text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:bg-gray-900 transition-all shadow-sm"
+            >
+              <Icon name="plus" size={14} /> Add New Story
+            </button>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {stories.map(story => (
+              <div key={story._id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col gap-4">
+                <img src={story.imageUrl} alt={story.title} className="w-full h-48 object-cover rounded-xl" />
+                <div>
+                  <h3 className="font-bold text-lg text-gray-900">{story.title}</h3>
+                  <p className="text-sm text-gray-600 line-clamp-2 mt-2">{story.content}</p>
+                  {story.linkUrl && <a href={story.linkUrl} target="_blank" rel="noreferrer" className="text-xs text-blue-500 mt-2 block break-all">{story.linkUrl}</a>}
+                </div>
+                <div className="mt-auto pt-4 border-t border-gray-50 flex justify-end">
+                  <button 
+                    onClick={async () => {
+                      if(window.confirm('Delete this story?')) {
+                        setLoading(true);
+                        try {
+                          await deleteStory(story._id);
+                          toast.success('Story deleted');
+                          refreshData();
+                        } catch(e: any) {
+                          toast.error('Failed to delete story');
+                        } finally {
+                          setLoading(false);
+                        }
+                      }
+                    }}
+                    className="text-xs text-rose-500 hover:text-rose-600 font-bold uppercase"
+                  >
+                    Delete Story
+                  </button>
+                </div>
+              </div>
+            ))}
+            {stories.length === 0 && (
+              <div className="col-span-full py-12 text-center text-gray-400 font-medium">No stories found. Create one to display on the landing page!</div>
+            )}
+          </div>
+
+          {showAddStoryModal && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+              <div className="bg-white rounded-[40px] w-full max-w-xl overflow-hidden shadow-2xl relative">
+                <div className="p-8 pb-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                  <div>
+                    <h2 className="text-2xl font-black text-gray-900">Add Story</h2>
+                    <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Publish to Landing Page</p>
+                  </div>
+                  <button onClick={() => setShowAddStoryModal(false)} className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-black transition-all shadow-sm">
+                    <Icon name="x" size={16} />
+                  </button>
+                </div>
+                <form 
+                  className="p-8 space-y-6"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    setLoading(true);
+                    try {
+                      await createStory(storyFormData);
+                      toast.success('Story created successfully');
+                      setShowAddStoryModal(false);
+                      setStoryFormData({ title: '', content: '', imageUrl: '', linkUrl: '' });
+                      refreshData();
+                    } catch(err) {
+                      toast.error('Failed to create story');
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                >
+                  <div className="space-y-4">
+                    <input required type="text" placeholder="Story Title" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:bg-white focus:border-black outline-none transition-all" value={storyFormData.title} onChange={e => setStoryFormData({...storyFormData, title: e.target.value})} />
+                    <textarea required placeholder="Story Content / Description" rows={4} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-black outline-none transition-all resize-none" value={storyFormData.content} onChange={e => setStoryFormData({...storyFormData, content: e.target.value})} />
+                    <input required type="url" placeholder="Image URL (e.g., https://unsplash.com/...)" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-black outline-none transition-all" value={storyFormData.imageUrl} onChange={e => setStoryFormData({...storyFormData, imageUrl: e.target.value})} />
+                    <input type="url" placeholder="Link URL (Optional link for 'Read More')" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-black outline-none transition-all" value={storyFormData.linkUrl} onChange={e => setStoryFormData({...storyFormData, linkUrl: e.target.value})} />
+                  </div>
+                  <button type="submit" disabled={loading} className="w-full bg-black text-white py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-gray-900 transition-all shadow-xl disabled:opacity-50">
+                    {loading ? 'Publishing...' : 'Publish Story'}
+                  </button>
+                </form>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

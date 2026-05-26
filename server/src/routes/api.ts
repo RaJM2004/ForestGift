@@ -13,6 +13,7 @@ import NGO from '../models/NGO';
 import Activity from '../models/Activity';
 import paymentRoutes from './paymentRoutes';
 import supportRoutes from './supportRoutes';
+import storyRoutes from './storyRoutes';
 
 const router = express.Router();
 
@@ -30,6 +31,7 @@ router.use('/certificates', certificateRoutes);
 router.use('/orders', orderRoutes);
 router.use('/payment', paymentRoutes);
 router.use('/support', supportRoutes);
+router.use('/stories', storyRoutes);
 
 // Generic fallback routes for backward compatibility/simplicity
 router.get('/users', async (req, res) => res.json(await User.find().sort({ createdAt: -1 })));
