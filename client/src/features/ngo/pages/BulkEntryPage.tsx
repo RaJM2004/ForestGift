@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { Map as LeafletMap } from 'leaflet';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import { createBulkTreeEntry, fetchBulkTreeEntries } from '../../../api';
+import * as XLSX from 'xlsx';
 
 export type BulkEntryPageProps = {
   ngoData: any;
@@ -282,6 +283,45 @@ export const BulkEntryPage = ({ ngoData, orders }: BulkEntryPageProps) => {
           
           <div className="space-y-4">
            
+            <div>
+              <label className="text-xs font-bold uppercase tracking-wide text-gray-500">Upload Excel (optional)</label>
+              <div className="flex gap-2 mt-2 items-center">
+                <input
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    try {
+                      const data = await file.arrayBuffer();
+                      const workbook = XLSX.read(data, { type: 'array' });
+                      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                      const rows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+                      const parsed = rows
+                        .map((r) => ({
+                          lat: Number(r.lat ?? r.Lat ?? r.latitude ?? r.Latitude ?? r.latitude),
+                          lng: Number(r.lng ?? r.lon ?? r.Lon ?? r.longitude ?? r.Longitude ?? r.longitude),
+                          location: r.location ?? r.Location ?? r.address ?? '',
+                          count: Number(r.count ?? r.Count ?? 1),
+                          note: r.note ?? r.Note ?? '',
+                          orderId: r.orderId ?? r.order_id ?? r.OrderID ?? '',
+                          species: r.species ?? r.Species ?? species,
+                          images: typeof r.images === 'string' ? r.images.split(';').map((s: string) => s.trim()).filter(Boolean) : Array.isArray(r.images) ? r.images : [],
+                        }))
+                        .filter((p) => !Number.isNaN(p.lat) && !Number.isNaN(p.lng));
+
+                      const normalized = parsed.map((p) => normalizeEntry({ ...p, createdAt: new Date().toISOString() }));
+                      setBulkEntries((prev) => [...normalized, ...prev]);
+                    } catch (err) {
+                      console.error('Failed to parse excel file', err);
+                    }
+                  }}
+                  className="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2"
+                />
+              </div>
+            </div>
+
 
             <div>
               <label className="text-xs font-bold uppercase tracking-wide text-gray-500">Location Search</label>
