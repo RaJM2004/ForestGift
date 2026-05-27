@@ -52,8 +52,11 @@ export const Badge = ({ status }: { status: string }) => {
   );
 };
 
-export const StatCard = ({ label, value, icon, colorClass, sub, trend }: any) => (
-  <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm flex flex-col gap-3 hover:border-black transition-colors relative overflow-hidden group">
+export const StatCard = ({ label, value, icon, colorClass, sub, trend, onClick }: any) => (
+  <div 
+    onClick={onClick}
+    className={`bg-white rounded-xl p-5 border border-gray-200 shadow-sm flex flex-col gap-3 hover:border-black transition-all duration-300 relative overflow-hidden group ${onClick ? 'cursor-pointer hover:shadow-md hover:-translate-y-0.5' : ''}`}
+  >
     <div className="absolute top-0 left-0 w-1 h-full bg-gray-200 group-hover:bg-black transition-colors"></div>
     <div className="flex justify-between items-start pl-2">
       <div>

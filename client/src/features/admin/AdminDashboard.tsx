@@ -477,10 +477,10 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <StatCard label="Total Citizens" value={enrichedUsers.length} icon="users" colorClass="bg-gray-100 text-black border border-gray-200" trend="+12.4%" />
-              <StatCard label="Registered NGOs" value={enrichedNgos.length} icon="ngo" colorClass="bg-gray-100 text-black border border-gray-200" />
-              <StatCard label="Trees Planted" value={totalTreesPlanted.toLocaleString()} icon="tree" colorClass="bg-gray-100 text-black border border-gray-200" trend="+4.2%" />
-              <StatCard label="Total Impact (₹)" value={`₹${totalContributed.toLocaleString()}`} icon="finance" colorClass="bg-gray-100 text-black border border-gray-200" />
+              <StatCard label="Total Citizens" value={enrichedUsers.length} icon="users" colorClass="bg-gray-100 text-black border border-gray-200" trend="+12.4%" onClick={() => setActiveSection("User Management")} />
+              <StatCard label="Registered NGOs" value={enrichedNgos.length} icon="ngo" colorClass="bg-gray-100 text-black border border-gray-200" onClick={() => setActiveSection("NGO Management")} />
+              <StatCard label="Trees Planted" value={totalTreesPlanted.toLocaleString()} icon="tree" colorClass="bg-gray-100 text-black border border-gray-200" trend="+4.2%" onClick={() => setActiveSection("Tree Map")} />
+              <StatCard label="Total Impact (₹)" value={`₹${totalContributed.toLocaleString()}`} icon="finance" colorClass="bg-gray-100 text-black border border-gray-200" onClick={() => setActiveSection("Reports & Analytics")} />
             </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
