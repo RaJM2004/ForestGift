@@ -469,9 +469,9 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
             <div className="flex justify-between items-center bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-zinc-200/60 shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="w-2 h-2 rounded-full bg-black animate-pulse" />
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Real-time Data Active</span>
+                <span className="text-xs font-semibold text-zinc-500 tracking-wide">Real-time Data Active</span>
               </div>
-              <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+              <div className="text-xs font-semibold text-zinc-500 tracking-wide">
                 Last Sync: {lastUpdated.toLocaleTimeString()}
               </div>
             </div>
@@ -485,7 +485,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-white rounded-2xl p-6 border border-zinc-200/60 shadow-sm">
-                <h3 className="font-black text-gray-900 mb-6">NGO Delivery Performance</h3>
+                <h3 className="font-bold text-zinc-900 mb-6">NGO Delivery Performance</h3>
                 <div className="space-y-5">
                   {enrichedNgos.map(n => {
                     const progress = n.assigned > 0 ? Math.round((n.completed / n.assigned) * 100) : 0;
@@ -493,11 +493,11 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                       <div key={n.id} className="group">
                         <div className="flex justify-between items-end mb-1.5 p-1">
                           <div>
-                            <span className="text-sm font-black text-black group-hover:text-gray-700 transition-colors uppercase tracking-widest">{n.name}</span>
+                            <span className="text-sm font-semibold text-zinc-900 group-hover:text-gray-700 transition-colors uppercase tracking-widest">{n.name}</span>
                             <span className="text-[9px] text-gray-400 ml-2 font-bold">{n.area}</span>
                           </div>
                           <div className="text-right">
-                            <span className="text-sm font-black text-black">{n.completed}/{n.assigned}</span>
+                            <span className="text-sm font-semibold text-zinc-900">{n.completed}/{n.assigned}</span>
                             <span className="text-[9px] text-black bg-zinc-100 px-1.5 py-0.5 rounded ml-2 font-black">+{progress}%</span>
                           </div>
                         </div>
@@ -531,7 +531,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gray-400 opacity-75"></span>
                        <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
                      </span>
-                     <span className="text-[10px] font-black tracking-widest uppercase text-gray-400">Live</span>
+                     <span className="text-[10px] font-semibold tracking-wide text-gray-400">Live</span>
                    </div>
                  </h3>
                  <div className="space-y-4 overflow-y-auto pr-2 no-scrollbar flex-1 relative z-10">
@@ -542,7 +542,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                          </div>
                          <div className="flex-1 min-w-0">
                            <p className="text-sm font-medium text-gray-400 leading-snug group-hover:text-white transition-colors">{a.msg}</p>
-                           <div className="text-[10px] text-gray-600 mt-1.5 font-black uppercase tracking-widest">{a.time} • System Admin</div>
+                           <div className="text-[10px] text-gray-600 mt-1.5 font-semibold tracking-wide">{a.time} • System Admin</div>
                          </div>
                       </div>
                     ))}
@@ -563,7 +563,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
               <div className="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex items-center justify-between hover:border-black transition-colors">
                 <div>
                   <div className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mb-1">Total Network</div>
-                  <div className="text-2xl font-black text-black">{enrichedUsers.length} <span className="text-xs text-gray-400 font-bold ml-1">Citizens</span></div>
+                  <div className="text-3xl font-bold text-zinc-950">{enrichedUsers.length} <span className="text-xs text-gray-400 font-bold ml-1">Citizens</span></div>
                 </div>
                 <div className="w-12 h-12 rounded-2xl bg-gray-100 text-black border border-gray-200 flex items-center justify-center">
                   <Icon name="users" size={20} />
@@ -572,7 +572,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
               <div className="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex items-center justify-between hover:border-black transition-colors">
                 <div>
                   <div className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mb-1">NGO Assigned</div>
-                  <div className="text-2xl font-black text-black">{assignedUsers}</div>
+                  <div className="text-3xl font-bold text-zinc-950">{assignedUsers}</div>
                 </div>
                 <div className="w-12 h-12 rounded-2xl bg-gray-100 text-black border border-gray-200 flex items-center justify-center">
                   <Icon name="ngo" size={20} />
@@ -581,7 +581,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
               <div className="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex items-center justify-between hover:border-black transition-colors">
                 <div>
                   <div className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mb-1">Unassigned Queue</div>
-                  <div className="text-2xl font-black text-black">{enrichedUsers.length - assignedUsers}</div>
+                  <div className="text-3xl font-bold text-zinc-950">{enrichedUsers.length - assignedUsers}</div>
                 </div>
                 <div className="w-12 h-12 rounded-2xl bg-gray-100 text-black border border-gray-200 flex items-center justify-center">
                   <Icon name="calendar" size={20} />
@@ -590,7 +590,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
               <div className="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex items-center justify-between hover:border-black transition-colors">
                 <div>
                   <div className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mb-1">Citizen Funding</div>
-                  <div className="text-2xl font-black text-black">₹{totalAmount.toLocaleString()}</div>
+                  <div className="text-3xl font-bold text-zinc-950">₹{totalAmount.toLocaleString()}</div>
                 </div>
                 <div className="w-12 h-12 rounded-2xl bg-gray-100 text-black border border-gray-200 flex items-center justify-center">
                   <Icon name="finance" size={20} />
@@ -600,7 +600,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
 
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-4 rounded-3xl border border-gray-100 shadow-sm gap-4">
               <div className="pl-2">
-                <h2 className="text-xl font-black text-gray-900">Citizen Directory</h2>
+                <h2 className="text-xl font-bold text-zinc-900">Citizen Directory</h2>
                 <p className="text-xs text-gray-400 font-medium italic">Managing {enrichedUsers.length} active contributors</p>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
@@ -612,7 +612,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                 </div>
                 <button 
                   onClick={() => setShowAddModal(true)}
-                  className="bg-black text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-gray-900 transition-all shadow-sm w-full sm:w-auto shrink-0"
+                  className="bg-black text-white px-5 py-2.5 rounded-xl text-xs font-semibold tracking-wide flex items-center justify-center gap-2 hover:bg-gray-900 transition-all shadow-sm w-full sm:w-auto shrink-0"
                 >
                   <Icon name="plus" size={14} /> Add New Citizen
                 </button>
@@ -624,12 +624,12 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                 <table className="w-full text-left">
                   <thead>
                     <tr className="bg-gray-50/80 border-b border-gray-100">
-                      <th className="px-6 py-4 pl-8 text-[10px] font-black text-gray-400 uppercase tracking-widest">Citizen Details</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Digital Token</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Contribution</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">NGO Assignment</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Email Status</th>
-                      <th className="px-6 py-4 pr-8 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Progress Status</th>
+                      <th className="px-6 py-4 pl-8 text-xs font-semibold text-zinc-500 tracking-wide">Citizen Details</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-zinc-500 tracking-wide">Digital Token</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-zinc-500 tracking-wide">Contribution</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-zinc-500 tracking-wide">NGO Assignment</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-zinc-500 tracking-wide">Email Status</th>
+                      <th className="px-6 py-4 pr-8 text-xs font-semibold text-zinc-500 tracking-wide text-right">Progress Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
@@ -637,23 +637,23 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                       return (
                         <tr key={u.id} className="text-sm hover:bg-gray-50/80 transition-colors group">
                           <td className="px-6 py-4 pl-8">
-                            <div className="font-black text-black border-l-2 border-transparent group-hover:border-black pl-2 -ml-2 transition-all">{u.name}</div>
+                            <div className="font-semibold text-zinc-900 border-l-2 border-transparent group-hover:border-black pl-2 -ml-2 transition-all">{u.name}</div>
                             <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">{u.id} • {u.location || 'HQ'}</div>
                           </td>
                           <td className="px-6 py-4 font-mono text-gray-500 font-extrabold tracking-tighter text-xs">{u.token}</td>
                           <td className="px-6 py-4">
-                            <div className="font-black text-black">₹{u.amount.toLocaleString()}</div>
+                            <div className="font-semibold text-zinc-900">₹{u.amount.toLocaleString()}</div>
                             <div className="text-[10px] text-gray-400 font-bold uppercase">{u.trees} {u.trees === 1 ? 'Tree' : 'Trees'}</div>
                           </td>
                           <td className="px-6 py-4">
-                            <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border ${u.ngo === 'Not Assigned' ? 'bg-gray-50 text-gray-500 border-gray-200' : 'bg-black text-white border-black'}`}>
+                            <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-500 tracking-wide border ${u.ngo === 'Not Assigned' ? 'bg-gray-50 text-gray-500 border-gray-200' : 'bg-black text-white border-black'}`}>
                                {u.ngo === 'Not Assigned' ? <Icon name="activity" size={12} /> : <Icon name="check" size={12} />}
                                {u.ngo}
                             </div>
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-2">
-                              <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${u.welcomeEmailSent ? 'text-black' : 'text-gray-400'}`}>
+                              <div className={`flex items-center gap-2 text-xs font-semibold text-zinc-500 tracking-wide ${u.welcomeEmailSent ? 'text-black' : 'text-gray-400'}`}>
                                 <div className={`w-1.5 h-1.5 rounded-full ${u.welcomeEmailSent ? 'bg-black' : 'bg-gray-300'}`}></div>
                                 {u.welcomeEmailSent ? 'Delivered' : 'Not Sent'}
                               </div>
@@ -758,7 +758,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
               <div className="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex items-center justify-between hover:border-black transition-colors">
                 <div>
                   <div className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mb-1">Active Partners</div>
-                  <div className="text-2xl font-black text-black">{totalNgos} <span className="text-xs text-gray-400 font-bold ml-1">NGOs</span></div>
+                  <div className="text-3xl font-bold text-zinc-950">{totalNgos} <span className="text-xs text-gray-400 font-bold ml-1">NGOs</span></div>
                 </div>
                 <div className="w-12 h-12 rounded-2xl bg-gray-100 text-black border border-gray-200 flex items-center justify-center">
                   <Icon name="ngo" size={20} />
@@ -767,7 +767,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
               <div className="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex items-center justify-between hover:border-black transition-colors">
                 <div>
                   <div className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mb-1">Total Planted</div>
-                  <div className="text-2xl font-black text-black">{totalPlanted.toLocaleString()}</div>
+                  <div className="text-3xl font-bold text-zinc-950">{totalPlanted.toLocaleString()}</div>
                 </div>
                 <div className="w-12 h-12 rounded-2xl bg-gray-100 text-black border border-gray-200 flex items-center justify-center">
                   <Icon name="tree" size={20} />
@@ -776,7 +776,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
               <div className="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex items-center justify-between hover:border-black transition-colors">
                 <div>
                   <div className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mb-1">Goal Capacity</div>
-                  <div className="text-2xl font-black text-black">{totalCapacity.toLocaleString()}</div>
+                  <div className="text-3xl font-bold text-zinc-950">{totalCapacity.toLocaleString()}</div>
                 </div>
                 <div className="w-12 h-12 rounded-2xl bg-gray-100 text-black border border-gray-200 flex items-center justify-center">
                   <Icon name="activity" size={20} />
@@ -785,7 +785,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
               <div className="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex items-center justify-between hover:border-black transition-colors">
                 <div>
                   <div className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mb-1">Average Rating</div>
-                  <div className="text-2xl font-black text-black">★ {avgRating}</div>
+                  <div className="text-3xl font-bold text-zinc-950">★ {avgRating}</div>
                 </div>
                 <div className="w-12 h-12 rounded-2xl bg-gray-100 text-black border border-gray-200 flex items-center justify-center">
                   <Icon name="star" size={20} />
@@ -795,13 +795,13 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
 
             <div className="flex justify-between items-center bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
               <div className="pl-2">
-                <h2 className="text-xl font-black text-gray-900">NGO Management</h2>
+                <h2 className="text-xl font-bold text-zinc-900">NGO Management</h2>
                 <p className="text-xs text-gray-400 font-medium italic">Partnering with {enrichedNgos.length} environmental organizations</p>
               </div>
               <div className="flex gap-3">
                 <button 
                   onClick={() => setShowAddNgoModal(true)}
-                  className="bg-black text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:bg-gray-900 transition-all shadow-sm"
+                  className="bg-black text-white px-5 py-2.5 rounded-xl text-xs font-semibold tracking-wide flex items-center gap-2 hover:bg-gray-900 transition-all shadow-sm"
                 >
                   <Icon name="plus" size={14} /> Register New NGO
                 </button>
@@ -811,7 +811,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 space-y-6">
                 <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-                  <h3 className="text-lg font-black text-gray-900 mb-6 flex items-center gap-2">
+                  <h3 className="text-lg font-bold text-zinc-900 mb-6 flex items-center gap-2">
                     <Icon name="map" size={18} className="text-black" />
                     Registered NGO Partners
                   </h3>
@@ -822,7 +822,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                         <div key={n.id} className="bg-gray-50 border border-gray-200 p-5 rounded-2xl space-y-4 hover:border-black transition-colors group">
                           <div className="flex justify-between items-start">
                             <div>
-                              <div className="text-sm font-black text-black group-hover:text-gray-700 transition-colors">{n.name}</div>
+                              <div className="text-sm font-semibold text-zinc-900 group-hover:text-gray-700 transition-colors">{n.name}</div>
                               <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{n.area}</div>
                             </div>
                             <div className="bg-gray-200 text-black text-[10px] font-black px-2 py-1.5 rounded-lg flex items-center gap-1 border border-gray-300">
@@ -832,7 +832,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                           
                           {/* Progress Bar */}
                           <div className="space-y-1">
-                            <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-gray-500">
+                            <div className="flex justify-between text-xs font-semibold text-zinc-500 tracking-wide text-gray-500">
                               <span>Progress</span>
                               <span className="text-black">{Math.round(completedPercent)}%</span>
                             </div>
@@ -843,16 +843,16 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
 
                           <div className="grid grid-cols-3 gap-2 text-center pt-2">
                             <div className="bg-white p-2.5 rounded-xl border border-gray-200 shadow-sm">
-                              <div className="text-sm font-black text-black">{n.completed}</div>
-                              <div className="text-[8px] text-gray-500 font-black uppercase tracking-widest mt-0.5">Planted</div>
+                              <div className="text-sm font-semibold text-zinc-900">{n.completed}</div>
+                              <div className="text-[10px] text-zinc-400 font-semibold tracking-wide mt-0.5">Planted</div>
                             </div>
                             <div className="bg-white p-2.5 rounded-xl border border-gray-200 shadow-sm">
                               <div className="text-sm font-black text-gray-600">{n.pending}</div>
-                              <div className="text-[8px] text-gray-500 font-black uppercase tracking-widest mt-0.5">Pending</div>
+                              <div className="text-[10px] text-zinc-400 font-semibold tracking-wide mt-0.5">Pending</div>
                             </div>
                             <div className="bg-white p-2.5 rounded-xl border border-gray-200 shadow-sm">
                               <div className="text-sm font-black text-gray-400">{n.assigned}</div>
-                              <div className="text-[8px] text-gray-500 font-black uppercase tracking-widest mt-0.5">Goal</div>
+                              <div className="text-[10px] text-zinc-400 font-semibold tracking-wide mt-0.5">Goal</div>
                             </div>
                           </div>
                         </div>
@@ -866,11 +866,11 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                 <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm h-full max-h-[700px] flex flex-col">
                   <div className="flex justify-between items-start mb-6 border-b border-gray-100 pb-4">
                     <div>
-                      <h3 className="text-lg font-black text-gray-900 flex items-center gap-2">
+                      <h3 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
                         <Icon name="users" size={18} className="text-gray-400" />
                         Assign Orders
                       </h3>
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Pending Citizen Trees</p>
+                      <p className="text-xs font-semibold text-zinc-500 tracking-wide mt-1">Pending Citizen Trees</p>
                     </div>
                     <div className="bg-gray-100 text-black text-[10px] font-black px-2.5 py-1 rounded-lg border border-gray-200">
                       {enrichedUsers.filter(u => u.ngo === 'Not Assigned').length} Queue
@@ -884,13 +884,13 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                           <Icon name="check" size={24} />
                         </div>
                         <h4 className="text-gray-900 font-black">All Caught Up!</h4>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">No pending citizen orders</p>
+                        <p className="text-xs font-semibold text-zinc-500 tracking-wide mt-1">No pending citizen orders</p>
                       </div>
                     ) : (
                       enrichedUsers.filter(u => u.ngo === 'Not Assigned').map(u => (
                         <div key={u.id} className="bg-gray-50 border border-gray-200 p-4 rounded-2xl flex items-center justify-between group hover:border-black transition-colors">
                           <div>
-                            <div className="text-sm font-black text-gray-900 group-hover:text-black transition-colors">{u.name}</div>
+                            <div className="text-sm font-bold text-zinc-900 group-hover:text-black transition-colors">{u.name}</div>
                             <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">{u.location} • {u.trees} {u.trees === 1 ? 'Tree' : 'Trees'}</div>
                           </div>
                           <button 
@@ -922,10 +922,10 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
 
             <div className="flex justify-between items-center bg-white p-6 rounded-3xl border border-zinc-200/60 shadow-sm">
               <div>
-                <h3 className="text-xl font-black text-black uppercase tracking-tight">Cake Delivery Registry</h3>
+                <h3 className="text-xl font-bold text-zinc-900">Cake Delivery Registry</h3>
                 <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1 italic">Tracking celebratory deliveries by region</p>
               </div>
-              <button onClick={() => setShowAddVendorModal(true)} className="bg-black text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:bg-gray-900 transition-all shadow-xl">
+              <button onClick={() => setShowAddVendorModal(true)} className="bg-black text-white px-6 py-3 rounded-2xl text-xs font-semibold tracking-wide flex items-center gap-2 hover:bg-gray-900 transition-all shadow-xl">
                  <Icon name="plus" size={14} /> Add Delivery Vendor
               </button>
             </div>
@@ -935,11 +935,11 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                  <table className="w-full text-left">
                    <thead>
                      <tr className="bg-gray-50 border-b border-gray-100">
-                       <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Citizen Account</th>
-                       <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Target Location</th>
-                       <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Assigned Delivery Vendor</th>
-                       <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status Tracking</th>
-                       <th className="px-6 py-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Action</th>
+                       <th className="px-6 py-4 text-xs font-semibold text-zinc-500 tracking-wide">Citizen Account</th>
+                       <th className="px-6 py-4 text-xs font-semibold text-zinc-500 tracking-wide">Target Location</th>
+                       <th className="px-6 py-4 text-xs font-semibold text-zinc-500 tracking-wide">Assigned Delivery Vendor</th>
+                       <th className="px-6 py-4 text-xs font-semibold text-zinc-500 tracking-wide">Status Tracking</th>
+                       <th className="px-6 py-4 text-right text-xs font-semibold text-zinc-500 tracking-wide">Action</th>
                      </tr>
                    </thead>
                    <tbody className="divide-y divide-gray-100">
@@ -948,16 +948,16 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                        return (
                          <tr key={u.id} className="text-sm hover:bg-gray-50/50 transition-colors group">
                            <td className="px-6 py-4">
-                             <div className="font-black text-black group-hover:text-gray-700 transition-colors uppercase tracking-tight">{u.name}</div>
+                             <div className="font-semibold text-zinc-900 group-hover:text-gray-700 transition-colors uppercase tracking-tight">{u.name}</div>
                              <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{u.phone}</div>
                            </td>
                            <td className="px-6 py-4 text-[11px] font-black text-gray-500 uppercase tracking-widest italic">{u.location || 'Satellite Area'}</td>
                            <td className="px-6 py-4">
-                             <div className="font-black text-black uppercase text-xs">{v.name}</div>
-                             <div className="text-[10px] text-zinc-500 font-black uppercase tracking-widest">₹{v.costPerCake} Unit Cost</div>
+                             <div className="font-semibold text-zinc-900 uppercase text-xs">{v.name}</div>
+                             <div className="text-[10px] text-zinc-500 font-semibold tracking-wide">₹{v.costPerCake} Unit Cost</div>
                            </td>
                            <td className="px-6 py-4">
-                              <span className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border ${u.cakeStatus === 'Delivered' ? 'bg-zinc-100 text-black border-zinc-200' : 'bg-zinc-50 text-zinc-400 border-zinc-200'}`}>
+                              <span className={`px-3 py-1.5 rounded-xl text-xs font-semibold text-zinc-500 tracking-wide border ${u.cakeStatus === 'Delivered' ? 'bg-zinc-100 text-black border-zinc-200' : 'bg-zinc-50 text-zinc-400 border-zinc-200'}`}>
                                 {u.cakeStatus || 'Pending'}
                               </span>
                            </td>
@@ -994,8 +994,8 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                 <Icon name="map" size={20} />
               </div>
               <div>
-                <h3 className="text-lg font-black text-black uppercase tracking-tighter">Planetary Reforestation Grid</h3>
-                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Real-time visualization of global plantation impact</p>
+                <h3 className="text-lg font-semibold text-zinc-900 uppercase tracking-tighter">Planetary Reforestation Grid</h3>
+                <p className="text-[10px] text-gray-400 font-semibold tracking-wide">Real-time visualization of global plantation impact</p>
               </div>
             </div>
             <div className="flex gap-4 items-center">
@@ -1068,13 +1068,13 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                       >
                         <Popup className="font-sans">
                           <div className="p-1 min-w-[180px]">
-                            <div className="text-center font-black text-gray-900 border-b border-gray-100 pb-2 mb-2 flex flex-col gap-0.5">
+                            <div className="text-center font-bold text-zinc-900 border-b border-gray-100 pb-2 mb-2 flex flex-col gap-0.5">
                               <span className="text-xs uppercase tracking-tighter text-gray-400">Contributor</span>
                               <span className="text-sm">{user?.name || s.orderId || s.userId || 'Authorized Citizen'}</span>
                             </div>
                             <div className="space-y-1.5">
                               <div className="flex justify-between items-center text-xs">
-                                <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest">User Name</span>
+                                <span className="text-[9px] text-gray-400 font-semibold tracking-wide">User Name</span>
                                 <span className="text-[10px] text-black font-black uppercase text-right">
                                   {user?.name || s.orderId || s.userId || 'Authorized Citizen'}
                                 </span>
@@ -1086,12 +1086,12 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                               <div className="pt-2 mt-1 border-t border-gray-50">
                                 <div className="flex items-center gap-2">
                                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: markerColor }}></div>
-                                  <span className="text-[10px] text-gray-900 font-black uppercase tracking-tight">{ngo?.name || s.ngoId}</span>
+                                  <span className="text-[10px] text-gray-900 font-semibold tracking-wide">{ngo?.name || s.ngoId}</span>
                                 </div>
                               </div>
                             </div>
                             {s.fileNames && s.fileNames.length > 0 && (
-                              <div className="mt-3 text-[9px] bg-zinc-100 text-black py-1.5 px-2 rounded-xl border border-zinc-200 flex items-center justify-center gap-1.5 font-black uppercase tracking-tight">
+                              <div className="mt-3 text-[9px] bg-zinc-100 text-black py-1.5 px-2 rounded-xl border border-zinc-200 flex items-center justify-center gap-1.5 font-semibold tracking-wide">
                                 <Icon name="check" size={10} /> Photo Evidence Verified
                               </div>
                             )}
@@ -1134,13 +1134,13 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                       >
                         <Popup className="font-sans">
                           <div className="p-1 min-w-[180px]">
-                            <div className="text-center font-black text-gray-900 border-b border-gray-100 pb-2 mb-2 flex flex-col gap-0.5">
+                            <div className="text-center font-bold text-zinc-900 border-b border-gray-100 pb-2 mb-2 flex flex-col gap-0.5">
                               <span className="text-xs uppercase tracking-tighter text-gray-400">Contributor</span>
                               <span className="text-sm">{user?.name || te.orderId || te.userId || 'Authorized Citizen'}</span>
                             </div>
                             <div className="space-y-1.5">
                               <div className="flex justify-between items-center text-xs">
-                                <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest">User Name</span>
+                                <span className="text-[9px] text-gray-400 font-semibold tracking-wide">User Name</span>
                                 <span className="text-[10px] text-black font-black uppercase text-right">
                                   {user?.name || te.orderId || te.userId || 'Authorized Citizen'}
                                 </span>
@@ -1152,12 +1152,12 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                               <div className="pt-2 mt-1 border-t border-gray-50">
                                 <div className="flex items-center gap-2">
                                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: markerColor }}></div>
-                                  <span className="text-[10px] text-gray-900 font-black uppercase tracking-tight">{ngo?.name || te.ngoId}</span>
+                                  <span className="text-[10px] text-gray-900 font-semibold tracking-wide">{ngo?.name || te.ngoId}</span>
                                 </div>
                               </div>
                             </div>
                             {te.fileNames && te.fileNames.length > 0 && (
-                              <div className="mt-3 text-[9px] bg-zinc-100 text-black py-1.5 px-2 rounded-xl border border-zinc-200 flex items-center justify-center gap-1.5 font-black uppercase tracking-tight">
+                              <div className="mt-3 text-[9px] bg-zinc-100 text-black py-1.5 px-2 rounded-xl border border-zinc-200 flex items-center justify-center gap-1.5 font-semibold tracking-wide">
                                 <Icon name="check" size={10} /> Photo Evidence Verified
                               </div>
                             )}
@@ -1186,8 +1186,8 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
           <div className="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border border-white/20 flex flex-col max-h-[90vh]">
             <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
               <div>
-                <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Register New Citizen</h3>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Onboarding to the ForestGift Network</p>
+                <h3 className="text-2xl font-bold text-zinc-900 uppercase tracking-tight">Register New Citizen</h3>
+                <p className="text-xs font-semibold text-zinc-500 tracking-wide mt-1">Onboarding to the ForestGift Network</p>
               </div>
               <button 
                 onClick={() => { setShowAddModal(false); setBulkDataPreview(null); setBulkImportStatus(null); }}
@@ -1203,7 +1203,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                   <div className="w-24 h-24 bg-zinc-100 text-black rounded-[32px] flex items-center justify-center mx-auto mb-6 border border-zinc-200 shadow-inner">
                     <Icon name="check" size={48} />
                   </div>
-                  <h2 className="text-2xl font-black text-gray-900 mb-2 uppercase tracking-tight">Import Successful</h2>
+                  <h2 className="text-2xl font-bold text-zinc-900 mb-2 uppercase tracking-tight">Import Successful</h2>
                   <p className="text-sm font-bold text-gray-500 mb-8 uppercase tracking-widest leading-relaxed">Successfully imported<br/><span className="text-black bg-zinc-100 px-1.5 py-0.5 rounded font-black">{bulkImportStatus.success}</span> out of <span className="text-black font-black">{bulkImportStatus.total}</span> citizens into the network.</p>
                   <button onClick={() => { setShowAddModal(false); setBulkDataPreview(null); setBulkImportStatus(null); }} className="bg-black text-white px-10 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] hover:bg-gray-900 transition-colors shadow-xl">
                     Close Registration
@@ -1212,13 +1212,13 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
               ) : bulkDataPreview ? (
                 <div className="p-8 flex flex-col gap-6 animate-in fade-in duration-300">
                   <div>
-                    <h4 className="text-xl font-black text-gray-900 uppercase tracking-tight">Review Data Before Processing</h4>
+                    <h4 className="text-xl font-bold text-zinc-900 uppercase tracking-tight">Review Data Before Processing</h4>
                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Please verify the <span className="text-black">{bulkDataPreview.length} records</span> extracted from the uploaded sheet.</p>
                   </div>
                   <div className="border border-gray-100 rounded-3xl overflow-hidden max-h-72 overflow-y-auto shadow-inner bg-gray-50">
                     <table className="w-full text-left">
                       <thead>
-                        <tr className="bg-white text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 sticky top-0 shadow-sm">
+                        <tr className="bg-white text-xs font-semibold text-zinc-500 tracking-wide border-b border-gray-100 sticky top-0 shadow-sm">
                           <th className="px-5 py-4">Citizen Name</th>
                           <th className="px-5 py-4">Contact Email</th>
                           <th className="px-5 py-4">Target Zone</th>
@@ -1230,7 +1230,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                           <tr key={i} className="hover:bg-gray-50 transition-colors">
                             <td className="px-5 py-3 text-black font-black">{row.name}</td>
                             <td className="px-5 py-3 text-xs">{row.email}</td>
-                            <td className="px-5 py-3 text-[11px] font-black uppercase tracking-widest text-gray-500">{row.location}</td>
+                            <td className="px-5 py-3 text-[11px] font-semibold tracking-wide text-gray-500">{row.location}</td>
                             <td className="px-5 py-3 text-black font-black text-right">{row.trees}</td>
                           </tr>
                         ))}
@@ -1251,12 +1251,12 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                   <div className="p-8 pb-0 flex flex-col gap-4 border-b border-gray-50">
                     <div className="bg-zinc-50 border border-zinc-200/60 rounded-2xl p-4 flex items-center justify-between gap-4">
                       <div>
-                        <h4 className="text-sm font-black text-black uppercase tracking-widest">Bulk Import Citizens</h4>
+                        <h4 className="text-sm font-semibold text-zinc-900 uppercase tracking-widest">Bulk Import Citizens</h4>
                         <p className="text-[10px] text-zinc-500 font-bold leading-tight mt-1">Upload an Excel (.xlsx) or CSV file with headers: Name, Email, Phone, Address, DOB, Amount, Location.</p>
                       </div>
                       <div>
                         <input type="file" id="bulk-upload" accept=".xlsx, .xls, .csv" className="hidden" onChange={handleBulkUpload} disabled={loading} />
-                        <label htmlFor="bulk-upload" className="cursor-pointer bg-black text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-zinc-800 transition-colors shadow-sm inline-block whitespace-nowrap">
+                        <label htmlFor="bulk-upload" className="cursor-pointer bg-black text-white px-5 py-2.5 rounded-xl text-xs font-semibold text-zinc-500 tracking-wide hover:bg-zinc-800 transition-colors shadow-sm inline-block whitespace-nowrap">
                            {loading ? 'Reading...' : 'Upload File'}
                         </label>
                       </div>
@@ -1270,42 +1270,42 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                   <form onSubmit={handleSubmit} className="p-8 pt-4 space-y-6">
                     <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Full Name</label>
+                        <label className="text-xs font-semibold text-zinc-600 mb-1.5 block">Full Name</label>
                         <input required className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black focus:bg-white focus:border-black outline-none transition-all shadow-inner" placeholder="e.g. Rahul Sharma" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Email Address</label>
+                        <label className="text-xs font-semibold text-zinc-600 mb-1.5 block">Email Address</label>
                         <input required type="email" className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black focus:bg-white focus:border-black outline-none transition-all shadow-inner" placeholder="rahul@domain.com" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-6">
                        <div className="space-y-2">
-                        <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Mobile Number</label>
+                        <label className="text-xs font-semibold text-zinc-600 mb-1.5 block">Mobile Number</label>
                         <input required className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black focus:bg-white focus:border-black outline-none transition-all shadow-inner" placeholder="+91 XXXXX XXXXX" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Date of Birth</label>
+                        <label className="text-xs font-semibold text-zinc-600 mb-1.5 block">Date of Birth</label>
                         <input required type="date" className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black focus:bg-white focus:border-black outline-none transition-all shadow-inner" value={formData.dob} onChange={e => setFormData({...formData, dob: e.target.value})} />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Permanent Address</label>
+                      <label className="text-xs font-semibold text-zinc-600 mb-1.5 block">Permanent Address</label>
                       <input required className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black focus:bg-white focus:border-black outline-none transition-all shadow-inner" placeholder="Full residential address..." value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
                     </div>
 
                     <div className="grid grid-cols-3 gap-6">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Contribution (₹)</label>
+                        <label className="text-xs font-semibold text-zinc-600 mb-1.5 block">Contribution (₹)</label>
                         <input required type="number" className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black focus:bg-white focus:border-black outline-none transition-all shadow-inner" value={formData.amount} onChange={e => setFormData({...formData, amount: parseInt(e.target.value), trees: Math.floor(parseInt(e.target.value)/1000) || 1})} />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Tree Count</label>
-                        <input readOnly className="w-full bg-zinc-100 border border-zinc-200 rounded-2xl px-5 py-4 text-sm font-black text-black cursor-not-allowed" value={formData.trees} />
+                        <label className="text-xs font-semibold text-zinc-600 mb-1.5 block">Tree Count</label>
+                        <input readOnly className="w-full bg-zinc-100 border border-zinc-200 rounded-2xl px-5 py-4 text-sm font-semibold text-zinc-900 cursor-not-allowed" value={formData.trees} />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Plantation Zone</label>
+                        <label className="text-xs font-semibold text-zinc-600 mb-1.5 block">Plantation Zone</label>
                         <select className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black focus:bg-white focus:border-black outline-none transition-all shadow-inner" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})}>
                           <option>Satellite Block A</option>
                           <option>Satellite Block B</option>
@@ -1333,7 +1333,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight">NGO Partner Registration</h3>
+              <h3 className="text-lg font-bold text-zinc-900 uppercase tracking-tight">NGO Partner Registration</h3>
               <button 
                 onClick={() => setShowAddNgoModal(false)}
                 className="p-2 hover:bg-white rounded-xl text-gray-400 hover:text-rose-500 transition-colors"
@@ -1386,7 +1386,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight">Cake Vendor Registration</h3>
+              <h3 className="text-lg font-bold text-zinc-900 uppercase tracking-tight">Cake Vendor Registration</h3>
               <button onClick={() => setShowAddVendorModal(false)} className="p-2 hover:bg-white rounded-xl text-gray-400 hover:text-rose-500 transition-colors">
                 <Icon name="x" size={20} />
               </button>
@@ -1432,7 +1432,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight">Assign Order</h3>
+              <h3 className="text-lg font-bold text-zinc-900 uppercase tracking-tight">Assign Order</h3>
               <button onClick={() => setShowAssignModal(false)} className="p-2 hover:bg-white rounded-xl text-gray-400 hover:text-rose-500 transition-colors">
                 <Icon name="x" size={20} />
               </button>
@@ -1440,8 +1440,8 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
             
             <form onSubmit={handleAssign} className="p-6 space-y-6">
               <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Citizen Details</p>
-                <p className="text-sm font-black text-black">{selectedUser.name}</p>
+                <p className="text-xs font-semibold text-zinc-500 tracking-wide mb-1">Citizen Details</p>
+                <p className="text-sm font-semibold text-zinc-900">{selectedUser.name}</p>
                 <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-1">Location: {selectedUser.location}</p>
               </div>
 
@@ -1485,7 +1485,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
         <div className="p-8 space-y-8 animate-in fade-in duration-500">
            {/* Header */}
            <div>
-             <h2 className="text-3xl font-black text-gray-900 uppercase tracking-tight">Ecosystem Impact Analytics</h2>
+             <h2 className="text-3xl font-bold text-zinc-900 uppercase tracking-tight">Ecosystem Impact Analytics</h2>
              <p className="text-xs text-gray-500 font-bold tracking-widest uppercase mt-2">Real-time telemetry and growth metrics</p>
            </div>
            
@@ -1501,26 +1501,26 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                   <>
                     <div className="bg-emerald-600 text-white p-6 rounded-3xl shadow-xl shadow-emerald-500/20 relative overflow-hidden flex flex-col justify-between">
                        <div className="relative z-10">
-                         <div className="text-[10px] font-black uppercase tracking-widest text-emerald-200 mb-2">Total Carbon Saved</div>
+                         <div className="text-xs font-semibold text-zinc-500 tracking-wide text-emerald-200 mb-2">Total Carbon Saved</div>
                          <div className="text-4xl font-black tracking-tighter">{carbonSavedKg.toLocaleString()} <span className="text-lg">kg</span></div>
                        </div>
                        <Icon name="check" size={120} className="absolute -right-6 -bottom-6 text-emerald-500 opacity-50" />
                     </div>
                     <div className="bg-white border border-gray-100 p-6 rounded-3xl shadow-sm flex flex-col justify-between">
                        <div>
-                         <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Trees Planted</div>
-                         <div className="text-4xl font-black text-gray-900 tracking-tighter">{totalPlantedTrees}</div>
+                         <div className="text-xs font-semibold text-zinc-500 tracking-wide text-gray-400 mb-2">Trees Planted</div>
+                         <div className="text-4xl font-bold text-zinc-900 tracking-tighter">{totalPlantedTrees}</div>
                        </div>
                     </div>
                     <div className="bg-white border border-gray-100 p-6 rounded-3xl shadow-sm flex flex-col justify-between">
                        <div>
-                         <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Partnering NGOs</div>
-                         <div className="text-4xl font-black text-gray-900 tracking-tighter">{ngos.length}</div>
+                         <div className="text-xs font-semibold text-zinc-500 tracking-wide text-gray-400 mb-2">Partnering NGOs</div>
+                         <div className="text-4xl font-bold text-zinc-900 tracking-tighter">{ngos.length}</div>
                        </div>
                     </div>
                     <div className="bg-white border border-gray-100 p-6 rounded-3xl shadow-sm flex flex-col justify-between">
                        <div>
-                         <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">New Citizens (Month)</div>
+                         <div className="text-xs font-semibold text-zinc-500 tracking-wide text-gray-400 mb-2">New Citizens (Month)</div>
                          <div className="text-4xl font-black text-emerald-600 tracking-tighter">+{thisMonthUsers}</div>
                        </div>
                     </div>
@@ -1532,7 +1532,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
            {/* Charts */}
            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
              <div className="col-span-1 lg:col-span-2 bg-white border border-gray-100 p-8 rounded-3xl shadow-sm">
-               <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-6 border-b border-gray-50 pb-4">Forest & Revenue Growth Trajectory</h3>
+               <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-widest mb-6 border-b border-gray-50 pb-4">Forest & Revenue Growth Trajectory</h3>
                <div className="h-72 w-full">
                   {(() => {
                     const timelineData = [];
@@ -1574,7 +1574,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
              
              <div className="col-span-1 bg-white border border-gray-100 p-8 rounded-3xl shadow-sm flex flex-col justify-between">
                <div>
-                  <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-6 border-b border-gray-50 pb-4">Operational Summary</h3>
+                  <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-widest mb-6 border-b border-gray-50 pb-4">Operational Summary</h3>
                   <div className="space-y-6">
                     {(() => {
                       const totalCakes = users.length;
@@ -1585,8 +1585,8 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                         <>
                           <div>
                             <div className="flex justify-between items-center mb-2">
-                              <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Cakes Ordered</span>
-                              <span className="text-xs font-black text-gray-900">{totalCakes}</span>
+                              <span className="text-xs font-semibold text-zinc-500 tracking-wide text-gray-500">Cakes Ordered</span>
+                              <span className="text-xs font-bold text-zinc-900">{totalCakes}</span>
                             </div>
                             <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                               <div className="h-full bg-blue-500 rounded-full" style={{width: `${Math.min(100, Math.max(5, (totalCakes / (totalCakes+10)) * 100))}%`}}></div>
@@ -1594,8 +1594,8 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                           </div>
                           <div>
                             <div className="flex justify-between items-center mb-2">
-                              <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Cakes Delivered</span>
-                              <span className="text-xs font-black text-gray-900">{deliveredCakes}</span>
+                              <span className="text-xs font-semibold text-zinc-500 tracking-wide text-gray-500">Cakes Delivered</span>
+                              <span className="text-xs font-bold text-zinc-900">{deliveredCakes}</span>
                             </div>
                             <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                               <div className="h-full bg-indigo-500 rounded-full" style={{width: `${Math.min(100, totalCakes === 0 ? 0 : (deliveredCakes / totalCakes) * 100)}%`}}></div>
@@ -1603,7 +1603,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                           </div>
                           <div>
                             <div className="flex justify-between items-center mb-2">
-                              <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Pending Blockers</span>
+                              <span className="text-xs font-semibold text-zinc-500 tracking-wide text-gray-500">Pending Blockers</span>
                               <span className="text-xs font-black text-amber-500 font-mono">{Math.max(0, pendingOrders)} Trees</span>
                             </div>
                             <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -1617,7 +1617,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                </div>
                <div className="mt-8 bg-emerald-50 p-4 rounded-2xl flex items-center justify-center gap-3">
                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                 <span className="text-[9px] font-black uppercase tracking-widest text-emerald-700">Live Backend Stream</span>
+                 <span className="text-xs font-semibold tracking-wide text-emerald-700">Live Backend Stream</span>
                </div>
              </div>
            </div>
@@ -1626,17 +1626,17 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
            <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm">
              <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
                <div>
-                 <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">Registry of Issued Certificates</h3>
+                 <h3 className="text-xl font-bold text-zinc-900 uppercase tracking-tight">Registry of Issued Certificates</h3>
                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Immutable Digital Environmental Credentials</p>
                </div>
-               <div className="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-widest border border-emerald-100">
+               <div className="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-xs font-semibold text-zinc-500 tracking-wide border border-emerald-100">
                   Total Issued: {certificates.length}
                </div>
              </div>
              <div className="overflow-x-auto">
                <table className="w-full text-left">
                  <thead>
-                   <tr className="bg-gray-50/50 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100">
+                   <tr className="bg-gray-50/50 text-xs font-semibold text-zinc-500 tracking-wide border-b border-gray-100">
                      <th className="px-8 py-4">Recipient Name</th>
                      <th className="px-8 py-4">Verification Code</th>
                      <th className="px-8 py-4">Verifying NGO</th>
@@ -1648,21 +1648,21 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                    {certificates.map(c => (
                      <tr key={c._id} className="hover:bg-gray-50/80 transition-colors group">
                        <td className="px-8 py-4">
-                         <div className="font-black text-black group-hover:text-emerald-600 transition-colors uppercase tracking-tight">{c.userName}</div>
+                         <div className="font-semibold text-zinc-900 group-hover:text-emerald-600 transition-colors uppercase tracking-tight">{c.userName}</div>
                          <div className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">ID: {c.userId}</div>
                        </td>
                        <td className="px-8 py-4 font-mono font-bold text-gray-600 tracking-tighter">{c.verificationCode}</td>
                        <td className="px-8 py-4">
                          <div className="flex items-center gap-2">
                            <div className="w-1.5 h-1.5 rounded-full bg-black"></div>
-                           <span className="font-black text-gray-900 text-[10px] uppercase">{c.ngoName}</span>
+                           <span className="font-bold text-zinc-900 text-[10px] uppercase">{c.ngoName}</span>
                          </div>
                        </td>
                        <td className="px-8 py-4 text-gray-500 font-bold">
                          {new Date(c.issueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                        </td>
                        <td className="px-8 py-4">
-                          <div className={`flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest ${c.emailSent ? 'text-emerald-500' : 'text-gray-400'}`}>
+                          <div className={`flex items-center justify-center gap-2 text-xs font-semibold text-zinc-500 tracking-wide ${c.emailSent ? 'text-emerald-500' : 'text-gray-400'}`}>
                             <div className={`w-1.5 h-1.5 rounded-full ${c.emailSent ? 'bg-emerald-500' : 'bg-gray-300'}`}></div>
                             {c.emailSent ? 'Link Delivred' : 'Pending'}
                           </div>
@@ -1671,7 +1671,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                    ))}
                    {certificates.length === 0 && (
                      <tr>
-                       <td colSpan={5} className="py-12 text-center text-[10px] font-black uppercase tracking-widest text-gray-400">
+                       <td colSpan={5} className="py-12 text-center text-xs font-semibold text-zinc-500 tracking-wide text-gray-400">
                          No certificates issued in current epoch
                        </td>
                      </tr>
@@ -1687,13 +1687,13 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
         <div className="animate-in fade-in duration-500 bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
           <div className="p-4 sm:p-8 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center bg-gray-50/50 gap-4">
             <div>
-              <h2 className="text-2xl sm:text-3xl font-black text-gray-900 uppercase tracking-tight">Role Management</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-zinc-900 uppercase tracking-tight">Role Management</h2>
               <p className="text-[10px] sm:text-xs text-gray-500 font-bold tracking-widest uppercase mt-2">Manage Citizens, NGOs & Cake Vendors</p>
             </div>
             <div className="flex bg-gray-200/50 p-1 rounded-2xl w-full sm:w-auto overflow-x-auto no-scrollbar snap-x">
-               <button onClick={() => setRoleManageTab('users')} className={`flex-1 sm:flex-none whitespace-nowrap snap-center px-4 sm:px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${roleManageTab === 'users' ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-black'}`}>Citizens</button>
-               <button onClick={() => setRoleManageTab('ngos')} className={`flex-1 sm:flex-none whitespace-nowrap snap-center px-4 sm:px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${roleManageTab === 'ngos' ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-black'}`}>NGOs</button>
-               <button onClick={() => setRoleManageTab('vendors')} className={`flex-1 sm:flex-none whitespace-nowrap snap-center px-4 sm:px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${roleManageTab === 'vendors' ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-black'}`}>Vendors</button>
+               <button onClick={() => setRoleManageTab('users')} className={`flex-1 sm:flex-none whitespace-nowrap snap-center px-4 sm:px-6 py-3 rounded-xl text-xs font-semibold text-zinc-500 tracking-wide transition-all ${roleManageTab === 'users' ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-black'}`}>Citizens</button>
+               <button onClick={() => setRoleManageTab('ngos')} className={`flex-1 sm:flex-none whitespace-nowrap snap-center px-4 sm:px-6 py-3 rounded-xl text-xs font-semibold text-zinc-500 tracking-wide transition-all ${roleManageTab === 'ngos' ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-black'}`}>NGOs</button>
+               <button onClick={() => setRoleManageTab('vendors')} className={`flex-1 sm:flex-none whitespace-nowrap snap-center px-4 sm:px-6 py-3 rounded-xl text-xs font-semibold text-zinc-500 tracking-wide transition-all ${roleManageTab === 'vendors' ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-black'}`}>Vendors</button>
             </div>
           </div>
           
@@ -1701,47 +1701,47 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
             <table className="w-full text-left border-collapse min-w-[500px]">
               <thead>
                 <tr className="border-b border-gray-100">
-                  <th className="pb-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">ID</th>
-                  <th className="pb-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Name</th>
-                  <th className="pb-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Email</th>
-                  <th className="pb-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Zone / Area</th>
-                  <th className="pb-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Actions</th>
+                  <th className="pb-4 text-xs font-semibold text-zinc-500 tracking-wide">ID</th>
+                  <th className="pb-4 text-xs font-semibold text-zinc-500 tracking-wide">Name</th>
+                  <th className="pb-4 text-xs font-semibold text-zinc-500 tracking-wide">Email</th>
+                  <th className="pb-4 text-xs font-semibold text-zinc-500 tracking-wide">Zone / Area</th>
+                  <th className="pb-4 text-right text-xs font-semibold text-zinc-500 tracking-wide">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {roleManageTab === 'users' && users.map(u => (
                   <tr key={u.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                     <td className="py-4 font-mono text-xs font-bold text-gray-500">{u.id}</td>
-                    <td className="py-4 text-sm font-black text-gray-900">{u.name}</td>
+                    <td className="py-4 text-sm font-bold text-zinc-900">{u.name}</td>
                     <td className="py-4 text-xs font-bold text-gray-500 w-1/4 truncate">{u.email}</td>
                     <td className="py-4 text-xs font-bold text-gray-500">{u.location}</td>
                     <td className="py-4 text-right space-x-2">
-                       <button onClick={() => setEditingRoleItem({type: 'user', data: u})} className="px-3 py-1.5 bg-gray-100 hover:bg-black hover:text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-colors text-black">Edit</button>
-                       <button onClick={() => handleDeleteRoleItem('user', u.id)} className="px-3 py-1.5 bg-rose-50 hover:bg-rose-500 hover:text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-colors text-rose-600">Del</button>
+                       <button onClick={() => setEditingRoleItem({type: 'user', data: u})} className="px-3 py-1.5 bg-gray-100 hover:bg-black hover:text-white text-xs font-semibold tracking-wide rounded-lg transition-colors text-black">Edit</button>
+                       <button onClick={() => handleDeleteRoleItem('user', u.id)} className="px-3 py-1.5 bg-rose-50 hover:bg-rose-500 hover:text-white text-xs font-semibold tracking-wide rounded-lg transition-colors text-rose-600">Del</button>
                     </td>
                   </tr>
                 ))}
                 {roleManageTab === 'ngos' && ngos.map(n => (
                   <tr key={n.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                     <td className="py-4 font-mono text-xs font-bold text-gray-500">{n.id}</td>
-                    <td className="py-4 text-sm font-black text-gray-900">{n.name}</td>
+                    <td className="py-4 text-sm font-bold text-zinc-900">{n.name}</td>
                     <td className="py-4 text-xs font-bold text-gray-500">{n.email}</td>
                     <td className="py-4 text-xs font-bold text-gray-500">{n.area}</td>
                     <td className="py-4 text-right space-x-2">
-                       <button onClick={() => setEditingRoleItem({type: 'ngo', data: n})} className="px-3 py-1.5 bg-gray-100 hover:bg-black hover:text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-colors text-black">Edit</button>
-                       <button onClick={() => handleDeleteRoleItem('ngo', n.id)} className="px-3 py-1.5 bg-rose-50 hover:bg-rose-500 hover:text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-colors text-rose-600">Del</button>
+                       <button onClick={() => setEditingRoleItem({type: 'ngo', data: n})} className="px-3 py-1.5 bg-gray-100 hover:bg-black hover:text-white text-xs font-semibold tracking-wide rounded-lg transition-colors text-black">Edit</button>
+                       <button onClick={() => handleDeleteRoleItem('ngo', n.id)} className="px-3 py-1.5 bg-rose-50 hover:bg-rose-500 hover:text-white text-xs font-semibold tracking-wide rounded-lg transition-colors text-rose-600">Del</button>
                     </td>
                   </tr>
                 ))}
                 {roleManageTab === 'vendors' && cakeVendors.map(v => (
                   <tr key={v.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                     <td className="py-4 font-mono text-xs font-bold text-gray-500">{v.id}</td>
-                    <td className="py-4 text-sm font-black text-gray-900">{v.name}</td>
+                    <td className="py-4 text-sm font-bold text-zinc-900">{v.name}</td>
                     <td className="py-4 text-xs font-bold text-gray-500">{v.email}</td>
                     <td className="py-4 text-xs font-bold text-gray-500">{v.area}</td>
                     <td className="py-4 text-right space-x-2">
-                       <button onClick={() => setEditingRoleItem({type: 'vendor', data: v})} className="px-3 py-1.5 bg-gray-100 hover:bg-black hover:text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-colors text-black">Edit</button>
-                       <button onClick={() => handleDeleteRoleItem('vendor', v.id)} className="px-3 py-1.5 bg-rose-50 hover:bg-rose-500 hover:text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-colors text-rose-600">Del</button>
+                       <button onClick={() => setEditingRoleItem({type: 'vendor', data: v})} className="px-3 py-1.5 bg-gray-100 hover:bg-black hover:text-white text-xs font-semibold tracking-wide rounded-lg transition-colors text-black">Edit</button>
+                       <button onClick={() => handleDeleteRoleItem('vendor', v.id)} className="px-3 py-1.5 bg-rose-50 hover:bg-rose-500 hover:text-white text-xs font-semibold tracking-wide rounded-lg transition-colors text-rose-600">Del</button>
                     </td>
                   </tr>
                 ))}
@@ -1749,7 +1749,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                   (roleManageTab === 'ngos' && ngos.length === 0) || 
                   (roleManageTab === 'vendors' && cakeVendors.length === 0)) && (
                   <tr>
-                    <td colSpan={5} className="py-12 text-center text-[10px] font-black uppercase tracking-widest text-gray-400">
+                    <td colSpan={5} className="py-12 text-center text-xs font-semibold text-zinc-500 tracking-wide text-gray-400">
                       No Records Found
                     </td>
                   </tr>
@@ -1765,7 +1765,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight">Edit {editingRoleItem.type}</h3>
+              <h3 className="text-lg font-bold text-zinc-900 uppercase tracking-tight">Edit {editingRoleItem.type}</h3>
               <button onClick={() => setEditingRoleItem(null)} className="p-2 hover:bg-white rounded-xl text-gray-400 hover:text-rose-500 transition-colors">
                 <Icon name="x" size={20} />
               </button>
@@ -1823,7 +1823,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
       {activeSection === "Settings" && (
         <div className="animate-in fade-in duration-500 bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
           <div className="p-8 border-b border-gray-100 bg-gray-50/50">
-            <h2 className="text-3xl font-black text-gray-900 uppercase tracking-tight">Core Framework Settings</h2>
+            <h2 className="text-3xl font-bold text-zinc-900 uppercase tracking-tight">Core Framework Settings</h2>
             <p className="text-xs text-gray-500 font-bold tracking-widest uppercase mt-2">Manage Global Parameters & Platform Health</p>
           </div>
           
@@ -1831,19 +1831,19 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
             <form onSubmit={handleSaveSettings} className="w-full max-w-2xl space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  <div className="space-y-2">
-                   <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Platform Name</label>
+                   <label className="text-xs font-semibold text-zinc-600 mb-1.5 block">Platform Name</label>
                    <input disabled={savingSettings} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:bg-white focus:border-black outline-none transition-all" value={localSettingsForm.platformName} onChange={e => setLocalSettingsForm({...localSettingsForm, platformName: e.target.value})} />
                  </div>
                  <div className="space-y-2">
-                   <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Tree Unit Price (₹)</label>
+                   <label className="text-xs font-semibold text-zinc-600 mb-1.5 block">Tree Unit Price (₹)</label>
                    <input type="number" disabled={savingSettings} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:bg-white focus:border-black outline-none transition-all font-mono" value={localSettingsForm.treeUnitPrice} onChange={e => setLocalSettingsForm({...localSettingsForm, treeUnitPrice: Number(e.target.value)})} />
                  </div>
                  <div className="space-y-2">
-                   <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Support Email</label>
+                   <label className="text-xs font-semibold text-zinc-600 mb-1.5 block">Support Email</label>
                    <input type="email" disabled={savingSettings} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:bg-white focus:border-black outline-none transition-all" value={localSettingsForm.supportEmail} onChange={e => setLocalSettingsForm({...localSettingsForm, supportEmail: e.target.value})} />
                  </div>
                  <div className="space-y-2">
-                   <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Support Phone</label>
+                   <label className="text-xs font-semibold text-zinc-600 mb-1.5 block">Support Phone</label>
                    <input disabled={savingSettings} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:bg-white focus:border-black outline-none transition-all font-mono" value={localSettingsForm.supportPhone} onChange={e => setLocalSettingsForm({...localSettingsForm, supportPhone: e.target.value})} />
                  </div>
               </div>
@@ -1875,12 +1875,12 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
           <div className="flex justify-between items-center bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
             <div className="pl-2">
-              <h2 className="text-xl font-black text-gray-900">Stories Management</h2>
+              <h2 className="text-xl font-bold text-zinc-900">Stories Management</h2>
               <p className="text-xs text-gray-400 font-medium italic">Manage stories displayed on the public landing page</p>
             </div>
             <button 
               onClick={() => setShowAddStoryModal(true)}
-              className="bg-black text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:bg-gray-900 transition-all shadow-sm"
+              className="bg-black text-white px-5 py-2.5 rounded-xl text-xs font-semibold tracking-wide flex items-center gap-2 hover:bg-gray-900 transition-all shadow-sm"
             >
               <Icon name="plus" size={14} /> Add New Story
             </button>
@@ -1928,7 +1928,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
               <div className="bg-white rounded-[40px] w-full max-w-xl overflow-hidden shadow-2xl relative">
                 <div className="p-8 pb-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                   <div>
-                    <h2 className="text-2xl font-black text-gray-900">Add Story</h2>
+                    <h2 className="text-2xl font-bold text-zinc-900">Add Story</h2>
                     <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Publish to Landing Page</p>
                   </div>
                   <button onClick={() => setShowAddStoryModal(false)} className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-black transition-all shadow-sm">
