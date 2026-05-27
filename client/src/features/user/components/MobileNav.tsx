@@ -35,7 +35,7 @@ export function MobileNav({ onSectionChange, activeSection }: { onSectionChange:
                 }`} 
               />
               <span 
-                className={`text-[10px] uppercase font-black tracking-tighter transition-colors ${
+                className={`text-[10px] uppercase font-bold tracking-tighter transition-colors ${
                   isActive ? "text-emerald-700" : "text-gray-400"
                 }`}
               >

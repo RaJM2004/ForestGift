@@ -180,14 +180,14 @@ export function ImpactReportPage() {
     }
   };
 
-  if (!analytics) return <div className="p-20 text-center font-black animate-pulse text-emerald-600 uppercase tracking-widest">Compiling Scientific Data...</div>;
+  if (!analytics) return <div className="p-20 text-center font-bold animate-pulse text-emerald-600 uppercase tracking-widest">Compiling Scientific Data...</div>;
 
   return (
     <div ref={reportRef} className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto w-full pb-24 bg-white">
       {/* Report Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-           <h1 className="text-3xl font-black text-gray-900 tracking-tight leading-none uppercase">IMPACT REPORT</h1>
+           <h1 className="text-3xl font-bold text-gray-900 tracking-tight leading-none uppercase">IMPACT REPORT</h1>
            <p className="text-sm text-gray-500 font-medium italic mt-2">Your verified environmental contribution analysis.</p>
         </div>
       </div>
@@ -207,21 +207,21 @@ export function ImpactReportPage() {
                <div>
                   <div className="flex items-center gap-2 mb-2">
                      <span className="text-3xl">🔥</span>
-                     <h3 className="text-2xl font-black text-gray-900 uppercase">Consistency Streak</h3>
+                     <h3 className="text-2xl font-bold text-gray-900 uppercase">Consistency Streak</h3>
                   </div>
                   <p className="text-sm font-bold text-amber-600 uppercase tracking-widest italic">You've planted trees for {analytics.monthlyData.filter(m => m.trees > 0).length} consecutive months!</p>
                </div>
                <div className="text-right">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] block">Status</span>
-                  <Badge className="bg-emerald-100 text-emerald-700 border-none font-black text-[10px] uppercase px-4 py-1 mt-1">GOLDEN RECORD</Badge>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] block">Status</span>
+                  <Badge className="bg-emerald-100 text-emerald-700 border-none font-bold text-[10px] uppercase px-4 py-1 mt-1">GOLDEN RECORD</Badge>
                </div>
             </div>
 
             <div className="flex justify-between items-center py-6 border-y border-gray-50 mb-8">
                {analytics.monthlyData.map((m, idx) => (
                   <div key={idx} className="flex flex-col items-center gap-3">
-                     <span className="text-[10px] font-black text-gray-400 uppercase">{m.month}</span>
-                     <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-xs transition-all duration-500 ${m.trees > 0 ? "bg-emerald-500 text-white shadow-lg shadow-emerald-100 scale-110" : "bg-gray-100 text-gray-300"}`}>
+                     <span className="text-[10px] font-bold text-gray-400 uppercase">{m.month}</span>
+                     <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-500 ${m.trees > 0 ? "bg-emerald-500 text-white shadow-lg shadow-emerald-100 scale-110" : "bg-gray-100 text-gray-300"}`}>
                         {m.trees > 0 ? "✓" : ""}
                      </div>
                   </div>
@@ -231,7 +231,7 @@ export function ImpactReportPage() {
             <div className="flex items-center justify-between">
                <div className="flex items-center gap-3 bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
                   <span className="text-xl">❄️</span>
-                  <p className="text-[10px] font-black text-blue-700 uppercase tracking-widest">1 streak freeze available</p>
+                  <p className="text-[10px] font-bold text-blue-700 uppercase tracking-widest">1 streak freeze available</p>
                </div>
                <div className="flex gap-4">
                   <StreakBadgeMini label="3 Mo" icon="⭐️" achieved />
@@ -249,8 +249,8 @@ export function ImpactReportPage() {
                <div className="w-16 h-16 bg-white/10 rounded-3xl flex items-center justify-center mx-auto mb-4 border border-white/20">
                   <Target className="w-8 h-8 text-emerald-400" />
                </div>
-               <h4 className="text-sm font-black uppercase tracking-[0.3em] text-emerald-400">Momentum</h4>
-               <p className="text-3xl font-black italic tracking-tighter">+{Math.min(100, analytics.monthlyData.filter(m => m.trees > 0).length * 15)}%</p>
+               <h4 className="text-sm font-bold uppercase tracking-[0.3em] text-emerald-400">Momentum</h4>
+               <p className="text-3xl font-bold italic tracking-tighter">+{Math.min(100, analytics.monthlyData.filter(m => m.trees > 0).length * 15)}%</p>
                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-6 opacity-70">Growth multiplier applied to your next plantation</p>
             </div>
          </Card>
@@ -261,10 +261,10 @@ export function ImpactReportPage() {
          <Card className="p-8 border-none shadow-sm min-h-[400px]">
             <div className="flex items-center justify-between mb-8">
                <div>
-                  <h3 className="text-lg font-black text-gray-900 uppercase">Growth Over Time</h3>
+                  <h3 className="text-lg font-bold text-gray-900 uppercase">Growth Over Time</h3>
                   <p className="text-xs text-gray-400 font-medium italic">Trees planted and carbon offset (Last 6 Months)</p>
                </div>
-               <Badge className="bg-emerald-50 text-emerald-600 border-none font-black text-[9px] uppercase px-4 py-1.5">Last 6 Months</Badge>
+               <Badge className="bg-emerald-50 text-emerald-600 border-none font-bold text-[9px] uppercase px-4 py-1.5">Last 6 Months</Badge>
             </div>
             <div className="h-[300px] w-full">
                <ResponsiveContainer width="99%" height={300}>
@@ -287,7 +287,7 @@ export function ImpactReportPage() {
       {/* Biodiversity & Monthly Bars - Row 2 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
          <Card className="p-8 border-none shadow-sm min-h-[380px]">
-            <h3 className="text-lg font-black text-gray-900 uppercase mb-8 text-center">Species Distribution</h3>
+            <h3 className="text-lg font-bold text-gray-900 uppercase mb-8 text-center">Species Distribution</h3>
             <div className="h-[250px] w-full relative">
                <ResponsiveContainer width="99%" height={250}>
                   <PieChart>
@@ -308,7 +308,7 @@ export function ImpactReportPage() {
                   </PieChart>
                </ResponsiveContainer>
                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <span className="text-2xl font-black text-gray-900">{stats?.totalTrees || 0}</span>
+                  <span className="text-2xl font-bold text-gray-900">{stats?.totalTrees || 0}</span>
                </div>
             </div>
             <div className="grid grid-cols-2 gap-x-8 gap-y-3 mt-4 text-center justify-center">
@@ -322,7 +322,7 @@ export function ImpactReportPage() {
          </Card>
 
          <Card className="p-8 border-none shadow-sm min-h-[380px]">
-            <h3 className="text-lg font-black text-gray-900 uppercase mb-8">Monthly Impact</h3>
+            <h3 className="text-lg font-bold text-gray-900 uppercase mb-8">Monthly Impact</h3>
             <div className="h-[250px] w-full">
                <ResponsiveContainer width="99%" height={250}>
                   <BarChart data={analytics.monthlyData}>
@@ -341,8 +341,8 @@ export function ImpactReportPage() {
       {/* Achievement Badges Section */}
       <div className="space-y-4">
          <div className="flex items-center justify-between">
-            <h3 className="text-xl font-black text-gray-900 uppercase">Impact Level: {Math.floor((stats?.totalTrees || 0) / 10) + 1}</h3>
-            <Badge className="bg-amber-100 text-amber-700 border-none font-black text-[10px] uppercase px-4 py-1.5 flex items-center shadow-sm">
+            <h3 className="text-xl font-bold text-gray-900 uppercase">Impact Level: {Math.floor((stats?.totalTrees || 0) / 10) + 1}</h3>
+            <Badge className="bg-amber-100 text-amber-700 border-none font-bold text-[10px] uppercase px-4 py-1.5 flex items-center shadow-sm">
                <Award className="w-3 h-3 mr-2" /> Elite Guardian
             </Badge>
          </div>
@@ -354,9 +354,9 @@ export function ImpactReportPage() {
                         <div className="p-3 bg-white rounded-2xl shadow-sm group-hover:scale-110 group-hover:rotate-6 transition-all">
                            <Award className={`w-5 h-5 ${Number(ach.current) >= Number(ach.target) ? "text-emerald-600" : "text-gray-300"}`} strokeWidth={3} />
                         </div>
-                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{ach.current} / {ach.target}</span>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{ach.current} / {ach.target}</span>
                      </div>
-                     <h4 className="font-black text-gray-900 uppercase text-[11px] mb-1 tracking-tight">{ach.title}</h4>
+                     <h4 className="font-bold text-gray-900 uppercase text-[11px] mb-1 tracking-tight">{ach.title}</h4>
                      <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden mt-3 shadow-inner">
                         <motion.div 
                            initial={{ width: 0 }}
@@ -379,7 +379,7 @@ export function ImpactReportPage() {
          
          <div className="relative z-10 max-w-2xl mx-auto space-y-8">
             <div className="space-y-3">
-               <h2 className="text-4xl font-black tracking-tighter uppercase leading-none">Share Your Impact</h2>
+               <h2 className="text-4xl font-bold tracking-tighter uppercase leading-none">Share Your Impact</h2>
                <p className="text-emerald-50 text-base font-medium italic opacity-90 px-4">Download your professional carbon brochure and showcase your environmental leadership to the world.</p>
             </div>
             
@@ -387,7 +387,7 @@ export function ImpactReportPage() {
                <Button 
                   onClick={handleShare}
                   disabled={isPreparing || isGenerating}
-                  className={`${sharedFile ? "bg-amber-500 hover:bg-amber-600" : "bg-white"} text-emerald-700 hover:bg-emerald-50 font-black text-[11px] uppercase tracking-widest px-10 py-7 rounded-2xl shadow-2xl flex items-center group w-full md:w-auto disabled:opacity-50`}
+                  className={`${sharedFile ? "bg-amber-500 hover:bg-amber-600" : "bg-white"} text-emerald-700 hover:bg-emerald-50 font-bold text-[11px] uppercase tracking-widest px-10 py-7 rounded-2xl shadow-2xl flex items-center group w-full md:w-auto disabled:opacity-50`}
                >
                   {isPreparing ? <div className="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mr-3" /> : <Share2 className={`w-5 h-5 mr-3 ${sharedFile ? "text-white" : "group-hover:rotate-12"} transition-transform`} />} 
                   {isPreparing ? "Generating PDF..." : sharedFile ? "Send Report Now" : "Prepare to Share"}
@@ -396,7 +396,7 @@ export function ImpactReportPage() {
                   variant="outline"
                   onClick={handleDownloadPDF}
                   disabled={isGenerating}
-                  className="bg-emerald-700/30 border-emerald-400/50 text-white hover:bg-emerald-700 font-black text-[11px] uppercase tracking-widest px-10 py-7 rounded-2xl flex items-center group w-full md:w-auto disabled:opacity-50"
+                  className="bg-emerald-700/30 border-emerald-400/50 text-white hover:bg-emerald-700 font-bold text-[11px] uppercase tracking-widest px-10 py-7 rounded-2xl flex items-center group w-full md:w-auto disabled:opacity-50"
                >
                   {isGenerating ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3" /> : <FileText className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" />}
                   {isGenerating ? "Processing..." : "Impact Brochure"}
@@ -413,6 +413,6 @@ const StreakBadgeMini = ({ label, icon, achieved }: any) => (
      <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${achieved ? "bg-amber-50 shadow-sm border border-amber-100" : "bg-gray-100"}`}>
         {icon}
      </div>
-     <p className="text-[8px] font-black uppercase tracking-widest text-gray-900">{label}</p>
+     <p className="text-[8px] font-bold uppercase tracking-widest text-gray-900">{label}</p>
   </div>
 );

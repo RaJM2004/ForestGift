@@ -36,11 +36,11 @@ export function MyOrdersPage() {
     <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto w-full pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-           <h1 className="text-3xl font-black text-gray-900 tracking-tight">MY ORDERS</h1>
+           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">MY ORDERS</h1>
            <p className="text-sm text-gray-500 font-medium italic">Tracking all your tree plantation investments</p>
         </div>
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-           <Button className="bg-emerald-600 hover:bg-emerald-700 font-black text-[10px] uppercase tracking-widest gap-2 shadow-lg shadow-emerald-200" onClick={() => window.open('https://forestgift.in/plant')}>
+           <Button className="bg-emerald-600 hover:bg-emerald-700 font-bold text-[10px] uppercase tracking-widest gap-2 shadow-lg shadow-emerald-200" onClick={() => window.open('https://forestgift.in/plant')}>
               <Plus className="w-4 h-4" /> Plant More Trees
            </Button>
         </motion.div>
@@ -58,7 +58,7 @@ export function MyOrdersPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input placeholder="Search orders by ID or location..." className="pl-10 h-11 bg-white border-2 border-gray-50 focus:border-emerald-500 rounded-xl" />
          </div>
-         <Button variant="outline" className="h-11 px-6 font-black text-[10px] uppercase tracking-widest gap-2 border-2 text-gray-500 border-gray-50">
+         <Button variant="outline" className="h-11 px-6 font-bold text-[10px] uppercase tracking-widest gap-2 border-2 text-gray-500 border-gray-50">
             <Filter className="w-4 h-4" /> Filters
          </Button>
       </div>
@@ -74,7 +74,7 @@ export function MyOrdersPage() {
 
          <TabsContent value="all" className="space-y-6">
             {isRefreshing && orders.length === 0 ? (
-               <div className="p-20 text-center font-black text-emerald-600 animate-pulse uppercase tracking-[0.3em]">Synching with Forest...</div>
+               <div className="p-20 text-center font-bold text-emerald-600 animate-pulse uppercase tracking-[0.3em]">Synching with Forest...</div>
             ) : orders.length > 0 ? (
                orders.map((order, i) => (
                  <OrderCard key={i} order={order} index={i} />
@@ -121,10 +121,10 @@ const OrderCard = ({ order, index }: any) => {
           <div className="md:col-span-2 space-y-4">
              <div className="flex items-center justify-between">
                 <div>
-                   <h3 className="text-lg font-black text-gray-900 tracking-tight">{order.orderId}</h3>
+                   <h3 className="text-lg font-bold text-gray-900 tracking-tight">{order.orderId}</h3>
                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">{order.date}</p>
                 </div>
-                <Badge className={`${statusColors[order.status] || "bg-gray-100"} font-black text-[9px] uppercase border-none px-3 py-1`}>{order.status}</Badge>
+                <Badge className={`${statusColors[order.status] || "bg-gray-100"} font-bold text-[9px] uppercase border-none px-3 py-1`}>{order.status}</Badge>
              </div>
              <div className="grid grid-cols-2 gap-4 pt-2">
                 <MiniInfo label="Quantity" value={`${order.trees} Trees`} />
@@ -141,7 +141,7 @@ const OrderCard = ({ order, index }: any) => {
 
           <div className="space-y-6 flex flex-col justify-center">
              <div className="space-y-3">
-                <div className="flex justify-between text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                <div className="flex justify-between text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                    <span>Growth Health</span>
                    <span className="text-emerald-600">{order.progress}%</span>
                 </div>
@@ -154,9 +154,9 @@ const OrderCard = ({ order, index }: any) => {
              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg shadow-emerald-100 mb-2">
                 <TreePine className="w-6 h-6 text-emerald-500 scale-90" />
              </div>
-             <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Audit Status</p>
+             <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Audit Status</p>
              <h4 className="text-xs font-bold text-gray-800 mt-1">{order.progress === 100 ? "100% Verified" : "Verification Pending"}</h4>
-             <Button variant="link" className="text-emerald-600 font-black text-[9px] uppercase tracking-widest mt-2 p-0 h-auto">View Proofs</Button>
+             <Button variant="link" className="text-emerald-600 font-bold text-[9px] uppercase tracking-widest mt-2 p-0 h-auto">View Proofs</Button>
           </div>
        </Card>
     </motion.div>
@@ -165,7 +165,7 @@ const OrderCard = ({ order, index }: any) => {
 
 const MiniInfo = ({ label, value }: any) => (
   <div>
-     <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-0.5">{label}</p>
+     <p className="text-[9px] font-bold text-gray-300 uppercase tracking-widest mb-0.5">{label}</p>
      <p className="text-xs font-bold text-gray-700 leading-tight">{value}</p>
   </div>
 );
@@ -178,7 +178,7 @@ const EmptyState = ({ message }: any) => (
     <div>
        <p className="text-lg font-bold text-gray-900">No Orders Found</p>
        <p className="text-sm text-gray-400 font-medium italic">{message || "Your tree plantation records will appear here."}</p>
-       <Button className="mt-4 bg-emerald-600 hover:bg-emerald-700 font-black text-[11px] uppercase tracking-[0.2em] px-8 shadow-lg shadow-emerald-100" onClick={() => window.open('https://forestgift.in/plant')}>Plant My First Tree</Button>
+       <Button className="mt-4 bg-emerald-600 hover:bg-emerald-700 font-bold text-[11px] uppercase tracking-[0.2em] px-8 shadow-lg shadow-emerald-100" onClick={() => window.open('https://forestgift.in/plant')}>Plant My First Tree</Button>
     </div>
   </div>
 );

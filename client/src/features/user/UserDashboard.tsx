@@ -46,7 +46,7 @@ export const UserDashboard = ({ handleLogout }: { handleLogout: () => void }) =>
   const [activeSection, setActiveSection] = useState<Section>('Dashboard');
   const { user, error, refreshData } = useUser();
 
-  if (!user) return <div className="h-screen w-full flex items-center justify-center font-black animate-pulse text-emerald-600 tracking-[0.3em] uppercase">SYNCING WITH FOREST...</div>;
+  if (!user) return <div className="h-screen w-full flex items-center justify-center font-bold animate-pulse text-emerald-600 tracking-[0.3em] uppercase">SYNCING WITH FOREST...</div>;
 
   const renderContent = () => {
     switch (activeSection) {
@@ -75,8 +75,8 @@ export const UserDashboard = ({ handleLogout }: { handleLogout: () => void }) =>
         
         {error && (
           <div className="bg-red-50 border-b border-red-100 p-3 flex items-center justify-center gap-3">
-             <span className="text-[10px] font-black text-red-600 uppercase tracking-widest">{error}</span>
-             <Button variant="outline" size="sm" onClick={refreshData} className="h-7 text-[9px] font-black uppercase text-red-600 border-red-200 hover:bg-red-100">Retry Sync</Button>
+             <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest">{error}</span>
+             <Button variant="outline" size="sm" onClick={refreshData} className="h-7 text-[9px] font-bold uppercase text-red-600 border-red-200 hover:bg-red-100">Retry Sync</Button>
           </div>
         )}
         
@@ -133,6 +133,6 @@ const Sidebar = ({ activeSection, setActiveSection, handleLogout }: any) => (
 const SidebarItem = ({ icon: Icon, label, active, onClick }: any) => (
   <button onClick={onClick} className={`w-full flex items-center p-3 rounded-xl transition-all ${active ? "bg-emerald-50 text-emerald-800 shadow-sm" : "text-gray-400 hover:bg-gray-50 hover:text-emerald-600"}`}>
     <Icon className={`w-5 h-5 mr-3 ${active ? "text-emerald-600 scale-110" : ""}`} />
-    <span className={`text-[10px] font-black uppercase tracking-widest ${active ? "translate-x-1" : ""} transition-transform`}>{label}</span>
+    <span className={`text-[10px] font-bold uppercase tracking-widest ${active ? "translate-x-1" : ""} transition-transform`}>{label}</span>
   </button>
 );
