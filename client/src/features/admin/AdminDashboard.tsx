@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { DashboardLayout } from '../../shared/layouts/DashboardLayout';
+import { AdminDashboardLayout } from './layouts/AdminDashboardLayout';
 import { Badge, Icon, StatCard } from '../../shared/components/UI';
 import { fetchUsers, fetchNGOs, fetchActivities, createUser, assignNGO, createNGO, fetchCakeVendors, createCakeVendor, updateCakeStatus, fetchAllSubmissions, createCertificate, fetchCertificates, fetchAllBulkTreeEntries, deleteUser, updateUser, deleteNGO, updateAdminNGO, deleteCakeVendor, updateCakeVendor, fetchAdminSettings, updateAdminSettings, resendWelcomeEmail, fetchStories, createStory, deleteStory } from '../../api';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
@@ -451,7 +451,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
   const unassignedUsers = users.filter(u => u.ngo === 'Not Assigned');
 
   return (
-    <DashboardLayout 
+    <AdminDashboardLayout 
       title="FORESTGIFT" 
       navItems={navItems} 
       activeSection={activeSection} 
@@ -466,9 +466,9 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
         
         return (
           <div className="space-y-6">
-            <div className="flex justify-between items-center bg-white/50 backdrop-blur-sm p-4 rounded-2xl border border-gray-100 shadow-sm">
+            <div className="flex justify-between items-center bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-zinc-200/60 shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <div className="w-2 h-2 rounded-full bg-black animate-pulse" />
                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Real-time Data Active</span>
               </div>
               <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
@@ -484,7 +484,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
             </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+              <div className="bg-white rounded-2xl p-6 border border-zinc-200/60 shadow-sm">
                 <h3 className="font-black text-gray-900 mb-6">NGO Delivery Performance</h3>
                 <div className="space-y-5">
                   {enrichedNgos.map(n => {
@@ -498,7 +498,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                           </div>
                           <div className="text-right">
                             <span className="text-sm font-black text-black">{n.completed}/{n.assigned}</span>
-                            <span className="text-[9px] text-emerald-500 ml-2 font-black">+{progress}%</span>
+                            <span className="text-[9px] text-black bg-zinc-100 px-1.5 py-0.5 rounded ml-2 font-black">+{progress}%</span>
                           </div>
                         </div>
                         <div className="h-2 w-full bg-gray-50 rounded-full border border-gray-100 overflow-hidden shadow-inner">
@@ -653,8 +653,8 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-2">
-                              <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${u.welcomeEmailSent ? 'text-emerald-500' : 'text-gray-400'}`}>
-                                <div className={`w-1.5 h-1.5 rounded-full ${u.welcomeEmailSent ? 'bg-emerald-500' : 'bg-gray-300'}`}></div>
+                              <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${u.welcomeEmailSent ? 'text-black' : 'text-gray-400'}`}>
+                                <div className={`w-1.5 h-1.5 rounded-full ${u.welcomeEmailSent ? 'bg-black' : 'bg-gray-300'}`}></div>
                                 {u.welcomeEmailSent ? 'Delivered' : 'Not Sent'}
                               </div>
                               {!u.welcomeEmailSent && (
@@ -718,7 +718,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                                       toast.error("Error: No plantation submission found for this user. The certificate cannot be verified without proof-of-plantation data.");
                                     }
                                   }}
-                                  className="p-2 hover:bg-emerald-50 text-emerald-600 rounded-lg transition-colors group/cert"
+                                  className="p-2 hover:bg-zinc-100 text-black rounded-lg transition-colors group/cert"
                                   title="View Certificate"
                                 >
                                   <Icon name="reports" size={16} />
@@ -917,10 +917,10 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <StatCard label="Total Cake Commitments" value={enrichedUsers.length} icon="cake" colorClass="bg-gray-100 text-black" />
               <StatCard label="Successfully Delivered" value={deliveredCakes} icon="check" colorClass="bg-gray-100 text-black" />
-              <StatCard label="Pending Orders" value={enrichedUsers.length - deliveredCakes} icon="calendar" colorClass="bg-gray-100 text-black text-rose-600" />
+              <StatCard label="Pending Orders" value={enrichedUsers.length - deliveredCakes} icon="calendar" colorClass="bg-gray-100 text-black" />
             </div>
 
-            <div className="flex justify-between items-center bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+            <div className="flex justify-between items-center bg-white p-6 rounded-3xl border border-zinc-200/60 shadow-sm">
               <div>
                 <h3 className="text-xl font-black text-black uppercase tracking-tight">Cake Delivery Registry</h3>
                 <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1 italic">Tracking celebratory deliveries by region</p>
@@ -930,7 +930,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
               </button>
             </div>
 
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-3xl border border-zinc-200/60 shadow-sm overflow-hidden">
                <div className="overflow-x-auto">
                  <table className="w-full text-left">
                    <thead>
@@ -954,10 +954,10 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                            <td className="px-6 py-4 text-[11px] font-black text-gray-500 uppercase tracking-widest italic">{u.location || 'Satellite Area'}</td>
                            <td className="px-6 py-4">
                              <div className="font-black text-black uppercase text-xs">{v.name}</div>
-                             <div className="text-[10px] text-emerald-600 font-black uppercase tracking-widest">₹{v.costPerCake} Unit Cost</div>
+                             <div className="text-[10px] text-zinc-500 font-black uppercase tracking-widest">₹{v.costPerCake} Unit Cost</div>
                            </td>
                            <td className="px-6 py-4">
-                              <span className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border ${u.cakeStatus === 'Delivered' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>
+                              <span className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border ${u.cakeStatus === 'Delivered' ? 'bg-zinc-100 text-black border-zinc-200' : 'bg-zinc-50 text-zinc-400 border-zinc-200'}`}>
                                 {u.cakeStatus || 'Pending'}
                               </span>
                            </td>
@@ -965,7 +965,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                              {u.cakeStatus !== 'Delivered' && (
                                <button 
                                  onClick={() => handleMarkDelivered(u.id)}
-                                 className="text-black hover:text-emerald-600 font-black text-[10px] uppercase tracking-widest flex items-center gap-1 ml-auto group/btn transition-all"
+                                 className="text-black hover:opacity-75 font-black text-[10px] uppercase tracking-widest flex items-center gap-1 ml-auto group/btn transition-all"
                                >
                                  Mark Delivered <Icon name="check" size={12} className="group-hover/btn:scale-125 transition-transform" />
                                </button>
@@ -1091,7 +1091,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                               </div>
                             </div>
                             {s.fileNames && s.fileNames.length > 0 && (
-                              <div className="mt-3 text-[9px] bg-emerald-50 text-emerald-600 py-1.5 px-2 rounded-xl border border-emerald-100 flex items-center justify-center gap-1.5 font-black uppercase tracking-tight">
+                              <div className="mt-3 text-[9px] bg-zinc-100 text-black py-1.5 px-2 rounded-xl border border-zinc-200 flex items-center justify-center gap-1.5 font-black uppercase tracking-tight">
                                 <Icon name="check" size={10} /> Photo Evidence Verified
                               </div>
                             )}
@@ -1157,7 +1157,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                               </div>
                             </div>
                             {te.fileNames && te.fileNames.length > 0 && (
-                              <div className="mt-3 text-[9px] bg-emerald-50 text-emerald-600 py-1.5 px-2 rounded-xl border border-emerald-100 flex items-center justify-center gap-1.5 font-black uppercase tracking-tight">
+                              <div className="mt-3 text-[9px] bg-zinc-100 text-black py-1.5 px-2 rounded-xl border border-zinc-200 flex items-center justify-center gap-1.5 font-black uppercase tracking-tight">
                                 <Icon name="check" size={10} /> Photo Evidence Verified
                               </div>
                             )}
@@ -1200,11 +1200,11 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
             <div className="overflow-y-auto no-scrollbar">
               {bulkImportStatus ? (
                 <div className="p-16 text-center animate-in fade-in zoom-in duration-500">
-                  <div className="w-24 h-24 bg-emerald-50 text-emerald-500 rounded-[32px] flex items-center justify-center mx-auto mb-6 border border-emerald-100 shadow-inner">
+                  <div className="w-24 h-24 bg-zinc-100 text-black rounded-[32px] flex items-center justify-center mx-auto mb-6 border border-zinc-200 shadow-inner">
                     <Icon name="check" size={48} />
                   </div>
                   <h2 className="text-2xl font-black text-gray-900 mb-2 uppercase tracking-tight">Import Successful</h2>
-                  <p className="text-sm font-bold text-gray-500 mb-8 uppercase tracking-widest leading-relaxed">Successfully imported<br/><span className="text-emerald-600 font-black">{bulkImportStatus.success}</span> out of <span className="text-black font-black">{bulkImportStatus.total}</span> citizens into the network.</p>
+                  <p className="text-sm font-bold text-gray-500 mb-8 uppercase tracking-widest leading-relaxed">Successfully imported<br/><span className="text-black bg-zinc-100 px-1.5 py-0.5 rounded font-black">{bulkImportStatus.success}</span> out of <span className="text-black font-black">{bulkImportStatus.total}</span> citizens into the network.</p>
                   <button onClick={() => { setShowAddModal(false); setBulkDataPreview(null); setBulkImportStatus(null); }} className="bg-black text-white px-10 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] hover:bg-gray-900 transition-colors shadow-xl">
                     Close Registration
                   </button>
@@ -1231,7 +1231,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                             <td className="px-5 py-3 text-black font-black">{row.name}</td>
                             <td className="px-5 py-3 text-xs">{row.email}</td>
                             <td className="px-5 py-3 text-[11px] font-black uppercase tracking-widest text-gray-500">{row.location}</td>
-                            <td className="px-5 py-3 text-emerald-600 font-black text-right">{row.trees}</td>
+                            <td className="px-5 py-3 text-black font-black text-right">{row.trees}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -1241,7 +1241,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                     <button onClick={() => setBulkDataPreview(null)} disabled={loading} className="flex-1 bg-gray-100 text-gray-600 py-4 rounded-[20px] text-[10px] font-black uppercase tracking-[0.2em] hover:bg-gray-200 transition-colors">
                       Cancel Import
                     </button>
-                    <button onClick={confirmBulkImport} disabled={loading} className="flex-[2] bg-emerald-600 text-white py-4 rounded-[20px] text-[10px] font-black uppercase tracking-[0.2em] hover:bg-emerald-700 transition-colors shadow-xl disabled:opacity-50">
+                    <button onClick={confirmBulkImport} disabled={loading} className="flex-[2] bg-black text-white py-4 rounded-[20px] text-[10px] font-black uppercase tracking-[0.2em] hover:bg-zinc-800 transition-colors shadow-xl disabled:opacity-50">
                       {loading ? 'Processing Batch...' : `Confirm & Import ${bulkDataPreview.length} Citizens`}
                     </button>
                   </div>
@@ -1249,14 +1249,14 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
               ) : (
                 <>
                   <div className="p-8 pb-0 flex flex-col gap-4 border-b border-gray-50">
-                    <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between gap-4">
+                    <div className="bg-zinc-50 border border-zinc-200/60 rounded-2xl p-4 flex items-center justify-between gap-4">
                       <div>
-                        <h4 className="text-sm font-black text-emerald-900 uppercase tracking-widest">Bulk Import Citizens</h4>
-                        <p className="text-[10px] text-emerald-600 font-bold leading-tight mt-1">Upload an Excel (.xlsx) or CSV file with headers: Name, Email, Phone, Address, DOB, Amount, Location.</p>
+                        <h4 className="text-sm font-black text-black uppercase tracking-widest">Bulk Import Citizens</h4>
+                        <p className="text-[10px] text-zinc-500 font-bold leading-tight mt-1">Upload an Excel (.xlsx) or CSV file with headers: Name, Email, Phone, Address, DOB, Amount, Location.</p>
                       </div>
                       <div>
                         <input type="file" id="bulk-upload" accept=".xlsx, .xls, .csv" className="hidden" onChange={handleBulkUpload} disabled={loading} />
-                        <label htmlFor="bulk-upload" className="cursor-pointer bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-colors shadow-sm inline-block whitespace-nowrap">
+                        <label htmlFor="bulk-upload" className="cursor-pointer bg-black text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-zinc-800 transition-colors shadow-sm inline-block whitespace-nowrap">
                            {loading ? 'Reading...' : 'Upload File'}
                         </label>
                       </div>
@@ -1302,7 +1302,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Tree Count</label>
-                        <input readOnly className="w-full bg-gray-100 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black text-emerald-600 cursor-not-allowed" value={formData.trees} />
+                        <input readOnly className="w-full bg-zinc-100 border border-zinc-200 rounded-2xl px-5 py-4 text-sm font-black text-black cursor-not-allowed" value={formData.trees} />
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Plantation Zone</label>
@@ -1969,6 +1969,6 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
         </div>
       )}
 
-    </DashboardLayout>
+    </AdminDashboardLayout>
   );
 };
