@@ -36,6 +36,8 @@ export const BulkEntryPage = ({ ngoData, orders }: BulkEntryPageProps) => {
   const [locationQuery, setLocationQuery] = useState('');
   const [selectedLocationLabel, setSelectedLocationLabel] = useState('');
   const [searchResults, setSearchResults] = useState<Array<{ display_name: string; lat: string; lon: string }>>([]);
+  const [excelEntries, setExcelEntries] = useState<any[]>([]);
+  const [excelUploadError, setExcelUploadError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const normalizeEntry = (raw: any) => ({
@@ -238,6 +240,40 @@ export const BulkEntryPage = ({ ngoData, orders }: BulkEntryPageProps) => {
     }
   };
 
+  const handleSubmitExcelEntries = async () => {
+    if (!excelEntries.length || isSubmitting) return;
+    try {
+      setIsSubmitting(true);
+      const createdEntries: any[] = [];
+
+      for (const entry of excelEntries) {
+        const payload = {
+          ngoId: ngoData?.id || ngoData?.name || '',
+          userId: undefined,
+          lat: entry.lat,
+          lng: entry.lng,
+          location: entry.location || ngoData?.area || '',
+          species: entry.species || species,
+          count: entry.count || 1,
+          note: entry.note || '',
+          fileNames: [],
+          images: Array.isArray(entry.images) ? entry.images : [],
+        };
+
+        const created = await createBulkTreeEntry(payload);
+        createdEntries.push(normalizeEntry(created));
+      }
+
+      setBulkEntries((prev) => [...createdEntries, ...prev]);
+      setExcelEntries([]);
+      setGoogleGeocodeError(null);
+    } catch (err) {
+      console.error('Failed to submit Excel entries', err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -293,6 +329,7 @@ export const BulkEntryPage = ({ ngoData, orders }: BulkEntryPageProps) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
                     try {
+                      setExcelUploadError(null);
                       const data = await file.arrayBuffer();
                       const workbook = XLSX.read(data, { type: 'array' });
                       const sheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -305,23 +342,58 @@ export const BulkEntryPage = ({ ngoData, orders }: BulkEntryPageProps) => {
                           location: r.location ?? r.Location ?? r.address ?? '',
                           count: Number(r.count ?? r.Count ?? 1),
                           note: r.note ?? r.Note ?? '',
-                          orderId: r.orderId ?? r.order_id ?? r.OrderID ?? '',
                           species: r.species ?? r.Species ?? species,
                           images: typeof r.images === 'string' ? r.images.split(';').map((s: string) => s.trim()).filter(Boolean) : Array.isArray(r.images) ? r.images : [],
                         }))
                         .filter((p) => !Number.isNaN(p.lat) && !Number.isNaN(p.lng));
 
+                      if (!parsed.length) {
+                        setExcelUploadError('No valid rows found in the uploaded Excel file.');
+                        setExcelEntries([]);
+                        return;
+                      }
+
                       const normalized = parsed.map((p) => normalizeEntry({ ...p, createdAt: new Date().toISOString() }));
-                      setBulkEntries((prev) => [...normalized, ...prev]);
+                      setExcelEntries(normalized);
                     } catch (err) {
                       console.error('Failed to parse excel file', err);
+                      setExcelUploadError('Failed to parse Excel file.');
+                      setExcelEntries([]);
                     }
                   }}
                   className="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2"
                 />
               </div>
+              {excelUploadError && (
+                <div className="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
+                  {excelUploadError}
+                </div>
+              )}
+              {excelEntries.length > 0 && (
+                <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-800">
+                  <div className="font-semibold">Excel upload ready to submit</div>
+                  <div className="mt-2 text-xs text-slate-600">{excelEntries.length} row(s) parsed successfully.</div>
+                  <div className="mt-3 flex flex-col gap-2">
+                    {excelEntries.slice(0, 3).map((entry, idx) => (
+                      <div key={idx} className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs">
+                        {entry.count} trees at {entry.location || `${entry.lat}, ${entry.lng}`}
+                      </div>
+                    ))}
+                    {excelEntries.length > 3 && (
+                      <div className="text-xs text-gray-500">+{excelEntries.length - 3} more rows</div>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSubmitExcelEntries}
+                    disabled={isSubmitting}
+                    className="mt-4 w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
+                  >
+                    {isSubmitting ? 'Submitting Excel rows...' : 'Submit Excel Rows'}
+                  </button>
+                </div>
+              )}
             </div>
-
 
             <div>
               <label className="text-xs font-bold uppercase tracking-wide text-gray-500">Location Search</label>
