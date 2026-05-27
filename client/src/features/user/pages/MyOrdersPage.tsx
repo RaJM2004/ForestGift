@@ -46,7 +46,7 @@ export function MyOrdersPage() {
         </motion.div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <ImpactCard title="Total Orders" value={orders.length} icon={ShoppingCart} color="green" loading={isRefreshing && orders.length === 0} />
         <ImpactCard title="Total Trees" value={totalTrees} icon={TreePine} color="blue" loading={isRefreshing && totalTrees === 0} />
         <ImpactCard title="In Progress" value={activeOrdersList.length} icon={Package} color="orange" loading={isRefreshing && orders.length === 0} />
@@ -64,11 +64,13 @@ export function MyOrdersPage() {
       </div>
 
       <Tabs defaultValue="all" className="space-y-6">
-         <TabsList className="bg-gray-100/50 p-1 rounded-xl">
-            <TabsTrigger value="all" className="rounded-lg font-bold text-xs uppercase tracking-widest px-8">All Orders</TabsTrigger>
-            <TabsTrigger value="active" className="rounded-lg font-bold text-xs uppercase tracking-widest px-8">Active</TabsTrigger>
-            <TabsTrigger value="completed" className="rounded-lg font-bold text-xs uppercase tracking-widest px-8">Completed</TabsTrigger>
-         </TabsList>
+         <div className="w-full overflow-x-auto scrollbar-none pb-1">
+            <TabsList className="bg-gray-100/50 p-1 rounded-xl w-full justify-start sm:justify-center">
+               <TabsTrigger value="all" className="rounded-lg font-bold text-xs uppercase tracking-widest px-3 sm:px-6 md:px-8">All Orders</TabsTrigger>
+               <TabsTrigger value="active" className="rounded-lg font-bold text-xs uppercase tracking-widest px-3 sm:px-6 md:px-8">Active</TabsTrigger>
+               <TabsTrigger value="completed" className="rounded-lg font-bold text-xs uppercase tracking-widest px-3 sm:px-6 md:px-8">Completed</TabsTrigger>
+            </TabsList>
+         </div>
 
          <TabsContent value="all" className="space-y-6">
             {isRefreshing && orders.length === 0 ? (

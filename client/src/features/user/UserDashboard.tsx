@@ -56,7 +56,7 @@ export const UserDashboard = ({ handleLogout }: { handleLogout: () => void }) =>
       case 'Certificates': return <CertificatesPage />;
       case 'Referrals': return <ReferralsPage />;
       case 'Orders': return <MyOrdersPage />;
-      case 'Settings': return <SettingsPage />;
+      case 'Settings': return <SettingsPage handleLogout={handleLogout} />;
       default: return <DashboardPage />;
     }
   };
@@ -80,7 +80,7 @@ export const UserDashboard = ({ handleLogout }: { handleLogout: () => void }) =>
           </div>
         )}
         
-        <main className="flex-1 overflow-y-auto bg-white md:bg-gray-50/30">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-white md:bg-gray-50/30">
             <AnimatePresence mode="wait">
               <motion.div 
                 initial={{ opacity: 0, y: 15 }} 
@@ -108,7 +108,7 @@ const Sidebar = ({ activeSection, setActiveSection, handleLogout }: any) => (
           <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200">
              <TreePine className="text-white w-6 h-6" />
           </div>
-          <span className="text-xl font-black text-gray-900 tracking-tighter uppercase italic">ForestGift</span>
+          <img src="https://assets.zyrosite.com/cdn-cgi/image/format=auto,w=768,fit=crop/AE0r4EWz6LuN9z6g/title-IA5qPxoWCRTW532I.jpg" alt="ForestGift" className="h-8 w-auto object-contain" />
        </div>
        
        <nav className="space-y-1">

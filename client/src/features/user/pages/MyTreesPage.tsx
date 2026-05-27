@@ -99,7 +99,7 @@ export function MyTreesPage() {
       </div>
 
       {/* Stats Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <ImpactCard title="Active" icon={TreePine} value={userTrees.length} color="green" loading={isRefreshing && userTrees.length === 0} />
         <ImpactCard title="Thriving" icon={TrendingUp} value={userTrees.filter(t => (t.health || 0) >= 90).length} color="blue" loading={isRefreshing && userTrees.length === 0} />
         <ImpactCard title="Favorites" icon={Heart} value={userTrees.filter(t => t.favorite).length} color="red" loading={isRefreshing && userTrees.length === 0} />
@@ -134,11 +134,13 @@ export function MyTreesPage() {
 
       {/* Tabbed Navigation */}
       <Tabs defaultValue="all" className="space-y-6">
-        <TabsList className="bg-gray-100/50 p-1 rounded-xl">
-          <TabsTrigger value="all" className="rounded-lg font-bold text-xs uppercase tracking-widest px-6">All Forest ({filteredTrees.length})</TabsTrigger>
-          <TabsTrigger value="favorites" className="rounded-lg font-bold text-xs uppercase tracking-widest px-6">Favorites ({favorites.length})</TabsTrigger>
-          <TabsTrigger value="recent" className="rounded-lg font-bold text-xs uppercase tracking-widest px-6">Recent</TabsTrigger>
-        </TabsList>
+        <div className="w-full overflow-x-auto scrollbar-none pb-1">
+          <TabsList className="bg-gray-100/50 p-1 rounded-xl w-full justify-start sm:justify-center">
+            <TabsTrigger value="all" className="rounded-lg font-bold text-xs uppercase tracking-widest px-3 sm:px-6">All Forest ({filteredTrees.length})</TabsTrigger>
+            <TabsTrigger value="favorites" className="rounded-lg font-bold text-xs uppercase tracking-widest px-3 sm:px-6">Favorites ({favorites.length})</TabsTrigger>
+            <TabsTrigger value="recent" className="rounded-lg font-bold text-xs uppercase tracking-widest px-3 sm:px-6">Recent</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="all" className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
            {filteredTrees.map((tree, i) => <TreeCard key={tree._id} tree={tree} index={i} viewMode={viewMode} onToggle={() => toggleFavorite(tree._id, tree.proofs ? 'submission' : 'bulk')} onViewPhotos={openLightbox} />)}

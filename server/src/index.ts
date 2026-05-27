@@ -12,8 +12,9 @@ import BulkTreeEntry from './models/BulkTreeEntry';
 import Order from './models/Order';
 
 
-// Load .env next to this file (server/src/.env), not only server/.env
+// Load .env next to this file (server/src/.env), or fallback to server/.env
 dotenv.config({ path: path.join(__dirname, '.env') });
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 const app = express();
 const PORT = process.env.PORT || 5000;

@@ -28,7 +28,7 @@ import { useUser } from "../context/UserContext";
 
 type SettingsTab = 'profile' | 'notifications';
 
-export function SettingsPage() {
+export function SettingsPage({ handleLogout }: { handleLogout?: () => void }) {
   const { user } = useUser();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   
@@ -61,7 +61,7 @@ export function SettingsPage() {
             <SettingsBtn active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={User} label="Profile Information" />
             <SettingsBtn active={activeTab === 'notifications'} onClick={() => setActiveTab('notifications')} icon={Bell} label="Notifications" />
             <div className="pt-4 mt-6 border-t border-gray-100">
-               <SettingsBtn icon={LogOut} label="Sign Out" variant="destructive" />
+               <SettingsBtn icon={LogOut} label="Sign Out" variant="destructive" onClick={handleLogout} />
             </div>
          </div>
 
@@ -101,7 +101,6 @@ const ProfileSection = ({ profile, setProfile }: any) => (
          <InputField label="Name" icon={User} defaultValue={profile.fullName} />
          <InputField label="Email" icon={Mail} defaultValue={profile.email} />
          <InputField label="Contact" icon={Phone} defaultValue={profile.phone} />
-         <InputField label="City/Region" icon={MapPin} defaultValue={profile.location} />
       </div>
 
       <Button className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm tracking-widest gap-2">

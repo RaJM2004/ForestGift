@@ -24,7 +24,7 @@ export const ImpactCard: React.FC<ImpactCardProps> = ({ title, value, sub, icon:
 
   if (loading) {
     return (
-      <Card className="p-6 border shadow-sm animate-pulse flex flex-col items-center space-y-3 bg-gray-50/50">
+      <Card className="p-3 sm:p-4 md:p-6 border shadow-sm animate-pulse flex flex-col items-center space-y-3 bg-gray-50/50">
         <div className="w-12 h-12 bg-gray-200 rounded-2xl" />
         <div className="space-y-2 w-full flex flex-col items-center">
           <div className="h-2 w-16 bg-gray-200 rounded" />
@@ -36,7 +36,7 @@ export const ImpactCard: React.FC<ImpactCardProps> = ({ title, value, sub, icon:
   }
 
   return (
-    <Card className={`p-4 md:p-6 border shadow-sm flex flex-col items-center text-center space-y-2 md:space-y-3 group hover:scale-[1.02] transition-all duration-300 ${colorMap[color]}`}>
+    <Card className={`p-3 sm:p-4 md:p-6 border shadow-sm flex flex-col items-center text-center space-y-2 md:space-y-3 group hover:scale-[1.02] transition-all duration-300 ${colorMap[color]}`}>
       <div className={`p-2.5 md:p-3 rounded-xl md:rounded-2xl group-hover:rotate-12 transition-transform shadow-inner`}>
         <Icon className="w-5 h-5 md:w-6 md:h-6" />
       </div>
