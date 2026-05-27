@@ -135,8 +135,8 @@ function App() {
         {/* Dashboard subroute - Strictly rendered full-screen if authenticated */}
         <Route path="/dashboard" element={
           isAuthenticated ? (
-            <div className="relative h-screen bg-gray-50">
-              <div className="h-full overflow-hidden">
+            <div className="relative h-screen w-full bg-gray-50 overflow-x-hidden">
+              <div className="h-full w-full overflow-hidden">
                 {role === 'admin' && <AdminDashboard handleLogout={handleLogout} />}
                 {role === 'ngo' && <NGODashboard user={user} handleLogout={handleLogout} />}
                 {role === 'cake' && <CakeDashboard user={user} handleLogout={handleLogout} />}

@@ -88,7 +88,7 @@ export const DashboardLayout = ({ children, navItems, activeSection, setActiveSe
   }, [isNotificationOpen, notifications.length]);
 
   return (
-    <div className="flex h-screen bg-gray-50 font-sans text-gray-900 overflow-hidden relative">
+    <div className="flex h-screen w-full bg-gray-50 font-sans text-gray-900 overflow-hidden relative">
       {/* Mobile Sidebar Overlay Backdrop */}
       {sidebarOpen && (
         <div 
