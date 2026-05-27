@@ -76,10 +76,15 @@
   scrollbar-width: none !important;  /* Firefox */
 }
 
-html, body {
-  width: 100%;
+/* Prevent horizontal overflow and side-to-side wiggling globally across all dashboards on mobile */
+html, body, #root, main, .h-screen, .h-[100dvh], .h-full, .flex-1, .min-h-screen {
   max-width: 100%;
   overflow-x: hidden !important;
+}
+
+/* Allow horizontal scrolling strictly on containers explicitly designated for it, such as data tables */
+.overflow-x-auto, .overflow-x-scroll, [class*="overflow-x-auto"] {
+  overflow-x: auto !important;
 }
 
 body {
@@ -88,12 +93,6 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
-}
-
-#root {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden !important;
 }
 
 @keyframes sway {

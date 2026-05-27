@@ -86,7 +86,7 @@ export function AdminDashboardLayout({
   const initials = "AD";
 
   return (
-    <div className="h-full min-h-0 flex flex-col bg-gradient-to-br from-white via-zinc-100/40 to-white relative overflow-hidden text-zinc-950 font-sans">
+    <div className="h-screen h-[100dvh] w-full overflow-hidden flex flex-col bg-gradient-to-br from-white via-zinc-100/40 to-white relative text-zinc-950 font-sans">
       
       {/* Sleek ambient monochrome blurs matching the NGO dashboard style */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
@@ -146,7 +146,8 @@ export function AdminDashboardLayout({
                     <button
                       type="button"
                       onClick={onLogout}
-                      className="hidden sm:inline-flex h-10 items-center gap-2 rounded-lg border border-zinc-200 px-3 text-zinc-700 hover:bg-zinc-50 transition-colors shadow-xs"
+                      className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-zinc-200 px-3 text-zinc-700 hover:bg-zinc-50 transition-colors shadow-xs"
+                      title="Sign out"
                     >
                       <LogOut className="h-4 w-4" />
                       <span className="hidden sm:inline text-sm font-semibold">Sign out</span>

@@ -110,6 +110,11 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
   const [localSettingsForm, setLocalSettingsForm] = useState<any>({ platformName: '', supportEmail: '', supportPhone: '', treeUnitPrice: 0, maintenanceMode: false });
   const [savingSettings, setSavingSettings] = useState(false);
 
+  // Reports & Analytics period filter states
+  const [filterType, setFilterType] = useState<"All Time" | "Yearly" | "Monthly">("All Time");
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
+
   // NGO Color Palette for map segregation
   const ngoColorMap = useMemo(() => {
     const colors = ['#059669', '#2563eb', '#7c3aed', '#db2777', '#ea580c', '#0891b2', '#4f46e5'];
@@ -433,6 +438,99 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
       toast.error(err.message || 'Error updating settings');
     } finally {
       setSavingSettings(false);
+    }
+  };
+
+  const downloadNetworkExcel = () => {
+    try {
+      const wb = XLSX.utils.book_new();
+
+      // 1. Dynamic Overview Data sheet
+      const activeNgosCount = ngos.length;
+      const activeVendorsCount = cakeVendors.length;
+      const activeUsersCount = users.length;
+      const totalFunding = users.reduce((sum, u) => sum + (u.amount || 0), 0);
+      const totalCakesDelivered = users.filter(u => u.cakeStatus === 'Delivered').length;
+      const totalCakePayouts = totalCakesDelivered * 220;
+
+      const overviewData = [
+        { "Metric Parameter": "Total Citizens (Users) Registered", "Value": activeUsersCount },
+        { "Metric Parameter": "Active Partner NGOs", "Value": activeNgosCount },
+        { "Metric Parameter": "Registered Cake Vendors", "Value": activeVendorsCount },
+        { "Metric Parameter": "Total Citizen Funding Received (₹)", "Value": totalFunding },
+        { "Metric Parameter": "Successfully Delivered Cakes", "Value": totalCakesDelivered },
+        { "Metric Parameter": "Total Cake Vendor Payouts Paid (₹220/cake)", "Value": totalCakePayouts },
+        { "Metric Parameter": "Report Export Date", "Value": new Date().toLocaleString() }
+      ];
+      const wsOverview = XLSX.utils.json_to_sheet(overviewData);
+      XLSX.utils.book_append_sheet(wb, wsOverview, "Ecosystem Summary");
+
+      // 2. Citizens Sheet
+      const citizensData = enrichedUsers.map(u => ({
+        "Citizen ID": u.id,
+        "Name": u.name,
+        "Email": u.email,
+        "Phone": u.phone || "N/A",
+        "Permanent Address": u.address || "N/A",
+        "DOB": u.dob || "N/A",
+        "Funding Amount (₹)": u.amount || 0,
+        "Trees Committed": u.trees || 0,
+        "NGO Assigned": u.ngo || "Not Assigned",
+        "Location/Zone": u.location || "N/A",
+        "Cake Delivery Status": u.cakeStatus || "Pending",
+        "Cake Vendor Name": getDisplayedCakeVendor(u, cakeVendors)?.name || "Regional State Bakers",
+        "Cake Vendor Payout (₹)": u.cakeStatus === 'Delivered' ? 220 : 0,
+        "Plantation Status": u.status || "Ordered",
+        "Created At": u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "N/A"
+      }));
+      const wsCitizens = XLSX.utils.json_to_sheet(citizensData);
+      XLSX.utils.book_append_sheet(wb, wsCitizens, "Citizens Registry");
+
+      // 3. NGOs Sheet
+      const ngosData = enrichedNgos.map(n => ({
+        "NGO ID": n.id,
+        "NGO Name": n.name,
+        "Registration Number": n.reg || "N/A",
+        "Operating Area/Zone": n.area || "N/A",
+        "Contact Person": n.contact || "N/A",
+        "Email": n.email || "N/A",
+        "Phone": n.phone || "N/A",
+        "Assigned Capacity": n.assigned || 0,
+        "Completed Plants": n.completed || 0,
+        "Pending Plants": n.pending || 0,
+        "NGO Performance Rating": n.rating || 0
+      }));
+      const wsNGOs = XLSX.utils.json_to_sheet(ngosData);
+      XLSX.utils.book_append_sheet(wb, wsNGOs, "NGO Partners");
+
+      // 4. Cake Vendors Sheet
+      const vendorsData = cakeVendors.map(v => ({
+        "Vendor ID": v.id,
+        "Vendor Name": v.name,
+        "Service Area": v.area || "N/A",
+        "Unit Cake Cost (₹)": v.costPerCake || 0,
+        "Contact Email": v.email || "N/A",
+        "Contact Phone": v.phone || "N/A",
+        "Cake Rate Paid by Platform (₹)": 220
+      }));
+      const wsVendors = XLSX.utils.json_to_sheet(vendorsData);
+      XLSX.utils.book_append_sheet(wb, wsVendors, "Cake Vendors");
+
+      // 5. System Activities Sheet
+      const activitiesData = activities.map(a => ({
+        "Timestamp": a.time || "N/A",
+        "Type": a.type || "N/A",
+        "Activity Log Description": a.msg || "N/A",
+        "Triggered By": "System Admin"
+      }));
+      const wsActivities = XLSX.utils.json_to_sheet(activitiesData);
+      XLSX.utils.book_append_sheet(wb, wsActivities, "System Activities");
+
+      XLSX.writeFile(wb, "ForestGift_Realtime_Ecosystem_Report.xlsx");
+      toast.success("Ecosystem Master Report exported successfully!");
+    } catch (e: any) {
+      console.error("Excel Export Error:", e);
+      toast.error("Failed to export Excel report: " + (e.message || e));
     }
   };
 
@@ -1484,54 +1582,209 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
       {activeSection === "Reports & Analytics" && (
         <div className="p-8 space-y-8 animate-in fade-in duration-500">
            {/* Header */}
-           <div>
-             <h2 className="text-3xl font-bold text-zinc-900 uppercase tracking-tight">Ecosystem Impact Analytics</h2>
-             <p className="text-xs text-gray-500 font-bold tracking-widest uppercase mt-2">Real-time telemetry and growth metrics</p>
+           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+             <div>
+               <h2 className="text-3xl font-bold text-zinc-900 uppercase tracking-tight">Ecosystem Impact & Financial Analytics</h2>
+               <p className="text-xs text-zinc-500 font-bold tracking-widest uppercase mt-2">Real-time telemetry and periodic growth metrics</p>
+             </div>
+             
+             {/* Excel Download button and dynamic sync metadata */}
+             <div className="flex flex-wrap items-center gap-3">
+               <span className="text-[10px] bg-zinc-100 border border-zinc-200 text-zinc-600 px-3 py-1.5 rounded-xl font-bold uppercase tracking-wider">
+                 Live Sync: {lastUpdated.toLocaleTimeString()}
+               </span>
+               <button
+                 onClick={downloadNetworkExcel}
+                 className="bg-black text-white hover:bg-zinc-800 px-5 py-2.5 rounded-xl text-xs font-semibold tracking-wide flex items-center gap-2 transition-all shadow-md active:scale-95 hover:-translate-y-0.5"
+               >
+                 <Icon name="reports" size={14} /> Download Excel Report
+               </button>
+             </div>
            </div>
-           
-           {/* High level stats map */}
-           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+
+           {/* Filter controls */}
+           <div className="bg-white border border-zinc-200/60 p-5 rounded-3xl shadow-sm flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
+             <div className="flex flex-col gap-1.5">
+               <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Select Time Filter</span>
+               <div className="flex bg-zinc-100 p-1 rounded-xl w-fit">
+                 {(["All Time", "Yearly", "Monthly"] as const).map(type => (
+                   <button
+                     key={type}
+                     type="button"
+                     onClick={() => setFilterType(type)}
+                     className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${filterType === type ? 'bg-white text-black shadow-sm' : 'text-zinc-500 hover:text-black'}`}
+                   >
+                     {type}
+                   </button>
+                 ))}
+               </div>
+             </div>
+
+             {filterType !== "All Time" && (
+               <div className="flex gap-4 items-center">
+                 <div className="flex flex-col gap-1.5">
+                   <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Year</span>
+                   <select
+                     value={selectedYear}
+                     onChange={e => setSelectedYear(Number(e.target.value))}
+                     className="bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-black focus:border-black outline-none cursor-pointer"
+                   >
+                     {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(year => (
+                       <option key={year} value={year}>{year}</option>
+                     ))}
+                   </select>
+                 </div>
+
+                 {filterType === "Monthly" && (
+                   <div className="flex flex-col gap-1.5">
+                     <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Month</span>
+                     <select
+                       value={selectedMonth}
+                       onChange={e => setSelectedMonth(Number(e.target.value))}
+                       className="bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-black focus:border-black outline-none cursor-pointer"
+                     >
+                       {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map((month, idx) => (
+                         <option key={idx} value={idx}>{month}</option>
+                       ))}
+                     </select>
+                   </div>
+                 )}
+               </div>
+             )}
+           </div>
+
+           {/* Metrics Grid */}
+           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               {(() => {
-                const totalRequestedTrees = users.reduce((acc, u) => acc + (u.trees || 1), 0);
-                const totalPlantedTrees = submissions.reduce((acc, s) => acc + (Number(s.count) || s.fileNames?.length || 1), 0);
-                const carbonSavedKg = totalPlantedTrees * 21; 
-                const thisMonthUsers = users.filter(u => !u.createdAt || (new Date(u.createdAt).getMonth() === new Date().getMonth())).length;
+                const matchesFilter = (dateStr?: string) => {
+                  if (!dateStr) return true;
+                  const date = new Date(dateStr);
+                  if (isNaN(date.getTime())) return true;
+                  
+                  if (filterType === "All Time") return true;
+                  if (filterType === "Yearly") {
+                    return date.getFullYear() === selectedYear;
+                  }
+                  if (filterType === "Monthly") {
+                    return date.getFullYear() === selectedYear && date.getMonth() === selectedMonth;
+                  }
+                  return true;
+                };
+
+                // Calculations
+                const allTimeCitizenFunding = enrichedUsers.reduce((sum, u) => sum + (u.amount || 0), 0);
+                const periodicCitizenFunding = enrichedUsers
+                  .filter(u => matchesFilter(u.createdAt))
+                  .reduce((sum, u) => sum + (u.amount || 0), 0);
                 
+                const allTimeDeliveredCakes = enrichedUsers.filter(u => u.cakeStatus === 'Delivered').length;
+                const periodicDeliveredCakes = enrichedUsers
+                  .filter(u => matchesFilter(u.createdAt) && u.cakeStatus === 'Delivered').length;
+                const allTimeCakePayouts = allTimeDeliveredCakes * 220;
+                const periodicCakePayouts = periodicDeliveredCakes * 220;
+
+                const periodicNewMembers = enrichedUsers.filter(u => matchesFilter(u.createdAt)).length;
+
+                const periodicTreesPlanted = submissions
+                  .filter(s => matchesFilter(s.createdAt))
+                  .reduce((sum, s) => sum + (Number(s.count) || 1), 0) + 
+                  treeEntries
+                  .filter(te => matchesFilter(te.createdAt))
+                  .length;
+
+                const allTimeTreesPlanted = submissions.reduce((sum, s) => sum + (Number(s.count) || 1), 0) + treeEntries.length;
+
+                const filterLabel = filterType === "All Time" ? "All Time" : filterType === "Yearly" ? `${selectedYear}` : `${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][selectedMonth]} ${selectedYear}`;
+
                 return (
                   <>
-                    <div className="bg-emerald-600 text-white p-6 rounded-3xl shadow-xl shadow-emerald-500/20 relative overflow-hidden flex flex-col justify-between">
-                       <div className="relative z-10">
-                         <div className="text-xs font-semibold text-zinc-500 tracking-wide text-emerald-200 mb-2">Total Carbon Saved</div>
-                         <div className="text-4xl font-black tracking-tighter">{carbonSavedKg.toLocaleString()} <span className="text-lg">kg</span></div>
-                       </div>
-                       <Icon name="check" size={120} className="absolute -right-6 -bottom-6 text-emerald-500 opacity-50" />
+                    <div className="col-span-1 md:col-span-2 bg-black text-white p-6 rounded-3xl shadow-md border border-zinc-800 relative overflow-hidden flex flex-col justify-between group hover:border-zinc-700 transition-all duration-300">
+                      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none">
+                        <svg width={200} height={200} viewBox="0 0 100 100" fill="currentColor">
+                          <path d="M50 5 L95 25 L95 75 L50 95 L5 75 L5 25 Z" stroke="white" strokeWidth="2" fill="none" />
+                        </svg>
+                      </div>
+                      <div className="relative z-10 space-y-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Citizen Funding (Real-Time)</span>
+                          <span className="bg-zinc-800 text-zinc-300 text-[9px] font-bold px-2 py-0.5 rounded-lg border border-zinc-700">{filterLabel}</span>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="text-4xl font-extrabold tracking-tighter">₹{periodicCitizenFunding.toLocaleString()}</div>
+                          <div className="text-[10px] text-zinc-500 font-semibold tracking-wide">Cumulative: ₹{allTimeCitizenFunding.toLocaleString()}</div>
+                        </div>
+                      </div>
+                      <div className="relative z-10 pt-4 border-t border-zinc-800/80 mt-4 flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Primary System Revenue</span>
+                      </div>
                     </div>
-                    <div className="bg-white border border-gray-100 p-6 rounded-3xl shadow-sm flex flex-col justify-between">
-                       <div>
-                         <div className="text-xs font-semibold text-zinc-500 tracking-wide text-gray-400 mb-2">Trees Planted</div>
-                         <div className="text-4xl font-bold text-zinc-900 tracking-tighter">{totalPlantedTrees}</div>
-                       </div>
+
+                    <div className="col-span-1 md:col-span-2 bg-white border border-zinc-200/80 p-6 rounded-3xl shadow-sm relative overflow-hidden flex flex-col justify-between group hover:border-black transition-all duration-300">
+                      <div className="relative z-10 space-y-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Cake Vendor Payouts</span>
+                          <span className="bg-zinc-100 text-black text-[9px] font-bold px-2 py-0.5 rounded-lg border border-zinc-200">{filterLabel}</span>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="text-4xl font-extrabold tracking-tighter text-zinc-900">₹{periodicCakePayouts.toLocaleString()}</div>
+                          <div className="text-[10px] text-zinc-500 font-semibold tracking-wide">
+                            ₹220 per Delivered Cake ({periodicDeliveredCakes} cakes this period)
+                          </div>
+                        </div>
+                      </div>
+                      <div className="relative z-10 pt-4 border-t border-zinc-100 mt-4 flex items-center justify-between">
+                        <span className="text-[10px] font-semibold text-zinc-400">All-Time Payout: ₹{allTimeCakePayouts.toLocaleString()} ({allTimeDeliveredCakes} delivered)</span>
+                      </div>
                     </div>
-                    <div className="bg-white border border-gray-100 p-6 rounded-3xl shadow-sm flex flex-col justify-between">
-                       <div>
-                         <div className="text-xs font-semibold text-zinc-500 tracking-wide text-gray-400 mb-2">Partnering NGOs</div>
-                         <div className="text-4xl font-bold text-zinc-900 tracking-tighter">{ngos.length}</div>
-                       </div>
+
+                    <div className="bg-white border border-zinc-200/80 p-6 rounded-3xl shadow-sm flex flex-col justify-between group hover:border-black transition-all duration-300">
+                      <div className="space-y-4">
+                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">New Members Added</span>
+                        <div>
+                          <div className="text-4xl font-extrabold tracking-tighter text-zinc-900">+{periodicNewMembers.toLocaleString()}</div>
+                          <p className="text-[10px] text-zinc-500 font-semibold tracking-wide mt-1">Total: {enrichedUsers.length} Citizens</p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="bg-white border border-gray-100 p-6 rounded-3xl shadow-sm flex flex-col justify-between">
-                       <div>
-                         <div className="text-xs font-semibold text-zinc-500 tracking-wide text-gray-400 mb-2">New Citizens (Month)</div>
-                         <div className="text-4xl font-black text-emerald-600 tracking-tighter">+{thisMonthUsers}</div>
-                       </div>
+
+                    <div className="bg-white border border-zinc-200/80 p-6 rounded-3xl shadow-sm flex flex-col justify-between group hover:border-black transition-all duration-300">
+                      <div className="space-y-4">
+                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">Monthly / Periodic Revenue</span>
+                        <div>
+                          <div className="text-4xl font-extrabold tracking-tighter text-zinc-900">₹{periodicCitizenFunding.toLocaleString()}</div>
+                          <p className="text-[10px] text-zinc-500 font-semibold tracking-wide mt-1">Funding Flow</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white border border-zinc-200/80 p-6 rounded-3xl shadow-sm flex flex-col justify-between group hover:border-black transition-all duration-300">
+                      <div className="space-y-4">
+                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">Total Revenue</span>
+                        <div>
+                          <div className="text-4xl font-extrabold tracking-tighter text-zinc-900">₹{allTimeCitizenFunding.toLocaleString()}</div>
+                          <p className="text-[10px] text-zinc-500 font-semibold tracking-wide mt-1">Cumulative Impact</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white border border-zinc-200/80 p-6 rounded-3xl shadow-sm flex flex-col justify-between group hover:border-black transition-all duration-300">
+                      <div className="space-y-4">
+                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">Trees Planted</span>
+                        <div>
+                          <div className="text-4xl font-extrabold tracking-tighter text-emerald-600">+{periodicTreesPlanted.toLocaleString()}</div>
+                          <p className="text-[10px] text-zinc-500 font-semibold tracking-wide mt-1">Total Planted: {allTimeTreesPlanted.toLocaleString()}</p>
+                        </div>
+                      </div>
                     </div>
                   </>
                 );
               })()}
            </div>
 
-           {/* Charts */}
+           {/* Charts & Summary Row */}
            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-             <div className="col-span-1 lg:col-span-2 bg-white border border-gray-100 p-8 rounded-3xl shadow-sm">
+             <div className="col-span-1 lg:col-span-2 bg-white border border-zinc-200/80 p-8 rounded-3xl shadow-sm">
                <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-widest mb-6 border-b border-gray-50 pb-4">Forest & Revenue Growth Trajectory</h3>
                <div className="h-72 w-full">
                   {(() => {
@@ -1563,8 +1816,8 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                           <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#9ca3af', fontWeight: 900}} />
                           <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#9ca3af', fontWeight: 900}} tickFormatter={(v) => `₹${v}`} />
                           <RechartsTooltip cursor={{stroke: '#e5e7eb', strokeWidth: 2}} contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}} />
-                          <Line yAxisId="left" type="monotone" dataKey="trees" stroke="#059669" strokeWidth={4} dot={{r: 6, strokeWidth: 2, fill: '#fff'}} activeDot={{r: 8}} name="Total Trees" />
-                          <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={4} dot={{r: 6, strokeWidth: 2, fill: '#fff'}} activeDot={{r: 8}} name="Revenue" />
+                          <Line yAxisId="left" type="monotone" dataKey="trees" stroke="#000000" strokeWidth={4} dot={{r: 6, strokeWidth: 2, fill: '#fff'}} activeDot={{r: 8}} name="Total Trees" />
+                          <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#71717a" strokeWidth={4} dot={{r: 6, strokeWidth: 2, fill: '#fff'}} activeDot={{r: 8}} name="Revenue" />
                         </LineChart>
                       </ResponsiveContainer>
                     );
@@ -1572,13 +1825,13 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                </div>
              </div>
              
-             <div className="col-span-1 bg-white border border-gray-100 p-8 rounded-3xl shadow-sm flex flex-col justify-between">
+             <div className="col-span-1 bg-white border border-zinc-200/80 p-8 rounded-3xl shadow-sm flex flex-col justify-between">
                <div>
                   <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-widest mb-6 border-b border-gray-50 pb-4">Operational Summary</h3>
                   <div className="space-y-6">
                     {(() => {
                       const totalCakes = users.length;
-                      const deliveredCakes = users.filter(u => u.status === 'Delivered' || u.status === 'Planted').length;
+                      const deliveredCakes = users.filter(u => u.cakeStatus === 'Delivered').length;
                       const pendingOrders = users.reduce((acc, u) => acc + (u.trees || 1), 0) - submissions.reduce((acc, s) => acc + (Number(s.count) || s.fileNames?.length || 1), 0);
                       
                       return (
@@ -1589,7 +1842,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                               <span className="text-xs font-bold text-zinc-900">{totalCakes}</span>
                             </div>
                             <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                              <div className="h-full bg-blue-500 rounded-full" style={{width: `${Math.min(100, Math.max(5, (totalCakes / (totalCakes+10)) * 100))}%`}}></div>
+                              <div className="h-full bg-zinc-900 rounded-full" style={{width: `${Math.min(100, Math.max(5, (totalCakes / (totalCakes+10)) * 100))}%`}}></div>
                             </div>
                           </div>
                           <div>
@@ -1598,7 +1851,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                               <span className="text-xs font-bold text-zinc-900">{deliveredCakes}</span>
                             </div>
                             <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                              <div className="h-full bg-indigo-500 rounded-full" style={{width: `${Math.min(100, totalCakes === 0 ? 0 : (deliveredCakes / totalCakes) * 100)}%`}}></div>
+                              <div className="h-full bg-zinc-500 rounded-full" style={{width: `${Math.min(100, totalCakes === 0 ? 0 : (deliveredCakes / totalCakes) * 100)}%`}}></div>
                             </div>
                           </div>
                           <div>
@@ -1615,28 +1868,28 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                     })()}
                   </div>
                </div>
-               <div className="mt-8 bg-emerald-50 p-4 rounded-2xl flex items-center justify-center gap-3">
-                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                 <span className="text-xs font-semibold tracking-wide text-emerald-700">Live Backend Stream</span>
+               <div className="mt-8 bg-zinc-50 border border-zinc-200/60 p-4 rounded-2xl flex items-center justify-center gap-3">
+                 <div className="w-2 h-2 rounded-full bg-black animate-pulse"></div>
+                 <span className="text-xs font-semibold tracking-wide text-zinc-700">Live Network Telemetry Active</span>
                </div>
              </div>
            </div>
 
            {/* Certificate Registry Section */}
-           <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm">
-             <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
+           <div className="bg-white border border-zinc-200/80 rounded-3xl overflow-hidden shadow-sm">
+             <div className="p-8 border-b border-zinc-200/60 flex justify-between items-center bg-zinc-50/50">
                <div>
                  <h3 className="text-xl font-bold text-zinc-900 uppercase tracking-tight">Registry of Issued Certificates</h3>
                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Immutable Digital Environmental Credentials</p>
                </div>
-               <div className="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-xs font-semibold text-zinc-500 tracking-wide border border-emerald-100">
+               <div className="px-4 py-2 bg-zinc-100 text-black rounded-xl text-xs font-semibold text-zinc-500 tracking-wide border border-zinc-200">
                   Total Issued: {certificates.length}
                </div>
              </div>
              <div className="overflow-x-auto">
                <table className="w-full text-left">
                  <thead>
-                   <tr className="bg-gray-50/50 text-xs font-semibold text-zinc-500 tracking-wide border-b border-gray-100">
+                   <tr className="bg-zinc-50/30 text-xs font-semibold text-zinc-500 tracking-wide border-b border-zinc-100">
                      <th className="px-8 py-4">Recipient Name</th>
                      <th className="px-8 py-4">Verification Code</th>
                      <th className="px-8 py-4">Verifying NGO</th>
@@ -1644,11 +1897,11 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                      <th className="px-8 py-4 text-center">Deliverability</th>
                    </tr>
                  </thead>
-                 <tbody className="divide-y divide-gray-50 text-xs">
+                 <tbody className="divide-y divide-zinc-100 text-xs">
                    {certificates.map(c => (
-                     <tr key={c._id} className="hover:bg-gray-50/80 transition-colors group">
+                     <tr key={c._id} className="hover:bg-zinc-50/80 transition-colors group">
                        <td className="px-8 py-4">
-                         <div className="font-semibold text-zinc-900 group-hover:text-emerald-600 transition-colors uppercase tracking-tight">{c.userName}</div>
+                         <div className="font-semibold text-zinc-900 group-hover:text-black transition-colors uppercase tracking-tight">{c.userName}</div>
                          <div className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">ID: {c.userId}</div>
                        </td>
                        <td className="px-8 py-4 font-mono font-bold text-gray-600 tracking-tighter">{c.verificationCode}</td>
@@ -1662,9 +1915,9 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                          {new Date(c.issueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                        </td>
                        <td className="px-8 py-4">
-                          <div className={`flex items-center justify-center gap-2 text-xs font-semibold text-zinc-500 tracking-wide ${c.emailSent ? 'text-emerald-500' : 'text-gray-400'}`}>
-                            <div className={`w-1.5 h-1.5 rounded-full ${c.emailSent ? 'bg-emerald-500' : 'bg-gray-300'}`}></div>
-                            {c.emailSent ? 'Link Delivred' : 'Pending'}
+                          <div className={`flex items-center justify-center gap-2 text-xs font-semibold text-zinc-500 tracking-wide ${c.emailSent ? 'text-black' : 'text-gray-400'}`}>
+                            <div className={`w-1.5 h-1.5 rounded-full ${c.emailSent ? 'bg-black' : 'bg-zinc-300'}`}></div>
+                            {c.emailSent ? 'Link Delivered' : 'Pending'}
                           </div>
                        </td>
                      </tr>
