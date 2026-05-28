@@ -56,10 +56,10 @@ const PlanCard = ({
 
     {/* Plan Image */}
     <motion.div
-      className="h-64 md:h-80 w-full flex items-center justify-center mb-6 relative z-10 cursor-pointer"
+      className="h-64 md:h-80 w-full flex items-center justify-center mb-6 mt-4 relative z-10 cursor-pointer"
       onClick={onPay}
     >
-      <img src={image} alt={label} className="max-h-full max-w-full object-contain mix-blend-multiply scale-110 md:scale-125 transition-transform duration-500 group-hover:scale-[1.35]" />
+      <img src={image} alt={label} className="max-h-full max-w-full object-contain mix-blend-multiply scale-100 md:scale-110 transition-transform duration-500 group-hover:scale-110 md:group-hover:scale-125" />
     </motion.div>
 
     {/* Title & Tagline */}
