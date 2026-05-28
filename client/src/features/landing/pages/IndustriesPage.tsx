@@ -24,10 +24,10 @@ export const IndustriesPage: React.FC = () => {
       <main className="pt-32 pb-20">
         
         {/* Hero */}
-        <section className="max-w-7xl mx-auto px-6 mb-32 text-center">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="space-y-6 max-w-4xl mx-auto">
+        <section className="px-6 md:px-12 lg:px-24 py-16 md:py-24 max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center text-left mb-32">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="space-y-6">
             <h1 className="text-5xl md:text-7xl font-bold tracking-tighter leading-tight uppercase">
-              FOREST FOR <span className="text-[#247114]">INDUSTRIES</span>
+              FOREST FOR <br className="hidden md:block" /> <span className="text-[#247114]">INDUSTRIES</span>
             </h1>
             <p className="text-2xl font-medium text-gray-800">
               Enterprise Sustainability System for Modern Companies
@@ -35,6 +35,18 @@ export const IndustriesPage: React.FC = () => {
             <div className="text-xl text-gray-600 italic bg-gray-50 p-8 rounded-3xl mt-8 shadow-sm">
               “We don’t plant trees. We build sustainable organizations.”
             </div>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2 }}
+            className="relative"
+          >
+            <img 
+              src="/industries/hero.png" 
+              alt="Industry Sustainability" 
+              className="w-full h-auto object-cover relative z-10 mix-blend-multiply"
+            />
           </motion.div>
         </section>
 
