@@ -14,8 +14,17 @@ export interface IUser extends Document {
   ngo: string;
   location: string;
   date: string;
-  cakeStatus?: 'Ordered' | 'Accepted' | 'OutForDelivery' | 'Delivered' | 'Rejected';
+  cakeStatus?:
+    | 'Ordered'
+    | 'Accepted'
+    | 'Preparing'
+    | 'OutForDelivery'
+    | 'Delivered'
+    | 'Rejected';
   cakeVendor?: string;
+  cakeDeliveryOtp?: string;
+  cakeOtpExpiresAt?: Date;
+  cakeDeliveredAt?: Date;
   password?: string;
   referralCode: string;
   referredBy?: string;
@@ -43,10 +52,13 @@ const UserSchema: Schema = new Schema({
   date: { type: String, required: true },
   cakeStatus: {
     type: String,
-    enum: ['Ordered', 'Accepted', 'OutForDelivery', 'Delivered', 'Rejected'],
+    enum: ['Ordered', 'Accepted', 'Preparing', 'OutForDelivery', 'Delivered', 'Rejected'],
     default: 'Ordered',
   },
   cakeVendor: { type: String, default: 'Unassigned' },
+  cakeDeliveryOtp: { type: String },
+  cakeOtpExpiresAt: { type: Date },
+  cakeDeliveredAt: { type: Date },
   password: { type: String, default: 'forestgift123' },
   referralCode: { type: String, unique: true },
   referredBy: { type: String },

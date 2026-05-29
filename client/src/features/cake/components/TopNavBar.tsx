@@ -1,4 +1,4 @@
-import { Bell, LogOut } from 'lucide-react';
+import { Bell, LogOut, Menu, X } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { Badge } from '../../../shared/components/ui/badge';
 import { Avatar, AvatarFallback } from '../../../shared/components/ui/avatar';
@@ -11,19 +11,22 @@ import type { CakePathname } from '../CakeNavContext';
 import { initialsFromName } from '../utils/helpers';
 
 const navLinkClass = (active: boolean) =>
-  `shrink-0 text-sm font-medium transition-colors border-0 bg-transparent cursor-pointer py-2 px-1 sm:px-0 rounded-md sm:rounded-none ${
+  `shrink-0 text-base sm:text-lg font-semibold transition-colors border-0 bg-transparent cursor-pointer py-2.5 px-2 sm:px-1 rounded-md sm:rounded-none ${
     active ? 'text-[#EC4899]' : 'text-gray-600 hover:text-[#EC4899]'
   }`;
 
 const NAV_ITEMS: { path: CakePathname; label: string }[] = [
   { path: '/', label: 'Dashboard' },
-  { path: '/deliveries', label: 'All Deliveries' },
+  { path: '/deliveries', label: 'Deliveries' },
+  { path: '/earnings', label: 'Earnings' },
+  { path: '/invoices', label: 'Invoices' },
   { path: '/profile', label: 'Profile' },
 ];
 
 export function TopNavBar({ onLogout }: { onLogout?: () => void }) {
   const { pathname, navigate } = useCakeNav();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false);
   const [notifications, setNotifications] = useState(createInitialCakeNotifications);
   const user = useCakeUser();
   const { vendor } = useCakeData();
@@ -47,23 +50,33 @@ export function TopNavBar({ onLogout }: { onLogout?: () => void }) {
       <div className="max-w-[1400px] mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-3 py-3 sm:py-2">
           <div className="flex items-center justify-between gap-3 min-h-[44px]">
-            <button
-              type="button"
-              onClick={() => navigate('/')}
-              className="flex items-center gap-2 sm:gap-3 hover:opacity-90 transition-opacity text-left min-w-0 flex-1 sm:flex-initial"
-            >
-              <div className="w-10 h-10 shrink-0 bg-gradient-to-br from-[#EC4899] to-[#FBCFE8] rounded-lg flex items-center justify-center shadow-sm">
-                <span className="text-xl" aria-hidden>
-                  🎂
-                </span>
-              </div>
-              <div className="flex flex-col min-w-0 text-left">
-                <span className="text-base sm:text-lg font-semibold text-[#1F2937] truncate" title={shopName}>
-                  {shopName}
-                </span>
-                <span className="text-xs text-gray-500 truncate">{subtitle}</span>
-              </div>
-            </button>
+            <div className="flex items-center gap-2 sm:gap-3 flex-1 sm:flex-initial min-w-0">
+              <button
+                type="button"
+                className="md:hidden p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg shrink-0"
+                onClick={() => setShowSidebar(true)}
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate('/')}
+                className="flex items-center gap-2 sm:gap-3 hover:opacity-90 transition-opacity text-left min-w-0 flex-1 sm:flex-initial"
+              >
+                <div className="w-10 h-10 shrink-0 bg-gradient-to-br from-[#EC4899] to-[#FBCFE8] rounded-lg flex items-center justify-center shadow-sm">
+                  <span className="text-xl" aria-hidden>
+                    🎂
+                  </span>
+                </div>
+                <div className="hidden sm:flex flex-col min-w-0 text-left">
+                  <span className="text-lg sm:text-xl font-bold text-[#1F2937] truncate" title={shopName}>
+                    {shopName}
+                  </span>
+                  <span className="text-sm text-gray-500 truncate">{subtitle}</span>
+                </div>
+              </button>
+            </div>
 
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               {onLogout ? (
@@ -91,7 +104,6 @@ export function TopNavBar({ onLogout }: { onLogout?: () => void }) {
                   </Badge>
                 ) : null}
               </button>
-
               <button
                 type="button"
                 onClick={() => navigate('/profile')}
@@ -108,7 +120,7 @@ export function TopNavBar({ onLogout }: { onLogout?: () => void }) {
           </div>
 
           <div
-            className="flex flex-wrap items-stretch sm:items-center gap-x-4 gap-y-1 sm:gap-x-6 border-t border-[#FBCFE8] pt-3 sm:border-t-0 sm:pt-0 -mx-1 px-1 sm:mx-0 sm:px-0"
+            className="hidden md:flex flex-wrap items-center gap-x-6 lg:gap-x-8 gap-y-2 border-t border-[#FBCFE8] pt-4 sm:border-t-0 sm:pt-2 -mx-1 px-1 sm:mx-0 sm:px-0"
             role="navigation"
             aria-label="Main"
           >
@@ -133,6 +145,73 @@ export function TopNavBar({ onLogout }: { onLogout?: () => void }) {
         onMarkAllRead={handleMarkAllRead}
         onMarkOneRead={handleMarkOneRead}
       />
+
+      {/* Mobile Sidebar Overlay */}
+      {showSidebar ? (
+        <div className="md:hidden fixed inset-0 z-50 flex">
+          <div 
+            className="fixed inset-0 bg-black/40 transition-opacity" 
+            onClick={() => setShowSidebar(false)} 
+            aria-label="Close sidebar"
+          />
+          <div className="relative w-64 max-w-sm bg-white h-full flex flex-col shadow-2xl animate-in slide-in-from-left duration-200 border-r border-[#FBCFE8]">
+            <div className="flex items-center justify-between px-4 py-4 border-b border-[#FBCFE8]/40 bg-gradient-to-r from-[#FDF2F8] to-white">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-[#EC4899] rounded-lg flex items-center justify-center shadow-inner">
+                  <span className="text-sm">🎂</span>
+                </div>
+                <span className="font-bold text-[#1F2937]">Menu</span>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setShowSidebar(false)}
+                className="p-1 rounded-full hover:bg-gray-100 text-gray-500"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+              {NAV_ITEMS.map((item) => {
+                const isActive = pathname === item.path;
+                return (
+                  <button
+                    key={item.path}
+                    type="button"
+                    onClick={() => {
+                      navigate(item.path);
+                      setShowSidebar(false);
+                    }}
+                    className={`w-full flex items-center px-4 py-3 text-left rounded-xl font-medium transition-all ${
+                      isActive 
+                        ? 'bg-[#FDF2F8] text-[#EC4899] shadow-sm border border-[#FBCFE8]/50' 
+                        : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+            
+            {onLogout && (
+              <div className="p-4 border-t border-[#FBCFE8]/40 bg-gray-50">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSidebar(false);
+                    onLogout();
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-semibold text-red-600 hover:bg-red-50 transition-colors border border-red-100"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Log out
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
     </nav>
   );
 }

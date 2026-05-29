@@ -52,22 +52,24 @@ export const Badge = ({ status }: { status: string }) => {
   );
 };
 
-export const StatCard = ({ label, value, icon, colorClass, sub, trend }: any) => (
-  <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm flex flex-col gap-3 hover:border-black transition-colors relative overflow-hidden group">
-    <div className="absolute top-0 left-0 w-1 h-full bg-gray-200 group-hover:bg-black transition-colors"></div>
-    <div className="flex justify-between items-start pl-2">
+export const StatCard = ({ label, value, icon, colorClass, sub, trend, onClick }: any) => (
+  <div 
+    onClick={onClick}
+    className={`bg-white rounded-2xl p-6 border border-zinc-200/60 shadow-md shadow-zinc-100/50 flex flex-col gap-3 hover:shadow-lg transition-all duration-300 relative overflow-hidden group ${onClick ? 'cursor-pointer hover:-translate-y-0.5' : ''}`}
+  >
+    <div className="flex justify-between items-start">
       <div>
-        <div className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mb-1">{label}</div>
-        <div className="text-2xl font-black text-black tracking-tight">{value}</div>
-        {sub && <div className="text-[10px] text-gray-400 font-bold mt-1 uppercase tracking-widest">{sub}</div>}
+        <div className="text-sm font-medium text-zinc-500 mb-1">{label}</div>
+        <div className="text-3xl font-bold text-zinc-950 tracking-tight">{value}</div>
+        {sub && <div className="text-[10px] text-zinc-400 font-semibold mt-1 uppercase tracking-widest">{sub}</div>}
       </div>
-      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorClass || 'bg-gray-100 text-black border border-gray-200'}`}>
+      <div className={`w-11 h-11 rounded-full flex items-center justify-center bg-gradient-to-br from-zinc-100 to-white text-zinc-800 border border-zinc-200/50 shadow-sm shrink-0 ${colorClass || ''}`}>
         <Icon name={icon} size={18} />
       </div>
     </div>
     {trend && (
-      <div className="flex items-center gap-1.5 text-[10px] text-black font-black uppercase tracking-widest pl-2 pt-2 border-t border-gray-100">
-        <Icon name="arrowUp" size={10} className="stroke-black" /> <span>{trend}</span> <span className="text-gray-400 font-bold">vs last month</span>
+      <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-semibold pt-2 border-t border-zinc-100">
+        <Icon name="arrowUp" size={10} className="stroke-zinc-500" /> <span>{trend}</span> <span className="text-zinc-400 font-normal">vs last month</span>
       </div>
     )}
   </div>

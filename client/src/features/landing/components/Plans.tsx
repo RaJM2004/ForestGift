@@ -14,23 +14,23 @@ const loadScript = (src: string) => {
   });
 };
 
-const PlanCard = ({ 
-  trees, 
-  label, 
-  image, 
-  delay, 
-  onPay, 
+const PlanCard = ({
+  trees,
+  label,
+  image,
+  delay,
+  onPay,
   isProcessing,
   price,
   tagline,
   features,
   badge
-}: { 
-  trees: string; 
-  label: string; 
-  image: string; 
-  delay: number; 
-  onPay: () => void; 
+}: {
+  trees: string;
+  label: string;
+  image: string;
+  delay: number;
+  onPay: () => void;
   isProcessing: boolean;
   price: string;
   tagline: string;
@@ -47,26 +47,19 @@ const PlanCard = ({
   >
     {/* Background Ambient Glow */}
     <div className="absolute -top-24 -right-24 w-48 h-48 bg-emerald-50 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
-    
+
     {badge && (
       <div className="absolute top-4 right-4 bg-[#247114] text-white text-[9px] font-bold tracking-widest uppercase px-3 py-1 rounded-full shadow-sm z-10 animate-pulse">
         {badge}
       </div>
     )}
 
-    {/* Plan Image with slow breathing loop */}
-    <motion.div 
-      className="h-64 md:h-80 w-full flex items-center justify-center mb-6 relative z-10 cursor-pointer"
+    {/* Plan Image */}
+    <motion.div
+      className="h-64 md:h-80 w-full flex items-center justify-center mb-6 mt-4 relative z-10 cursor-pointer"
       onClick={onPay}
-      animate={{ y: [0, -6, 0] }}
-      transition={{
-        duration: 4,
-        repeat: Infinity,
-        ease: "easeInOut",
-        delay: delay * 2
-      }}
     >
-      <img src={image} alt={label} className="max-h-full max-w-full object-contain filter drop-shadow-md transition-transform duration-500 group-hover:scale-105" />
+      <img src={image} alt={label} className="max-h-full max-w-full object-contain mix-blend-multiply scale-100 md:scale-110 transition-transform duration-500 group-hover:scale-110 md:group-hover:scale-125" />
     </motion.div>
 
     {/* Title & Tagline */}
@@ -82,7 +75,6 @@ const PlanCard = ({
 
       {/* Pricing Tag */}
       <div className="mb-4 bg-emerald-50/50 py-3 rounded-2xl border border-emerald-100/30">
-        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Contribution</span>
         <div className="text-xl md:text-2xl font-bold text-gray-900 mt-0.5">
           ₹{price}
         </div>
@@ -101,7 +93,7 @@ const PlanCard = ({
       </ul>
 
       {/* Action Button */}
-      <button 
+      <button
         onClick={onPay}
         disabled={isProcessing}
         className="px-10 py-3.5 bg-black hover:bg-[#247114] text-white disabled:bg-gray-200 rounded-full font-bold text-xs tracking-widest uppercase transition-all shadow-xl shadow-black/5 group-hover:shadow-black/20 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5 mx-auto cursor-pointer"
@@ -170,7 +162,7 @@ export const Plans: React.FC<{ showHeader?: boolean; onPlantClick?: () => void }
       }
 
       const order = await createRazorpayOrder(amount, `receipt_${label}_${Date.now()}`);
-      
+
       const options = {
         key: key,
         amount: order.amount,
@@ -193,7 +185,7 @@ export const Plans: React.FC<{ showHeader?: boolean; onPlantClick?: () => void }
               },
               planDetails: { amount, label, trees: label === 'CHILD' ? 1 : label === 'YOUTH' ? 5 : 10 }
             });
-            
+
             navigate('/payment-success');
           } catch (err) {
             console.error('Payment Verification Failed', err);
@@ -238,13 +230,13 @@ export const Plans: React.FC<{ showHeader?: boolean; onPlantClick?: () => void }
           dob: formData.dob,
           address: `${formData.city}, ${formData.state}, ${formData.country} - ${formData.pincode}`
         },
-        planDetails: { 
-          amount, 
-          label, 
-          trees: label === 'CHILD' ? 1 : label === 'YOUTH' ? 5 : 10 
+        planDetails: {
+          amount,
+          label,
+          trees: label === 'CHILD' ? 1 : label === 'YOUTH' ? 5 : 10
         }
       });
-      
+
       navigate('/payment-success');
     } catch (err) {
       console.error('Bank Transfer registration failed:', err);
@@ -285,7 +277,7 @@ export const Plans: React.FC<{ showHeader?: boolean; onPlantClick?: () => void }
               "Exact GPS tracking & location updates"
             ]}
             badge="FRESH START"
-            image="https://assets.zyrosite.com/AE0r4EWz6LuN9z6g/1-weL5oULaZlVRdkoW.svg"
+            image="/plans/plan_1_tree.png"
             delay={0.1}
             onPay={() => handlePlanClick(1000, 'CHILD')}
             isProcessing={processingId === 'CHILD'}
@@ -303,7 +295,7 @@ export const Plans: React.FC<{ showHeader?: boolean; onPlantClick?: () => void }
               "Quarterly growth & photo reports"
             ]}
             badge="MOST POPULAR"
-            image="https://assets.zyrosite.com/AE0r4EWz6LuN9z6g/3-RfwxF2WHhFUi52Fp.svg"
+            image="/plans/plan_5_trees.png"
             delay={0.2}
             onPay={() => handlePlanClick(5000, 'YOUTH')}
             isProcessing={processingId === 'YOUTH'}
@@ -322,7 +314,7 @@ export const Plans: React.FC<{ showHeader?: boolean; onPlantClick?: () => void }
               "Creates a thriving local wild habitat"
             ]}
             badge="LEADER IMPACT"
-            image="https://assets.zyrosite.com/AE0r4EWz6LuN9z6g/2-1fLJvcLm6KVwVDqB.svg"
+            image="/plans/plan_10_trees.png"
             delay={0.3}
             onPay={() => handlePlanClick(10000, 'ELDER')}
             isProcessing={processingId === 'ELDER'}
@@ -334,14 +326,14 @@ export const Plans: React.FC<{ showHeader?: boolean; onPlantClick?: () => void }
       <AnimatePresence>
         {showForm && (
           <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 overflow-y-auto">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowForm(false)}
               className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             />
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
@@ -373,7 +365,7 @@ export const Plans: React.FC<{ showHeader?: boolean; onPlantClick?: () => void }
                               placeholder="Full name"
                               className="w-full pl-12 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-[#247114] outline-none text-sm text-gray-800 transition-all placeholder:text-gray-400"
                               value={formData.name}
-                              onChange={e => setFormData({...formData, name: e.target.value})}
+                              onChange={e => setFormData({ ...formData, name: e.target.value })}
                             />
                           </div>
                         </div>
@@ -387,7 +379,7 @@ export const Plans: React.FC<{ showHeader?: boolean; onPlantClick?: () => void }
                               placeholder="Email"
                               className="w-full pl-12 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-[#247114] outline-none text-sm text-gray-800 transition-all placeholder:text-gray-400"
                               value={formData.email}
-                              onChange={e => setFormData({...formData, email: e.target.value})}
+                              onChange={e => setFormData({ ...formData, email: e.target.value })}
                             />
                           </div>
                         </div>
@@ -404,7 +396,7 @@ export const Plans: React.FC<{ showHeader?: boolean; onPlantClick?: () => void }
                               placeholder="Country"
                               className="w-full pl-12 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-[#247114] outline-none text-sm text-gray-800 transition-all placeholder:text-gray-400"
                               value={formData.country}
-                              onChange={e => setFormData({...formData, country: e.target.value})}
+                              onChange={e => setFormData({ ...formData, country: e.target.value })}
                             />
                           </div>
                         </div>
@@ -418,7 +410,7 @@ export const Plans: React.FC<{ showHeader?: boolean; onPlantClick?: () => void }
                               placeholder="State"
                               className="w-full pl-12 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-[#247114] outline-none text-sm text-gray-800 transition-all placeholder:text-gray-400"
                               value={formData.state}
-                              onChange={e => setFormData({...formData, state: e.target.value})}
+                              onChange={e => setFormData({ ...formData, state: e.target.value })}
                             />
                           </div>
                         </div>
@@ -435,7 +427,7 @@ export const Plans: React.FC<{ showHeader?: boolean; onPlantClick?: () => void }
                               placeholder="City"
                               className="w-full pl-12 pr-4 py-3 bg-gray-50/50 border border-gray-100 rounded-xl focus:border-[#247114] focus:bg-white focus:ring-1 focus:ring-[#247114] outline-none text-sm font-semibold text-gray-800 transition-all placeholder:text-gray-400"
                               value={formData.city}
-                              onChange={e => setFormData({...formData, city: e.target.value})}
+                              onChange={e => setFormData({ ...formData, city: e.target.value })}
                             />
                           </div>
                         </div>
@@ -449,7 +441,7 @@ export const Plans: React.FC<{ showHeader?: boolean; onPlantClick?: () => void }
                               placeholder="Pin Code"
                               className="w-full pl-12 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-[#247114] outline-none text-sm text-gray-800 transition-all placeholder:text-gray-400"
                               value={formData.pincode}
-                              onChange={e => setFormData({...formData, pincode: e.target.value})}
+                              onChange={e => setFormData({ ...formData, pincode: e.target.value })}
                             />
                           </div>
                         </div>
@@ -465,7 +457,7 @@ export const Plans: React.FC<{ showHeader?: boolean; onPlantClick?: () => void }
                               type="date"
                               className="w-full pl-12 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-[#247114] outline-none text-sm text-gray-800 transition-all"
                               value={formData.dob}
-                              onChange={e => setFormData({...formData, dob: e.target.value})}
+                              onChange={e => setFormData({ ...formData, dob: e.target.value })}
                             />
                           </div>
                         </div>
@@ -479,7 +471,7 @@ export const Plans: React.FC<{ showHeader?: boolean; onPlantClick?: () => void }
                               placeholder="Phone number"
                               className="w-full pl-12 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-[#247114] outline-none text-sm text-gray-800 transition-all placeholder:text-gray-400"
                               value={formData.phone}
-                              onChange={e => setFormData({...formData, phone: e.target.value})}
+                              onChange={e => setFormData({ ...formData, phone: e.target.value })}
                             />
                           </div>
                         </div>
@@ -488,7 +480,7 @@ export const Plans: React.FC<{ showHeader?: boolean; onPlantClick?: () => void }
                       {/* Interactive Terms & Conditions Checkbox */}
                       <div className="pt-2">
                         <div className="flex items-start gap-3 bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100/50 transition-all duration-300">
-                          <input 
+                          <input
                             type="checkbox"
                             id="pledge"
                             required
@@ -510,7 +502,7 @@ export const Plans: React.FC<{ showHeader?: boolean; onPlantClick?: () => void }
                       </div>
 
                       <div className="pt-4">
-                        <button 
+                        <button
                           type="submit"
                           disabled={!pledgeChecked}
                           className="w-full py-4 bg-[#247114] hover:bg-[#1b550e] disabled:bg-gray-200 text-white disabled:text-gray-400 rounded-2xl font-bold text-xs tracking-widest uppercase flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-[#247114]/25 active:scale-[0.98] cursor-pointer group"
@@ -529,7 +521,7 @@ export const Plans: React.FC<{ showHeader?: boolean; onPlantClick?: () => void }
                     {/* Payment Method Step */}
                     <div className="flex justify-between items-center mb-6">
                       <div className="flex items-center gap-3">
-                        <button 
+                        <button
                           onClick={() => setPaymentStep('details')}
                           className="p-2 hover:bg-emerald-50 rounded-full text-gray-500 hover:text-[#247114] transition-colors cursor-pointer"
                         >
@@ -548,13 +540,12 @@ export const Plans: React.FC<{ showHeader?: boolean; onPlantClick?: () => void }
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 mb-6">
-                      <div 
+                      <div
                         onClick={() => setPaymentMethod('razorpay')}
-                        className={`p-5 border rounded-2xl cursor-pointer transition-all flex flex-col items-center justify-center text-center space-y-2.5 ${
-                          paymentMethod === 'razorpay' 
-                            ? 'border-[#247114] bg-emerald-50/20 shadow-sm shadow-emerald-100/50' 
+                        className={`p-5 border rounded-2xl cursor-pointer transition-all flex flex-col items-center justify-center text-center space-y-2.5 ${paymentMethod === 'razorpay'
+                            ? 'border-[#247114] bg-emerald-50/20 shadow-sm shadow-emerald-100/50'
                             : 'border-gray-100 hover:border-emerald-100 hover:bg-emerald-50/5'
-                        }`}
+                          }`}
                       >
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${paymentMethod === 'razorpay' ? 'bg-[#247114] text-white' : 'bg-emerald-50 text-emerald-600'}`}>
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -567,13 +558,12 @@ export const Plans: React.FC<{ showHeader?: boolean; onPlantClick?: () => void }
                         </div>
                       </div>
 
-                      <div 
+                      <div
                         onClick={() => setPaymentMethod('bank')}
-                        className={`p-5 border rounded-2xl cursor-pointer transition-all flex flex-col items-center justify-center text-center space-y-2.5 ${
-                          paymentMethod === 'bank' 
-                            ? 'border-[#247114] bg-emerald-50/20 shadow-sm shadow-emerald-100/50' 
+                        className={`p-5 border rounded-2xl cursor-pointer transition-all flex flex-col items-center justify-center text-center space-y-2.5 ${paymentMethod === 'bank'
+                            ? 'border-[#247114] bg-emerald-50/20 shadow-sm shadow-emerald-100/50'
                             : 'border-gray-100 hover:border-emerald-100 hover:bg-emerald-50/5'
-                        }`}
+                          }`}
                       >
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${paymentMethod === 'bank' ? 'bg-[#247114] text-white' : 'bg-emerald-50 text-emerald-600'}`}>
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -593,8 +583,8 @@ export const Plans: React.FC<{ showHeader?: boolean; onPlantClick?: () => void }
                           <div className="bg-emerald-50/40 border border-emerald-100/50 rounded-2xl p-4 text-[11px] font-semibold text-emerald-800 leading-relaxed">
                             🌿 You will be redirected to the secure Razorpay Payment Gateway. Once the payment succeeds, your tree registration and global certificate will be minted instantly!
                           </div>
-                          
-                          <button 
+
+                          <button
                             onClick={handleRazorpayPayment}
                             disabled={processingId !== null}
                             className="w-full py-4 bg-[#247114] hover:bg-[#1b550e] disabled:bg-gray-200 text-white disabled:text-gray-400 rounded-2xl font-bold text-xs tracking-widest uppercase flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-[#247114]/25 active:scale-[0.98] cursor-pointer"
@@ -612,7 +602,7 @@ export const Plans: React.FC<{ showHeader?: boolean; onPlantClick?: () => void }
                               <Trees size={12} />
                               <span>Bank Transfer Instructions</span>
                             </h4>
-                            
+
                             <div className="space-y-1.5 text-xs text-gray-800 font-semibold">
                               <div className="flex justify-between items-center py-0.5">
                                 <span className="text-gray-400 text-[10px] font-bold uppercase">Beneficiary</span>
@@ -642,7 +632,7 @@ export const Plans: React.FC<{ showHeader?: boolean; onPlantClick?: () => void }
                             </div>
                           </div>
 
-                          <button 
+                          <button
                             onClick={handleBankTransferSubmit}
                             disabled={isPlacingOrder}
                             className="w-full py-4 bg-[#247114] hover:bg-[#1b550e] disabled:bg-gray-200 text-white disabled:text-gray-400 rounded-2xl font-bold text-xs tracking-widest uppercase flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-[#247114]/25 active:scale-[0.98] cursor-pointer"

@@ -48,7 +48,7 @@ export function CertificatesPage() {
     <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto w-full">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-           <h1 className="text-3xl font-black text-gray-900 tracking-tight">CERTIFICATES</h1>
+           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">CERTIFICATES</h1>
            <p className="text-sm text-gray-500 font-medium italic">Your verified environmental credentials and plantation proofs</p>
         </div>
         <div className="flex gap-2">
@@ -115,12 +115,12 @@ export function CertificatesPage() {
                          <div className="p-3 bg-white/20 backdrop-blur rounded-2xl">
                             <Award className="w-8 h-8" />
                          </div>
-                         <Badge className="bg-white/20 backdrop-blur border-none font-black text-[9px] uppercase tracking-[0.2em]">
+                         <Badge className="bg-white/20 backdrop-blur border-none font-bold text-[9px] uppercase tracking-[0.2em]">
                            {cert.verified ? "VERIFIED CREDENTIAL" : "VALUATION PENDING"}
                          </Badge>
                       </div>
                       <div className="mt-4 relative z-10">
-                         <h3 className="text-xl font-black tracking-tight leading-tight uppercase">Plantation<br />Certificate</h3>
+                         <h3 className="text-xl font-bold tracking-tight leading-tight uppercase">Plantation<br />Certificate</h3>
                          <p className="text-[10px] text-emerald-100 font-bold uppercase tracking-widest mt-1 opacity-70">SERIAL: FG-{cert.id || cert._id?.substring(0,8)}</p>
                       </div>
                    </div>
@@ -134,12 +134,12 @@ export function CertificatesPage() {
                       </div>
                       
                       <div className="flex gap-3 pt-6 border-t border-gray-50">
-                         <Button variant="outline" className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest gap-2 bg-white hover:bg-gray-50">
+                         <Button variant="outline" className="flex-1 h-11 text-[10px] font-bold uppercase tracking-widest gap-2 bg-white hover:bg-gray-50">
                            <Share2 className="w-4 h-4" /> Share Impact
                          </Button>
                          <Button 
                            onClick={() => handleDownload(cert)}
-                           className="flex-1 h-11 bg-emerald-600 hover:bg-emerald-700 text-[10px] font-black uppercase tracking-widest gap-2 shadow-lg shadow-emerald-200"
+                           className="flex-1 h-11 bg-emerald-600 hover:bg-emerald-700 text-[10px] font-bold uppercase tracking-widest gap-2 shadow-lg shadow-emerald-200"
                          >
                            <Download className="w-4 h-4" /> Export PDF
                          </Button>
@@ -158,7 +158,7 @@ export function CertificatesPage() {
              <div className="space-y-1">
                 <p className="text-lg font-bold text-gray-900">No Credentials Found</p>
                 <p className="text-sm text-gray-400 font-medium max-w-xs mx-auto italic">We couldn't find any certificates matching your search or filter criteria.</p>
-                <button onClick={() => { setSearchTerm(""); setOnlyVerified(false); }} className="text-[10px] font-black text-emerald-600 uppercase tracking-widest hover:underline mt-4">Clear All Filters</button>
+                <button onClick={() => { setSearchTerm(""); setOnlyVerified(false); }} className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest hover:underline mt-4">Clear All Filters</button>
              </div>
           </div>
         )}
@@ -169,7 +169,7 @@ export function CertificatesPage() {
 
 const DataPoint = ({ label, value, icon: Icon }: any) => (
   <div className="space-y-1">
-     <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest leading-none">{label}</p>
+     <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest leading-none">{label}</p>
      <div className="flex items-center gap-1.5">
         {Icon && <Icon className="w-3.5 h-3.5 text-emerald-500 opacity-70" />}
         <p className="text-sm font-bold text-gray-800 truncate">{value}</p>

@@ -28,7 +28,7 @@ import { useUser } from "../context/UserContext";
 
 type SettingsTab = 'profile' | 'notifications';
 
-export function SettingsPage() {
+export function SettingsPage({ handleLogout }: { handleLogout?: () => void }) {
   const { user } = useUser();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   
@@ -51,7 +51,7 @@ export function SettingsPage() {
     <div className="p-4 md:p-8 space-y-8 pb-20 max-w-7xl mx-auto w-full">
       <div className="text-center md:text-left flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight leading-none uppercase text-emerald-600">ACCOUNT SETTINGS</h1>
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight leading-none uppercase text-emerald-600">ACCOUNT SETTINGS</h1>
             <p className="text-sm text-gray-400 font-medium italic mt-2">Personalize your profile and notification preferences</p>
          </div>
       </div>
@@ -61,7 +61,7 @@ export function SettingsPage() {
             <SettingsBtn active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={User} label="Profile Information" />
             <SettingsBtn active={activeTab === 'notifications'} onClick={() => setActiveTab('notifications')} icon={Bell} label="Notifications" />
             <div className="pt-4 mt-6 border-t border-gray-100">
-               <SettingsBtn icon={LogOut} label="Sign Out" variant="destructive" />
+               <SettingsBtn icon={LogOut} label="Sign Out" variant="destructive" onClick={handleLogout} />
             </div>
          </div>
 
@@ -79,17 +79,17 @@ export function SettingsPage() {
 
 const ProfileSection = ({ profile, setProfile }: any) => (
    <Card className="p-8 border-none shadow-sm space-y-8 bg-white/80">
-      <h3 className="text-xl font-black text-gray-900">Personal Identity</h3>
+      <h3 className="text-xl font-bold text-gray-900">Personal Identity</h3>
       
       <div className="flex flex-col md:flex-row items-center gap-8 pb-8 border-b border-gray-50">
          <div className="relative group">
-            <div className="w-28 h-28 bg-emerald-600 rounded-3xl flex items-center justify-center text-white text-4xl font-black shadow-xl shrink-0">
+            <div className="w-28 h-28 bg-emerald-600 rounded-3xl flex items-center justify-center text-white text-4xl font-bold shadow-xl shrink-0">
                {profile.fullName[0]}
             </div>
             <button className="absolute -bottom-2 -right-2 p-3 bg-white rounded-2xl shadow-xl border border-gray-100 text-emerald-600"><Camera className="w-4 h-4" /></button>
          </div>
          <div className="text-center md:text-left space-y-2">
-            <h4 className="text-2xl font-black text-gray-900 leading-tight">{profile.fullName}</h4>
+            <h4 className="text-2xl font-bold text-gray-900 leading-tight">{profile.fullName}</h4>
             <p className="text-sm text-gray-400 font-medium">Official Plant Partner of ForestGift</p>
             <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                <Badge className="bg-emerald-50 text-emerald-700 border-none font-bold text-[10px] uppercase">VERIFIED PARTNER</Badge>
@@ -101,10 +101,9 @@ const ProfileSection = ({ profile, setProfile }: any) => (
          <InputField label="Name" icon={User} defaultValue={profile.fullName} />
          <InputField label="Email" icon={Mail} defaultValue={profile.email} />
          <InputField label="Contact" icon={Phone} defaultValue={profile.phone} />
-         <InputField label="City/Region" icon={MapPin} defaultValue={profile.location} />
       </div>
 
-      <Button className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm tracking-widest gap-2">
+      <Button className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm tracking-widest gap-2">
          <CheckCircle className="w-5 h-5" /> UPDATE PROFILE
       </Button>
    </Card>
@@ -112,7 +111,7 @@ const ProfileSection = ({ profile, setProfile }: any) => (
 
 const NotificationsSection = () => (
    <Card className="p-8 border-none shadow-sm space-y-6">
-      <h3 className="text-xl font-black text-gray-900">Sync & Alerts</h3>
+      <h3 className="text-xl font-bold text-gray-900">Sync & Alerts</h3>
       <div className="space-y-6 divide-y divide-gray-50">
          <ToggleItem icon={TreePine} title="Impact Status" sub="Alerts when your trees sequester significant carbon" />
          <ToggleItem icon={Award} title="Ranking Alerts" sub="Notified when your global ranking increases" />
@@ -129,7 +128,7 @@ const SettingsBtn = ({ icon: Icon, label, active, variant, onClick }: any) => (
    }`}>
     <div className="flex items-center gap-3">
        <Icon className={`w-5 h-5 ${active ? "text-white" : "text-gray-400 group-hover:text-emerald-500"}`} />
-       <span className={`text-[11px] font-black uppercase tracking-widest transition-colors ${active ? "text-white" : ""}`}>{label}</span>
+       <span className={`text-[11px] font-bold uppercase tracking-widest transition-colors ${active ? "text-white" : ""}`}>{label}</span>
     </div>
     {active && <ChevronRight className="w-4 h-4 text-white/50" />}
   </button>
@@ -137,7 +136,7 @@ const SettingsBtn = ({ icon: Icon, label, active, variant, onClick }: any) => (
 
 const InputField = ({ label, icon: Icon, defaultValue }: any) => (
    <div className="space-y-2 group">
-      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">{label}</label>
+      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1">{label}</label>
       <div className="relative">
          <Icon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
          <input type="text" defaultValue={defaultValue} className="w-full h-12 pl-11 pr-4 rounded-xl border-2 border-gray-50 font-bold focus:border-emerald-500 bg-gray-50/30 outline-none text-gray-700" />

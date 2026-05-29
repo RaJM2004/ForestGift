@@ -73,7 +73,7 @@ export function MyTreesPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-           <h1 className="text-3xl font-black text-gray-900 tracking-tight">MY TREES</h1>
+           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">MY TREES</h1>
            <p className="text-sm text-gray-500 font-medium italic">Managing your {userTrees.length} personal environmental assets</p>
         </div>
         <div className="flex items-center gap-2">
@@ -99,7 +99,7 @@ export function MyTreesPage() {
       </div>
 
       {/* Stats Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <ImpactCard title="Active" icon={TreePine} value={userTrees.length} color="green" loading={isRefreshing && userTrees.length === 0} />
         <ImpactCard title="Thriving" icon={TrendingUp} value={userTrees.filter(t => (t.health || 0) >= 90).length} color="blue" loading={isRefreshing && userTrees.length === 0} />
         <ImpactCard title="Favorites" icon={Heart} value={userTrees.filter(t => t.favorite).length} color="red" loading={isRefreshing && userTrees.length === 0} />
@@ -124,7 +124,7 @@ export function MyTreesPage() {
                  variant="ghost"
                  size="sm"
                  onClick={() => setHealthStatus(status)}
-                 className={`rounded-lg px-4 h-8 font-black text-[9px] uppercase tracking-widest transition-all ${healthStatus === status ? 'bg-white shadow-sm text-emerald-600' : 'text-gray-400 opacity-60'}`}
+                 className={`rounded-lg px-4 h-8 font-bold text-[9px] uppercase tracking-widest transition-all ${healthStatus === status ? 'bg-white shadow-sm text-emerald-600' : 'text-gray-400 opacity-60'}`}
                >
                  {status}
                </Button>
@@ -134,11 +134,13 @@ export function MyTreesPage() {
 
       {/* Tabbed Navigation */}
       <Tabs defaultValue="all" className="space-y-6">
-        <TabsList className="bg-gray-100/50 p-1 rounded-xl">
-          <TabsTrigger value="all" className="rounded-lg font-bold text-xs uppercase tracking-widest px-6">All Forest ({filteredTrees.length})</TabsTrigger>
-          <TabsTrigger value="favorites" className="rounded-lg font-bold text-xs uppercase tracking-widest px-6">Favorites ({favorites.length})</TabsTrigger>
-          <TabsTrigger value="recent" className="rounded-lg font-bold text-xs uppercase tracking-widest px-6">Recent</TabsTrigger>
-        </TabsList>
+        <div className="w-full overflow-x-auto scrollbar-none pb-1">
+          <TabsList className="bg-gray-100/50 p-1 rounded-xl w-full justify-start sm:justify-center">
+            <TabsTrigger value="all" className="rounded-lg font-bold text-xs uppercase tracking-widest px-3 sm:px-6">All Forest ({filteredTrees.length})</TabsTrigger>
+            <TabsTrigger value="favorites" className="rounded-lg font-bold text-xs uppercase tracking-widest px-3 sm:px-6">Favorites ({favorites.length})</TabsTrigger>
+            <TabsTrigger value="recent" className="rounded-lg font-bold text-xs uppercase tracking-widest px-3 sm:px-6">Recent</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="all" className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
            {filteredTrees.map((tree, i) => <TreeCard key={tree._id} tree={tree} index={i} viewMode={viewMode} onToggle={() => toggleFavorite(tree._id, tree.proofs ? 'submission' : 'bulk')} onViewPhotos={openLightbox} />)}
@@ -196,7 +198,7 @@ const TreeCard = ({ tree, index, viewMode, onToggle, onViewPhotos }: any) => {
               </div>
             )}
             <div className="absolute top-3 inset-x-3 flex justify-between items-start">
-               <Badge className="bg-white/90 backdrop-blur text-emerald-700 font-black text-[9px] border-none uppercase">
+               <Badge className="bg-white/90 backdrop-blur text-emerald-700 font-bold text-[9px] border-none uppercase">
                  {health >= 90 ? "Thriving" : "Monitoring"}
                </Badge>
                <button onClick={onToggle} className="p-2 bg-white/90 backdrop-blur rounded-full shadow-md text-gray-300 hover:text-red-500 transition-all active:scale-90">
@@ -211,7 +213,7 @@ const TreeCard = ({ tree, index, viewMode, onToggle, onViewPhotos }: any) => {
             </div>
 
             <div className="space-y-2">
-               <div className="flex justify-between text-[10px] font-black text-gray-400 uppercase tracking-widest">
+               <div className="flex justify-between text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                   <span>Growth Health</span>
                   <span className="text-emerald-600">{health}%</span>
                </div>
@@ -229,7 +231,7 @@ const TreeCard = ({ tree, index, viewMode, onToggle, onViewPhotos }: any) => {
             </div>
 
             <div className="pt-2">
-               <Button className="w-full h-9 text-[10px] font-black uppercase tracking-widest bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-100" onClick={() => onViewPhotos(images)}>
+               <Button className="w-full h-9 text-[10px] font-bold uppercase tracking-widest bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-100" onClick={() => onViewPhotos(images)}>
                   View Photo Proof
                </Button>
             </div>
@@ -241,7 +243,7 @@ const TreeCard = ({ tree, index, viewMode, onToggle, onViewPhotos }: any) => {
 
 const InfoItem = ({ label, value }: any) => (
   <div>
-    <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-0.5">{label}</p>
+    <p className="text-[9px] font-bold text-gray-300 uppercase tracking-widest mb-0.5">{label}</p>
     <p className="text-xs font-bold text-gray-700">{value}</p>
   </div>
 );
@@ -253,7 +255,7 @@ const EmptyState = ({ message, onReset }: any) => (
      </div>
      <div className="space-y-1">
         <p className="text-sm text-gray-400 font-medium italic">{message || "No trees match these filters."}</p>
-        {onReset && <button onClick={onReset} className="text-[10px] font-black text-emerald-600 uppercase tracking-widest hover:underline">Clear all filters</button>}
+        {onReset && <button onClick={onReset} className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest hover:underline">Clear all filters</button>}
      </div>
   </div>
 );

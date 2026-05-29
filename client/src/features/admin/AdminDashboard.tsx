@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { DashboardLayout } from '../../shared/layouts/DashboardLayout';
+import { AdminDashboardLayout } from './layouts/AdminDashboardLayout';
 import { Badge, Icon, StatCard } from '../../shared/components/UI';
-import { fetchUsers, fetchNGOs, fetchActivities, createUser, assignNGO, createNGO, fetchCakeVendors, createCakeVendor, updateCakeStatus, fetchAllSubmissions, createCertificate, fetchCertificates, fetchAllBulkTreeEntries, deleteUser, updateUser, deleteNGO, updateAdminNGO, deleteCakeVendor, updateCakeVendor, fetchAdminSettings, updateAdminSettings, resendWelcomeEmail } from '../../api';
+import { fetchUsers, fetchNGOs, fetchActivities, createUser, assignNGO, createNGO, fetchCakeVendors, createCakeVendor, updateCakeStatus, fetchAllSubmissions, createCertificate, fetchCertificates, fetchAllBulkTreeEntries, deleteUser, updateUser, deleteNGO, updateAdminNGO, deleteCakeVendor, updateCakeVendor, fetchAdminSettings, updateAdminSettings, resendWelcomeEmail, fetchStories, createStory, deleteStory } from '../../api';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts';
@@ -62,6 +62,9 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
   const [cakeVendors, setCakeVendors] = useState<any[]>([]);
   const [treeEntries, setTreeEntries] = useState<any[]>([]);
   const [certificates, setCertificates] = useState<any[]>([]);
+  const [stories, setStories] = useState<any[]>([]);
+  const [showAddStoryModal, setShowAddStoryModal] = useState(false);
+  const [storyFormData, setStoryFormData] = useState({ title: '', content: '', imageUrl: '', linkUrl: '' });
   const [ngoFilter, setNgoFilter] = useState("All NGOs");
   const [userSearch, setUserSearch] = useState("");
   const [lastUpdated, setLastUpdated] = useState(new Date());
@@ -106,6 +109,11 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
   const [adminSettings, setAdminSettings] = useState<any>(null);
   const [localSettingsForm, setLocalSettingsForm] = useState<any>({ platformName: '', supportEmail: '', supportPhone: '', treeUnitPrice: 0, maintenanceMode: false });
   const [savingSettings, setSavingSettings] = useState(false);
+
+  // Reports & Analytics period filter states
+  const [filterType, setFilterType] = useState<"All Time" | "Yearly" | "Monthly">("All Time");
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
 
   // NGO Color Palette for map segregation
   const ngoColorMap = useMemo(() => {
@@ -167,15 +175,17 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
       fetchAllSubmissions(), 
       fetchAllBulkTreeEntries(), 
       fetchAdminSettings(),
-      fetchCertificates()
+      fetchCertificates(),
+      fetchStories()
     ])
-      .then(([u, n, a, cv, s, te, as, certs]) => {
+      .then(([u, n, a, cv, s, te, as, certs, st]) => {
         console.log("SYNC SUCCESS:", { 
           users: u?.length || 0, 
           ngos: n?.length || 0, 
           submissions: s?.length || 0,
           treeEntries: te?.length || 0,
-          certificates: certs?.length || 0
+          certificates: certs?.length || 0,
+          stories: st?.length || 0
         });
         
         setUsers(Array.isArray(u) ? u : []);
@@ -185,6 +195,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
         setSubmissions(Array.isArray(s) ? s : []);
         setTreeEntries(Array.isArray(te) ? te : []);
         setCertificates(Array.isArray(certs) ? certs : []);
+        setStories(Array.isArray(st) ? st : []);
         setLastUpdated(new Date());
 
         if (as && !adminSettings) {
@@ -430,6 +441,99 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
     }
   };
 
+  const downloadNetworkExcel = () => {
+    try {
+      const wb = XLSX.utils.book_new();
+
+      // 1. Dynamic Overview Data sheet
+      const activeNgosCount = ngos.length;
+      const activeVendorsCount = cakeVendors.length;
+      const activeUsersCount = users.length;
+      const totalFunding = users.reduce((sum, u) => sum + (u.amount || 0), 0);
+      const totalCakesDelivered = users.filter(u => u.cakeStatus === 'Delivered').length;
+      const totalCakePayouts = totalCakesDelivered * 220;
+
+      const overviewData = [
+        { "Metric Parameter": "Total Citizens (Users) Registered", "Value": activeUsersCount },
+        { "Metric Parameter": "Active Partner NGOs", "Value": activeNgosCount },
+        { "Metric Parameter": "Registered Cake Vendors", "Value": activeVendorsCount },
+        { "Metric Parameter": "Total Citizen Funding Received (₹)", "Value": totalFunding },
+        { "Metric Parameter": "Successfully Delivered Cakes", "Value": totalCakesDelivered },
+        { "Metric Parameter": "Total Cake Vendor Payouts Paid (₹220/cake)", "Value": totalCakePayouts },
+        { "Metric Parameter": "Report Export Date", "Value": new Date().toLocaleString() }
+      ];
+      const wsOverview = XLSX.utils.json_to_sheet(overviewData);
+      XLSX.utils.book_append_sheet(wb, wsOverview, "Ecosystem Summary");
+
+      // 2. Citizens Sheet
+      const citizensData = enrichedUsers.map(u => ({
+        "Citizen ID": u.id,
+        "Name": u.name,
+        "Email": u.email,
+        "Phone": u.phone || "N/A",
+        "Permanent Address": u.address || "N/A",
+        "DOB": u.dob || "N/A",
+        "Funding Amount (₹)": u.amount || 0,
+        "Trees Committed": u.trees || 0,
+        "NGO Assigned": u.ngo || "Not Assigned",
+        "Location/Zone": u.location || "N/A",
+        "Cake Delivery Status": u.cakeStatus || "Pending",
+        "Cake Vendor Name": getDisplayedCakeVendor(u, cakeVendors)?.name || "Regional State Bakers",
+        "Cake Vendor Payout (₹)": u.cakeStatus === 'Delivered' ? 220 : 0,
+        "Plantation Status": u.status || "Ordered",
+        "Created At": u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "N/A"
+      }));
+      const wsCitizens = XLSX.utils.json_to_sheet(citizensData);
+      XLSX.utils.book_append_sheet(wb, wsCitizens, "Citizens Registry");
+
+      // 3. NGOs Sheet
+      const ngosData = enrichedNgos.map(n => ({
+        "NGO ID": n.id,
+        "NGO Name": n.name,
+        "Registration Number": n.reg || "N/A",
+        "Operating Area/Zone": n.area || "N/A",
+        "Contact Person": n.contact || "N/A",
+        "Email": n.email || "N/A",
+        "Phone": n.phone || "N/A",
+        "Assigned Capacity": n.assigned || 0,
+        "Completed Plants": n.completed || 0,
+        "Pending Plants": n.pending || 0,
+        "NGO Performance Rating": n.rating || 0
+      }));
+      const wsNGOs = XLSX.utils.json_to_sheet(ngosData);
+      XLSX.utils.book_append_sheet(wb, wsNGOs, "NGO Partners");
+
+      // 4. Cake Vendors Sheet
+      const vendorsData = cakeVendors.map(v => ({
+        "Vendor ID": v.id,
+        "Vendor Name": v.name,
+        "Service Area": v.area || "N/A",
+        "Unit Cake Cost (₹)": v.costPerCake || 0,
+        "Contact Email": v.email || "N/A",
+        "Contact Phone": v.phone || "N/A",
+        "Cake Rate Paid by Platform (₹)": 220
+      }));
+      const wsVendors = XLSX.utils.json_to_sheet(vendorsData);
+      XLSX.utils.book_append_sheet(wb, wsVendors, "Cake Vendors");
+
+      // 5. System Activities Sheet
+      const activitiesData = activities.map(a => ({
+        "Timestamp": a.time || "N/A",
+        "Type": a.type || "N/A",
+        "Activity Log Description": a.msg || "N/A",
+        "Triggered By": "System Admin"
+      }));
+      const wsActivities = XLSX.utils.json_to_sheet(activitiesData);
+      XLSX.utils.book_append_sheet(wb, wsActivities, "System Activities");
+
+      XLSX.writeFile(wb, "ForestGift_Realtime_Ecosystem_Report.xlsx");
+      toast.success("Ecosystem Master Report exported successfully!");
+    } catch (e: any) {
+      console.error("Excel Export Error:", e);
+      toast.error("Failed to export Excel report: " + (e.message || e));
+    }
+  };
+
   const navItems = [
     { label: "Dashboard Overview", icon: "dashboard" },
     { label: "User Management", icon: "users" },
@@ -437,6 +541,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
     { label: "Cake Management", icon: "cake" },
     { label: "Tree Map", icon: "map" },
     { label: "Reports & Analytics", icon: "reports" },
+    { label: "Stories Management", icon: "reports" },
     { label: "Role Management", icon: "roles" },
     { label: "Settings", icon: "settings" },
   ];
@@ -444,7 +549,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
   const unassignedUsers = users.filter(u => u.ngo === 'Not Assigned');
 
   return (
-    <DashboardLayout 
+    <AdminDashboardLayout 
       title="FORESTGIFT" 
       navItems={navItems} 
       activeSection={activeSection} 
@@ -459,26 +564,26 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
         
         return (
           <div className="space-y-6">
-            <div className="flex justify-between items-center bg-white/50 backdrop-blur-sm p-4 rounded-2xl border border-gray-100 shadow-sm">
+            <div className="flex justify-between items-center bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-zinc-200/60 shadow-sm">
               <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Real-time Data Active</span>
+                <div className="w-2 h-2 rounded-full bg-black animate-pulse" />
+                <span className="text-xs font-semibold text-zinc-500 tracking-wide">Real-time Data Active</span>
               </div>
-              <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+              <div className="text-xs font-semibold text-zinc-500 tracking-wide">
                 Last Sync: {lastUpdated.toLocaleTimeString()}
               </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <StatCard label="Total Citizens" value={enrichedUsers.length} icon="users" colorClass="bg-gray-100 text-black border border-gray-200" trend="+12.4%" />
-              <StatCard label="Registered NGOs" value={enrichedNgos.length} icon="ngo" colorClass="bg-gray-100 text-black border border-gray-200" />
-              <StatCard label="Trees Planted" value={totalTreesPlanted.toLocaleString()} icon="tree" colorClass="bg-gray-100 text-black border border-gray-200" trend="+4.2%" />
-              <StatCard label="Total Impact (₹)" value={`₹${totalContributed.toLocaleString()}`} icon="finance" colorClass="bg-gray-100 text-black border border-gray-200" />
+              <StatCard label="Total Citizens" value={enrichedUsers.length} icon="users" colorClass="bg-gray-100 text-black border border-gray-200" trend="+12.4%" onClick={() => setActiveSection("User Management")} />
+              <StatCard label="Registered NGOs" value={enrichedNgos.length} icon="ngo" colorClass="bg-gray-100 text-black border border-gray-200" onClick={() => setActiveSection("NGO Management")} />
+              <StatCard label="Trees Planted" value={totalTreesPlanted.toLocaleString()} icon="tree" colorClass="bg-gray-100 text-black border border-gray-200" trend="+4.2%" onClick={() => setActiveSection("Tree Map")} />
+              <StatCard label="Total Impact (₹)" value={`₹${totalContributed.toLocaleString()}`} icon="finance" colorClass="bg-gray-100 text-black border border-gray-200" onClick={() => setActiveSection("Reports & Analytics")} />
             </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                <h3 className="font-black text-gray-900 mb-6">NGO Delivery Performance</h3>
+              <div className="bg-white rounded-2xl p-6 border border-zinc-200/60 shadow-sm">
+                <h3 className="font-bold text-zinc-900 mb-6">NGO Delivery Performance</h3>
                 <div className="space-y-5">
                   {enrichedNgos.map(n => {
                     const progress = n.assigned > 0 ? Math.round((n.completed / n.assigned) * 100) : 0;
@@ -486,12 +591,12 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                       <div key={n.id} className="group">
                         <div className="flex justify-between items-end mb-1.5 p-1">
                           <div>
-                            <span className="text-sm font-black text-black group-hover:text-gray-700 transition-colors uppercase tracking-widest">{n.name}</span>
+                            <span className="text-sm font-semibold text-zinc-900 group-hover:text-gray-700 transition-colors uppercase tracking-widest">{n.name}</span>
                             <span className="text-[9px] text-gray-400 ml-2 font-bold">{n.area}</span>
                           </div>
                           <div className="text-right">
-                            <span className="text-sm font-black text-black">{n.completed}/{n.assigned}</span>
-                            <span className="text-[9px] text-emerald-500 ml-2 font-black">+{progress}%</span>
+                            <span className="text-sm font-semibold text-zinc-900">{n.completed}/{n.assigned}</span>
+                            <span className="text-[9px] text-black bg-zinc-100 px-1.5 py-0.5 rounded ml-2 font-black">+{progress}%</span>
                           </div>
                         </div>
                         <div className="h-2 w-full bg-gray-50 rounded-full border border-gray-100 overflow-hidden shadow-inner">
@@ -524,7 +629,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gray-400 opacity-75"></span>
                        <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
                      </span>
-                     <span className="text-[10px] font-black tracking-widest uppercase text-gray-400">Live</span>
+                     <span className="text-[10px] font-semibold tracking-wide text-gray-400">Live</span>
                    </div>
                  </h3>
                  <div className="space-y-4 overflow-y-auto pr-2 no-scrollbar flex-1 relative z-10">
@@ -535,7 +640,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                          </div>
                          <div className="flex-1 min-w-0">
                            <p className="text-sm font-medium text-gray-400 leading-snug group-hover:text-white transition-colors">{a.msg}</p>
-                           <div className="text-[10px] text-gray-600 mt-1.5 font-black uppercase tracking-widest">{a.time} • System Admin</div>
+                           <div className="text-[10px] text-gray-600 mt-1.5 font-semibold tracking-wide">{a.time} • System Admin</div>
                          </div>
                       </div>
                     ))}
@@ -556,7 +661,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
               <div className="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex items-center justify-between hover:border-black transition-colors">
                 <div>
                   <div className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mb-1">Total Network</div>
-                  <div className="text-2xl font-black text-black">{enrichedUsers.length} <span className="text-xs text-gray-400 font-bold ml-1">Citizens</span></div>
+                  <div className="text-3xl font-bold text-zinc-950">{enrichedUsers.length} <span className="text-xs text-gray-400 font-bold ml-1">Citizens</span></div>
                 </div>
                 <div className="w-12 h-12 rounded-2xl bg-gray-100 text-black border border-gray-200 flex items-center justify-center">
                   <Icon name="users" size={20} />
@@ -565,7 +670,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
               <div className="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex items-center justify-between hover:border-black transition-colors">
                 <div>
                   <div className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mb-1">NGO Assigned</div>
-                  <div className="text-2xl font-black text-black">{assignedUsers}</div>
+                  <div className="text-3xl font-bold text-zinc-950">{assignedUsers}</div>
                 </div>
                 <div className="w-12 h-12 rounded-2xl bg-gray-100 text-black border border-gray-200 flex items-center justify-center">
                   <Icon name="ngo" size={20} />
@@ -574,7 +679,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
               <div className="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex items-center justify-between hover:border-black transition-colors">
                 <div>
                   <div className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mb-1">Unassigned Queue</div>
-                  <div className="text-2xl font-black text-black">{enrichedUsers.length - assignedUsers}</div>
+                  <div className="text-3xl font-bold text-zinc-950">{enrichedUsers.length - assignedUsers}</div>
                 </div>
                 <div className="w-12 h-12 rounded-2xl bg-gray-100 text-black border border-gray-200 flex items-center justify-center">
                   <Icon name="calendar" size={20} />
@@ -583,7 +688,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
               <div className="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex items-center justify-between hover:border-black transition-colors">
                 <div>
                   <div className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mb-1">Citizen Funding</div>
-                  <div className="text-2xl font-black text-black">₹{totalAmount.toLocaleString()}</div>
+                  <div className="text-3xl font-bold text-zinc-950">₹{totalAmount.toLocaleString()}</div>
                 </div>
                 <div className="w-12 h-12 rounded-2xl bg-gray-100 text-black border border-gray-200 flex items-center justify-center">
                   <Icon name="finance" size={20} />
@@ -593,7 +698,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
 
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-4 rounded-3xl border border-gray-100 shadow-sm gap-4">
               <div className="pl-2">
-                <h2 className="text-xl font-black text-gray-900">Citizen Directory</h2>
+                <h2 className="text-xl font-bold text-zinc-900">Citizen Directory</h2>
                 <p className="text-xs text-gray-400 font-medium italic">Managing {enrichedUsers.length} active contributors</p>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
@@ -605,7 +710,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                 </div>
                 <button 
                   onClick={() => setShowAddModal(true)}
-                  className="bg-black text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-gray-900 transition-all shadow-sm w-full sm:w-auto shrink-0"
+                  className="bg-black text-white px-5 py-2.5 rounded-xl text-xs font-semibold tracking-wide flex items-center justify-center gap-2 hover:bg-gray-900 transition-all shadow-sm w-full sm:w-auto shrink-0"
                 >
                   <Icon name="plus" size={14} /> Add New Citizen
                 </button>
@@ -617,12 +722,12 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                 <table className="w-full text-left">
                   <thead>
                     <tr className="bg-gray-50/80 border-b border-gray-100">
-                      <th className="px-6 py-4 pl-8 text-[10px] font-black text-gray-400 uppercase tracking-widest">Citizen Details</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Digital Token</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Contribution</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">NGO Assignment</th>
-                      <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Email Status</th>
-                      <th className="px-6 py-4 pr-8 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Progress Status</th>
+                      <th className="px-6 py-4 pl-8 text-xs font-semibold text-zinc-500 tracking-wide">Citizen Details</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-zinc-500 tracking-wide">Digital Token</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-zinc-500 tracking-wide">Contribution</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-zinc-500 tracking-wide">NGO Assignment</th>
+                      <th className="px-6 py-4 text-xs font-semibold text-zinc-500 tracking-wide">Email Status</th>
+                      <th className="px-6 py-4 pr-8 text-xs font-semibold text-zinc-500 tracking-wide text-right">Progress Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
@@ -630,24 +735,24 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                       return (
                         <tr key={u.id} className="text-sm hover:bg-gray-50/80 transition-colors group">
                           <td className="px-6 py-4 pl-8">
-                            <div className="font-black text-black border-l-2 border-transparent group-hover:border-black pl-2 -ml-2 transition-all">{u.name}</div>
+                            <div className="font-semibold text-zinc-900 border-l-2 border-transparent group-hover:border-black pl-2 -ml-2 transition-all">{u.name}</div>
                             <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">{u.id} • {u.location || 'HQ'}</div>
                           </td>
                           <td className="px-6 py-4 font-mono text-gray-500 font-extrabold tracking-tighter text-xs">{u.token}</td>
                           <td className="px-6 py-4">
-                            <div className="font-black text-black">₹{u.amount.toLocaleString()}</div>
+                            <div className="font-semibold text-zinc-900">₹{u.amount.toLocaleString()}</div>
                             <div className="text-[10px] text-gray-400 font-bold uppercase">{u.trees} {u.trees === 1 ? 'Tree' : 'Trees'}</div>
                           </td>
                           <td className="px-6 py-4">
-                            <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border ${u.ngo === 'Not Assigned' ? 'bg-gray-50 text-gray-500 border-gray-200' : 'bg-black text-white border-black'}`}>
+                            <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-500 tracking-wide border ${u.ngo === 'Not Assigned' ? 'bg-gray-50 text-gray-500 border-gray-200' : 'bg-black text-white border-black'}`}>
                                {u.ngo === 'Not Assigned' ? <Icon name="activity" size={12} /> : <Icon name="check" size={12} />}
                                {u.ngo}
                             </div>
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-2">
-                              <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${u.welcomeEmailSent ? 'text-emerald-500' : 'text-gray-400'}`}>
-                                <div className={`w-1.5 h-1.5 rounded-full ${u.welcomeEmailSent ? 'bg-emerald-500' : 'bg-gray-300'}`}></div>
+                              <div className={`flex items-center gap-2 text-xs font-semibold text-zinc-500 tracking-wide ${u.welcomeEmailSent ? 'text-black' : 'text-gray-400'}`}>
+                                <div className={`w-1.5 h-1.5 rounded-full ${u.welcomeEmailSent ? 'bg-black' : 'bg-gray-300'}`}></div>
                                 {u.welcomeEmailSent ? 'Delivered' : 'Not Sent'}
                               </div>
                               {!u.welcomeEmailSent && (
@@ -711,7 +816,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                                       toast.error("Error: No plantation submission found for this user. The certificate cannot be verified without proof-of-plantation data.");
                                     }
                                   }}
-                                  className="p-2 hover:bg-emerald-50 text-emerald-600 rounded-lg transition-colors group/cert"
+                                  className="p-2 hover:bg-zinc-100 text-black rounded-lg transition-colors group/cert"
                                   title="View Certificate"
                                 >
                                   <Icon name="reports" size={16} />
@@ -751,7 +856,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
               <div className="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex items-center justify-between hover:border-black transition-colors">
                 <div>
                   <div className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mb-1">Active Partners</div>
-                  <div className="text-2xl font-black text-black">{totalNgos} <span className="text-xs text-gray-400 font-bold ml-1">NGOs</span></div>
+                  <div className="text-3xl font-bold text-zinc-950">{totalNgos} <span className="text-xs text-gray-400 font-bold ml-1">NGOs</span></div>
                 </div>
                 <div className="w-12 h-12 rounded-2xl bg-gray-100 text-black border border-gray-200 flex items-center justify-center">
                   <Icon name="ngo" size={20} />
@@ -760,7 +865,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
               <div className="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex items-center justify-between hover:border-black transition-colors">
                 <div>
                   <div className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mb-1">Total Planted</div>
-                  <div className="text-2xl font-black text-black">{totalPlanted.toLocaleString()}</div>
+                  <div className="text-3xl font-bold text-zinc-950">{totalPlanted.toLocaleString()}</div>
                 </div>
                 <div className="w-12 h-12 rounded-2xl bg-gray-100 text-black border border-gray-200 flex items-center justify-center">
                   <Icon name="tree" size={20} />
@@ -769,7 +874,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
               <div className="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex items-center justify-between hover:border-black transition-colors">
                 <div>
                   <div className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mb-1">Goal Capacity</div>
-                  <div className="text-2xl font-black text-black">{totalCapacity.toLocaleString()}</div>
+                  <div className="text-3xl font-bold text-zinc-950">{totalCapacity.toLocaleString()}</div>
                 </div>
                 <div className="w-12 h-12 rounded-2xl bg-gray-100 text-black border border-gray-200 flex items-center justify-center">
                   <Icon name="activity" size={20} />
@@ -778,7 +883,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
               <div className="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex items-center justify-between hover:border-black transition-colors">
                 <div>
                   <div className="text-[10px] text-gray-400 font-extrabold uppercase tracking-widest mb-1">Average Rating</div>
-                  <div className="text-2xl font-black text-black">★ {avgRating}</div>
+                  <div className="text-3xl font-bold text-zinc-950">★ {avgRating}</div>
                 </div>
                 <div className="w-12 h-12 rounded-2xl bg-gray-100 text-black border border-gray-200 flex items-center justify-center">
                   <Icon name="star" size={20} />
@@ -788,13 +893,13 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
 
             <div className="flex justify-between items-center bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
               <div className="pl-2">
-                <h2 className="text-xl font-black text-gray-900">NGO Management</h2>
+                <h2 className="text-xl font-bold text-zinc-900">NGO Management</h2>
                 <p className="text-xs text-gray-400 font-medium italic">Partnering with {enrichedNgos.length} environmental organizations</p>
               </div>
               <div className="flex gap-3">
                 <button 
                   onClick={() => setShowAddNgoModal(true)}
-                  className="bg-black text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:bg-gray-900 transition-all shadow-sm"
+                  className="bg-black text-white px-5 py-2.5 rounded-xl text-xs font-semibold tracking-wide flex items-center gap-2 hover:bg-gray-900 transition-all shadow-sm"
                 >
                   <Icon name="plus" size={14} /> Register New NGO
                 </button>
@@ -804,7 +909,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 space-y-6">
                 <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-                  <h3 className="text-lg font-black text-gray-900 mb-6 flex items-center gap-2">
+                  <h3 className="text-lg font-bold text-zinc-900 mb-6 flex items-center gap-2">
                     <Icon name="map" size={18} className="text-black" />
                     Registered NGO Partners
                   </h3>
@@ -815,7 +920,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                         <div key={n.id} className="bg-gray-50 border border-gray-200 p-5 rounded-2xl space-y-4 hover:border-black transition-colors group">
                           <div className="flex justify-between items-start">
                             <div>
-                              <div className="text-sm font-black text-black group-hover:text-gray-700 transition-colors">{n.name}</div>
+                              <div className="text-sm font-semibold text-zinc-900 group-hover:text-gray-700 transition-colors">{n.name}</div>
                               <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{n.area}</div>
                             </div>
                             <div className="bg-gray-200 text-black text-[10px] font-black px-2 py-1.5 rounded-lg flex items-center gap-1 border border-gray-300">
@@ -825,7 +930,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                           
                           {/* Progress Bar */}
                           <div className="space-y-1">
-                            <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-gray-500">
+                            <div className="flex justify-between text-xs font-semibold text-zinc-500 tracking-wide text-gray-500">
                               <span>Progress</span>
                               <span className="text-black">{Math.round(completedPercent)}%</span>
                             </div>
@@ -836,16 +941,16 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
 
                           <div className="grid grid-cols-3 gap-2 text-center pt-2">
                             <div className="bg-white p-2.5 rounded-xl border border-gray-200 shadow-sm">
-                              <div className="text-sm font-black text-black">{n.completed}</div>
-                              <div className="text-[8px] text-gray-500 font-black uppercase tracking-widest mt-0.5">Planted</div>
+                              <div className="text-sm font-semibold text-zinc-900">{n.completed}</div>
+                              <div className="text-[10px] text-zinc-400 font-semibold tracking-wide mt-0.5">Planted</div>
                             </div>
                             <div className="bg-white p-2.5 rounded-xl border border-gray-200 shadow-sm">
                               <div className="text-sm font-black text-gray-600">{n.pending}</div>
-                              <div className="text-[8px] text-gray-500 font-black uppercase tracking-widest mt-0.5">Pending</div>
+                              <div className="text-[10px] text-zinc-400 font-semibold tracking-wide mt-0.5">Pending</div>
                             </div>
                             <div className="bg-white p-2.5 rounded-xl border border-gray-200 shadow-sm">
                               <div className="text-sm font-black text-gray-400">{n.assigned}</div>
-                              <div className="text-[8px] text-gray-500 font-black uppercase tracking-widest mt-0.5">Goal</div>
+                              <div className="text-[10px] text-zinc-400 font-semibold tracking-wide mt-0.5">Goal</div>
                             </div>
                           </div>
                         </div>
@@ -859,11 +964,11 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                 <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm h-full max-h-[700px] flex flex-col">
                   <div className="flex justify-between items-start mb-6 border-b border-gray-100 pb-4">
                     <div>
-                      <h3 className="text-lg font-black text-gray-900 flex items-center gap-2">
+                      <h3 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
                         <Icon name="users" size={18} className="text-gray-400" />
                         Assign Orders
                       </h3>
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Pending Citizen Trees</p>
+                      <p className="text-xs font-semibold text-zinc-500 tracking-wide mt-1">Pending Citizen Trees</p>
                     </div>
                     <div className="bg-gray-100 text-black text-[10px] font-black px-2.5 py-1 rounded-lg border border-gray-200">
                       {enrichedUsers.filter(u => u.ngo === 'Not Assigned').length} Queue
@@ -877,13 +982,13 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                           <Icon name="check" size={24} />
                         </div>
                         <h4 className="text-gray-900 font-black">All Caught Up!</h4>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">No pending citizen orders</p>
+                        <p className="text-xs font-semibold text-zinc-500 tracking-wide mt-1">No pending citizen orders</p>
                       </div>
                     ) : (
                       enrichedUsers.filter(u => u.ngo === 'Not Assigned').map(u => (
                         <div key={u.id} className="bg-gray-50 border border-gray-200 p-4 rounded-2xl flex items-center justify-between group hover:border-black transition-colors">
                           <div>
-                            <div className="text-sm font-black text-gray-900 group-hover:text-black transition-colors">{u.name}</div>
+                            <div className="text-sm font-bold text-zinc-900 group-hover:text-black transition-colors">{u.name}</div>
                             <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">{u.location} • {u.trees} {u.trees === 1 ? 'Tree' : 'Trees'}</div>
                           </div>
                           <button 
@@ -910,29 +1015,29 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <StatCard label="Total Cake Commitments" value={enrichedUsers.length} icon="cake" colorClass="bg-gray-100 text-black" />
               <StatCard label="Successfully Delivered" value={deliveredCakes} icon="check" colorClass="bg-gray-100 text-black" />
-              <StatCard label="Pending Orders" value={enrichedUsers.length - deliveredCakes} icon="calendar" colorClass="bg-gray-100 text-black text-rose-600" />
+              <StatCard label="Pending Orders" value={enrichedUsers.length - deliveredCakes} icon="calendar" colorClass="bg-gray-100 text-black" />
             </div>
 
-            <div className="flex justify-between items-center bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+            <div className="flex justify-between items-center bg-white p-6 rounded-3xl border border-zinc-200/60 shadow-sm">
               <div>
-                <h3 className="text-xl font-black text-black uppercase tracking-tight">Cake Delivery Registry</h3>
+                <h3 className="text-xl font-bold text-zinc-900">Cake Delivery Registry</h3>
                 <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1 italic">Tracking celebratory deliveries by region</p>
               </div>
-              <button onClick={() => setShowAddVendorModal(true)} className="bg-black text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center gap-2 hover:bg-gray-900 transition-all shadow-xl">
+              <button onClick={() => setShowAddVendorModal(true)} className="bg-black text-white px-6 py-3 rounded-2xl text-xs font-semibold tracking-wide flex items-center gap-2 hover:bg-gray-900 transition-all shadow-xl">
                  <Icon name="plus" size={14} /> Add Delivery Vendor
               </button>
             </div>
 
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-3xl border border-zinc-200/60 shadow-sm overflow-hidden">
                <div className="overflow-x-auto">
                  <table className="w-full text-left">
                    <thead>
                      <tr className="bg-gray-50 border-b border-gray-100">
-                       <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Citizen Account</th>
-                       <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Target Location</th>
-                       <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Assigned Delivery Vendor</th>
-                       <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status Tracking</th>
-                       <th className="px-6 py-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Action</th>
+                       <th className="px-6 py-4 text-xs font-semibold text-zinc-500 tracking-wide">Citizen Account</th>
+                       <th className="px-6 py-4 text-xs font-semibold text-zinc-500 tracking-wide">Target Location</th>
+                       <th className="px-6 py-4 text-xs font-semibold text-zinc-500 tracking-wide">Assigned Delivery Vendor</th>
+                       <th className="px-6 py-4 text-xs font-semibold text-zinc-500 tracking-wide">Status Tracking</th>
+                       <th className="px-6 py-4 text-right text-xs font-semibold text-zinc-500 tracking-wide">Action</th>
                      </tr>
                    </thead>
                    <tbody className="divide-y divide-gray-100">
@@ -941,16 +1046,16 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                        return (
                          <tr key={u.id} className="text-sm hover:bg-gray-50/50 transition-colors group">
                            <td className="px-6 py-4">
-                             <div className="font-black text-black group-hover:text-gray-700 transition-colors uppercase tracking-tight">{u.name}</div>
+                             <div className="font-semibold text-zinc-900 group-hover:text-gray-700 transition-colors uppercase tracking-tight">{u.name}</div>
                              <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{u.phone}</div>
                            </td>
                            <td className="px-6 py-4 text-[11px] font-black text-gray-500 uppercase tracking-widest italic">{u.location || 'Satellite Area'}</td>
                            <td className="px-6 py-4">
-                             <div className="font-black text-black uppercase text-xs">{v.name}</div>
-                             <div className="text-[10px] text-emerald-600 font-black uppercase tracking-widest">₹{v.costPerCake} Unit Cost</div>
+                             <div className="font-semibold text-zinc-900 uppercase text-xs">{v.name}</div>
+                             <div className="text-[10px] text-zinc-500 font-semibold tracking-wide">₹{v.costPerCake} Unit Cost</div>
                            </td>
                            <td className="px-6 py-4">
-                              <span className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border ${u.cakeStatus === 'Delivered' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>
+                              <span className={`px-3 py-1.5 rounded-xl text-xs font-semibold text-zinc-500 tracking-wide border ${u.cakeStatus === 'Delivered' ? 'bg-zinc-100 text-black border-zinc-200' : 'bg-zinc-50 text-zinc-400 border-zinc-200'}`}>
                                 {u.cakeStatus || 'Pending'}
                               </span>
                            </td>
@@ -958,7 +1063,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                              {u.cakeStatus !== 'Delivered' && (
                                <button 
                                  onClick={() => handleMarkDelivered(u.id)}
-                                 className="text-black hover:text-emerald-600 font-black text-[10px] uppercase tracking-widest flex items-center gap-1 ml-auto group/btn transition-all"
+                                 className="text-black hover:opacity-75 font-black text-[10px] uppercase tracking-widest flex items-center gap-1 ml-auto group/btn transition-all"
                                >
                                  Mark Delivered <Icon name="check" size={12} className="group-hover/btn:scale-125 transition-transform" />
                                </button>
@@ -987,8 +1092,8 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                 <Icon name="map" size={20} />
               </div>
               <div>
-                <h3 className="text-lg font-black text-black uppercase tracking-tighter">Planetary Reforestation Grid</h3>
-                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Real-time visualization of global plantation impact</p>
+                <h3 className="text-lg font-semibold text-zinc-900 uppercase tracking-tighter">Planetary Reforestation Grid</h3>
+                <p className="text-[10px] text-gray-400 font-semibold tracking-wide">Real-time visualization of global plantation impact</p>
               </div>
             </div>
             <div className="flex gap-4 items-center">
@@ -1061,13 +1166,13 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                       >
                         <Popup className="font-sans">
                           <div className="p-1 min-w-[180px]">
-                            <div className="text-center font-black text-gray-900 border-b border-gray-100 pb-2 mb-2 flex flex-col gap-0.5">
+                            <div className="text-center font-bold text-zinc-900 border-b border-gray-100 pb-2 mb-2 flex flex-col gap-0.5">
                               <span className="text-xs uppercase tracking-tighter text-gray-400">Contributor</span>
                               <span className="text-sm">{user?.name || s.orderId || s.userId || 'Authorized Citizen'}</span>
                             </div>
                             <div className="space-y-1.5">
                               <div className="flex justify-between items-center text-xs">
-                                <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest">User Name</span>
+                                <span className="text-[9px] text-gray-400 font-semibold tracking-wide">User Name</span>
                                 <span className="text-[10px] text-black font-black uppercase text-right">
                                   {user?.name || s.orderId || s.userId || 'Authorized Citizen'}
                                 </span>
@@ -1079,12 +1184,12 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                               <div className="pt-2 mt-1 border-t border-gray-50">
                                 <div className="flex items-center gap-2">
                                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: markerColor }}></div>
-                                  <span className="text-[10px] text-gray-900 font-black uppercase tracking-tight">{ngo?.name || s.ngoId}</span>
+                                  <span className="text-[10px] text-gray-900 font-semibold tracking-wide">{ngo?.name || s.ngoId}</span>
                                 </div>
                               </div>
                             </div>
                             {s.fileNames && s.fileNames.length > 0 && (
-                              <div className="mt-3 text-[9px] bg-emerald-50 text-emerald-600 py-1.5 px-2 rounded-xl border border-emerald-100 flex items-center justify-center gap-1.5 font-black uppercase tracking-tight">
+                              <div className="mt-3 text-[9px] bg-zinc-100 text-black py-1.5 px-2 rounded-xl border border-zinc-200 flex items-center justify-center gap-1.5 font-semibold tracking-wide">
                                 <Icon name="check" size={10} /> Photo Evidence Verified
                               </div>
                             )}
@@ -1127,13 +1232,13 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                       >
                         <Popup className="font-sans">
                           <div className="p-1 min-w-[180px]">
-                            <div className="text-center font-black text-gray-900 border-b border-gray-100 pb-2 mb-2 flex flex-col gap-0.5">
+                            <div className="text-center font-bold text-zinc-900 border-b border-gray-100 pb-2 mb-2 flex flex-col gap-0.5">
                               <span className="text-xs uppercase tracking-tighter text-gray-400">Contributor</span>
                               <span className="text-sm">{user?.name || te.orderId || te.userId || 'Authorized Citizen'}</span>
                             </div>
                             <div className="space-y-1.5">
                               <div className="flex justify-between items-center text-xs">
-                                <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest">User Name</span>
+                                <span className="text-[9px] text-gray-400 font-semibold tracking-wide">User Name</span>
                                 <span className="text-[10px] text-black font-black uppercase text-right">
                                   {user?.name || te.orderId || te.userId || 'Authorized Citizen'}
                                 </span>
@@ -1145,12 +1250,12 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                               <div className="pt-2 mt-1 border-t border-gray-50">
                                 <div className="flex items-center gap-2">
                                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: markerColor }}></div>
-                                  <span className="text-[10px] text-gray-900 font-black uppercase tracking-tight">{ngo?.name || te.ngoId}</span>
+                                  <span className="text-[10px] text-gray-900 font-semibold tracking-wide">{ngo?.name || te.ngoId}</span>
                                 </div>
                               </div>
                             </div>
                             {te.fileNames && te.fileNames.length > 0 && (
-                              <div className="mt-3 text-[9px] bg-emerald-50 text-emerald-600 py-1.5 px-2 rounded-xl border border-emerald-100 flex items-center justify-center gap-1.5 font-black uppercase tracking-tight">
+                              <div className="mt-3 text-[9px] bg-zinc-100 text-black py-1.5 px-2 rounded-xl border border-zinc-200 flex items-center justify-center gap-1.5 font-semibold tracking-wide">
                                 <Icon name="check" size={10} /> Photo Evidence Verified
                               </div>
                             )}
@@ -1179,8 +1284,8 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
           <div className="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border border-white/20 flex flex-col max-h-[90vh]">
             <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
               <div>
-                <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Register New Citizen</h3>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Onboarding to the ForestGift Network</p>
+                <h3 className="text-2xl font-bold text-zinc-900 uppercase tracking-tight">Register New Citizen</h3>
+                <p className="text-xs font-semibold text-zinc-500 tracking-wide mt-1">Onboarding to the ForestGift Network</p>
               </div>
               <button 
                 onClick={() => { setShowAddModal(false); setBulkDataPreview(null); setBulkImportStatus(null); }}
@@ -1193,11 +1298,11 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
             <div className="overflow-y-auto no-scrollbar">
               {bulkImportStatus ? (
                 <div className="p-16 text-center animate-in fade-in zoom-in duration-500">
-                  <div className="w-24 h-24 bg-emerald-50 text-emerald-500 rounded-[32px] flex items-center justify-center mx-auto mb-6 border border-emerald-100 shadow-inner">
+                  <div className="w-24 h-24 bg-zinc-100 text-black rounded-[32px] flex items-center justify-center mx-auto mb-6 border border-zinc-200 shadow-inner">
                     <Icon name="check" size={48} />
                   </div>
-                  <h2 className="text-2xl font-black text-gray-900 mb-2 uppercase tracking-tight">Import Successful</h2>
-                  <p className="text-sm font-bold text-gray-500 mb-8 uppercase tracking-widest leading-relaxed">Successfully imported<br/><span className="text-emerald-600 font-black">{bulkImportStatus.success}</span> out of <span className="text-black font-black">{bulkImportStatus.total}</span> citizens into the network.</p>
+                  <h2 className="text-2xl font-bold text-zinc-900 mb-2 uppercase tracking-tight">Import Successful</h2>
+                  <p className="text-sm font-bold text-gray-500 mb-8 uppercase tracking-widest leading-relaxed">Successfully imported<br/><span className="text-black bg-zinc-100 px-1.5 py-0.5 rounded font-black">{bulkImportStatus.success}</span> out of <span className="text-black font-black">{bulkImportStatus.total}</span> citizens into the network.</p>
                   <button onClick={() => { setShowAddModal(false); setBulkDataPreview(null); setBulkImportStatus(null); }} className="bg-black text-white px-10 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] hover:bg-gray-900 transition-colors shadow-xl">
                     Close Registration
                   </button>
@@ -1205,13 +1310,13 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
               ) : bulkDataPreview ? (
                 <div className="p-8 flex flex-col gap-6 animate-in fade-in duration-300">
                   <div>
-                    <h4 className="text-xl font-black text-gray-900 uppercase tracking-tight">Review Data Before Processing</h4>
+                    <h4 className="text-xl font-bold text-zinc-900 uppercase tracking-tight">Review Data Before Processing</h4>
                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Please verify the <span className="text-black">{bulkDataPreview.length} records</span> extracted from the uploaded sheet.</p>
                   </div>
                   <div className="border border-gray-100 rounded-3xl overflow-hidden max-h-72 overflow-y-auto shadow-inner bg-gray-50">
                     <table className="w-full text-left">
                       <thead>
-                        <tr className="bg-white text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 sticky top-0 shadow-sm">
+                        <tr className="bg-white text-xs font-semibold text-zinc-500 tracking-wide border-b border-gray-100 sticky top-0 shadow-sm">
                           <th className="px-5 py-4">Citizen Name</th>
                           <th className="px-5 py-4">Contact Email</th>
                           <th className="px-5 py-4">Target Zone</th>
@@ -1223,8 +1328,8 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                           <tr key={i} className="hover:bg-gray-50 transition-colors">
                             <td className="px-5 py-3 text-black font-black">{row.name}</td>
                             <td className="px-5 py-3 text-xs">{row.email}</td>
-                            <td className="px-5 py-3 text-[11px] font-black uppercase tracking-widest text-gray-500">{row.location}</td>
-                            <td className="px-5 py-3 text-emerald-600 font-black text-right">{row.trees}</td>
+                            <td className="px-5 py-3 text-[11px] font-semibold tracking-wide text-gray-500">{row.location}</td>
+                            <td className="px-5 py-3 text-black font-black text-right">{row.trees}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -1234,7 +1339,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                     <button onClick={() => setBulkDataPreview(null)} disabled={loading} className="flex-1 bg-gray-100 text-gray-600 py-4 rounded-[20px] text-[10px] font-black uppercase tracking-[0.2em] hover:bg-gray-200 transition-colors">
                       Cancel Import
                     </button>
-                    <button onClick={confirmBulkImport} disabled={loading} className="flex-[2] bg-emerald-600 text-white py-4 rounded-[20px] text-[10px] font-black uppercase tracking-[0.2em] hover:bg-emerald-700 transition-colors shadow-xl disabled:opacity-50">
+                    <button onClick={confirmBulkImport} disabled={loading} className="flex-[2] bg-black text-white py-4 rounded-[20px] text-[10px] font-black uppercase tracking-[0.2em] hover:bg-zinc-800 transition-colors shadow-xl disabled:opacity-50">
                       {loading ? 'Processing Batch...' : `Confirm & Import ${bulkDataPreview.length} Citizens`}
                     </button>
                   </div>
@@ -1242,14 +1347,14 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
               ) : (
                 <>
                   <div className="p-8 pb-0 flex flex-col gap-4 border-b border-gray-50">
-                    <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between gap-4">
+                    <div className="bg-zinc-50 border border-zinc-200/60 rounded-2xl p-4 flex items-center justify-between gap-4">
                       <div>
-                        <h4 className="text-sm font-black text-emerald-900 uppercase tracking-widest">Bulk Import Citizens</h4>
-                        <p className="text-[10px] text-emerald-600 font-bold leading-tight mt-1">Upload an Excel (.xlsx) or CSV file with headers: Name, Email, Phone, Address, DOB, Amount, Location.</p>
+                        <h4 className="text-sm font-semibold text-zinc-900 uppercase tracking-widest">Bulk Import Citizens</h4>
+                        <p className="text-[10px] text-zinc-500 font-bold leading-tight mt-1">Upload an Excel (.xlsx) or CSV file with headers: Name, Email, Phone, Address, DOB, Amount, Location.</p>
                       </div>
                       <div>
                         <input type="file" id="bulk-upload" accept=".xlsx, .xls, .csv" className="hidden" onChange={handleBulkUpload} disabled={loading} />
-                        <label htmlFor="bulk-upload" className="cursor-pointer bg-emerald-600 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-colors shadow-sm inline-block whitespace-nowrap">
+                        <label htmlFor="bulk-upload" className="cursor-pointer bg-black text-white px-5 py-2.5 rounded-xl text-xs font-semibold text-zinc-500 tracking-wide hover:bg-zinc-800 transition-colors shadow-sm inline-block whitespace-nowrap">
                            {loading ? 'Reading...' : 'Upload File'}
                         </label>
                       </div>
@@ -1263,42 +1368,42 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                   <form onSubmit={handleSubmit} className="p-8 pt-4 space-y-6">
                     <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Full Name</label>
+                        <label className="text-xs font-semibold text-zinc-600 mb-1.5 block">Full Name</label>
                         <input required className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black focus:bg-white focus:border-black outline-none transition-all shadow-inner" placeholder="e.g. Rahul Sharma" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Email Address</label>
+                        <label className="text-xs font-semibold text-zinc-600 mb-1.5 block">Email Address</label>
                         <input required type="email" className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black focus:bg-white focus:border-black outline-none transition-all shadow-inner" placeholder="rahul@domain.com" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-6">
                        <div className="space-y-2">
-                        <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Mobile Number</label>
+                        <label className="text-xs font-semibold text-zinc-600 mb-1.5 block">Mobile Number</label>
                         <input required className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black focus:bg-white focus:border-black outline-none transition-all shadow-inner" placeholder="+91 XXXXX XXXXX" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Date of Birth</label>
+                        <label className="text-xs font-semibold text-zinc-600 mb-1.5 block">Date of Birth</label>
                         <input required type="date" className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black focus:bg-white focus:border-black outline-none transition-all shadow-inner" value={formData.dob} onChange={e => setFormData({...formData, dob: e.target.value})} />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Permanent Address</label>
+                      <label className="text-xs font-semibold text-zinc-600 mb-1.5 block">Permanent Address</label>
                       <input required className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black focus:bg-white focus:border-black outline-none transition-all shadow-inner" placeholder="Full residential address..." value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
                     </div>
 
                     <div className="grid grid-cols-3 gap-6">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Contribution (₹)</label>
+                        <label className="text-xs font-semibold text-zinc-600 mb-1.5 block">Contribution (₹)</label>
                         <input required type="number" className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black focus:bg-white focus:border-black outline-none transition-all shadow-inner" value={formData.amount} onChange={e => setFormData({...formData, amount: parseInt(e.target.value), trees: Math.floor(parseInt(e.target.value)/1000) || 1})} />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Tree Count</label>
-                        <input readOnly className="w-full bg-gray-100 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black text-emerald-600 cursor-not-allowed" value={formData.trees} />
+                        <label className="text-xs font-semibold text-zinc-600 mb-1.5 block">Tree Count</label>
+                        <input readOnly className="w-full bg-zinc-100 border border-zinc-200 rounded-2xl px-5 py-4 text-sm font-semibold text-zinc-900 cursor-not-allowed" value={formData.trees} />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Plantation Zone</label>
+                        <label className="text-xs font-semibold text-zinc-600 mb-1.5 block">Plantation Zone</label>
                         <select className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-black focus:bg-white focus:border-black outline-none transition-all shadow-inner" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})}>
                           <option>Satellite Block A</option>
                           <option>Satellite Block B</option>
@@ -1326,7 +1431,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight">NGO Partner Registration</h3>
+              <h3 className="text-lg font-bold text-zinc-900 uppercase tracking-tight">NGO Partner Registration</h3>
               <button 
                 onClick={() => setShowAddNgoModal(false)}
                 className="p-2 hover:bg-white rounded-xl text-gray-400 hover:text-rose-500 transition-colors"
@@ -1379,7 +1484,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight">Cake Vendor Registration</h3>
+              <h3 className="text-lg font-bold text-zinc-900 uppercase tracking-tight">Cake Vendor Registration</h3>
               <button onClick={() => setShowAddVendorModal(false)} className="p-2 hover:bg-white rounded-xl text-gray-400 hover:text-rose-500 transition-colors">
                 <Icon name="x" size={20} />
               </button>
@@ -1425,7 +1530,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight">Assign Order</h3>
+              <h3 className="text-lg font-bold text-zinc-900 uppercase tracking-tight">Assign Order</h3>
               <button onClick={() => setShowAssignModal(false)} className="p-2 hover:bg-white rounded-xl text-gray-400 hover:text-rose-500 transition-colors">
                 <Icon name="x" size={20} />
               </button>
@@ -1433,8 +1538,8 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
             
             <form onSubmit={handleAssign} className="p-6 space-y-6">
               <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Citizen Details</p>
-                <p className="text-sm font-black text-black">{selectedUser.name}</p>
+                <p className="text-xs font-semibold text-zinc-500 tracking-wide mb-1">Citizen Details</p>
+                <p className="text-sm font-semibold text-zinc-900">{selectedUser.name}</p>
                 <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest mt-1">Location: {selectedUser.location}</p>
               </div>
 
@@ -1477,55 +1582,210 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
       {activeSection === "Reports & Analytics" && (
         <div className="p-8 space-y-8 animate-in fade-in duration-500">
            {/* Header */}
-           <div>
-             <h2 className="text-3xl font-black text-gray-900 uppercase tracking-tight">Ecosystem Impact Analytics</h2>
-             <p className="text-xs text-gray-500 font-bold tracking-widest uppercase mt-2">Real-time telemetry and growth metrics</p>
+           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+             <div>
+               <h2 className="text-3xl font-bold text-zinc-900 uppercase tracking-tight">Ecosystem Impact & Financial Analytics</h2>
+               <p className="text-xs text-zinc-500 font-bold tracking-widest uppercase mt-2">Real-time telemetry and periodic growth metrics</p>
+             </div>
+             
+             {/* Excel Download button and dynamic sync metadata */}
+             <div className="flex flex-wrap items-center gap-3">
+               <span className="text-[10px] bg-zinc-100 border border-zinc-200 text-zinc-600 px-3 py-1.5 rounded-xl font-bold uppercase tracking-wider">
+                 Live Sync: {lastUpdated.toLocaleTimeString()}
+               </span>
+               <button
+                 onClick={downloadNetworkExcel}
+                 className="bg-black text-white hover:bg-zinc-800 px-5 py-2.5 rounded-xl text-xs font-semibold tracking-wide flex items-center gap-2 transition-all shadow-md active:scale-95 hover:-translate-y-0.5"
+               >
+                 <Icon name="reports" size={14} /> Download Excel Report
+               </button>
+             </div>
            </div>
-           
-           {/* High level stats map */}
-           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+
+           {/* Filter controls */}
+           <div className="bg-white border border-zinc-200/60 p-5 rounded-3xl shadow-sm flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
+             <div className="flex flex-col gap-1.5">
+               <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Select Time Filter</span>
+               <div className="flex bg-zinc-100 p-1 rounded-xl w-fit">
+                 {(["All Time", "Yearly", "Monthly"] as const).map(type => (
+                   <button
+                     key={type}
+                     type="button"
+                     onClick={() => setFilterType(type)}
+                     className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${filterType === type ? 'bg-white text-black shadow-sm' : 'text-zinc-500 hover:text-black'}`}
+                   >
+                     {type}
+                   </button>
+                 ))}
+               </div>
+             </div>
+
+             {filterType !== "All Time" && (
+               <div className="flex gap-4 items-center">
+                 <div className="flex flex-col gap-1.5">
+                   <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Year</span>
+                   <select
+                     value={selectedYear}
+                     onChange={e => setSelectedYear(Number(e.target.value))}
+                     className="bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-black focus:border-black outline-none cursor-pointer"
+                   >
+                     {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map(year => (
+                       <option key={year} value={year}>{year}</option>
+                     ))}
+                   </select>
+                 </div>
+
+                 {filterType === "Monthly" && (
+                   <div className="flex flex-col gap-1.5">
+                     <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Month</span>
+                     <select
+                       value={selectedMonth}
+                       onChange={e => setSelectedMonth(Number(e.target.value))}
+                       className="bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-2 text-xs font-black focus:border-black outline-none cursor-pointer"
+                     >
+                       {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map((month, idx) => (
+                         <option key={idx} value={idx}>{month}</option>
+                       ))}
+                     </select>
+                   </div>
+                 )}
+               </div>
+             )}
+           </div>
+
+           {/* Metrics Grid */}
+           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               {(() => {
-                const totalRequestedTrees = users.reduce((acc, u) => acc + (u.trees || 1), 0);
-                const totalPlantedTrees = submissions.reduce((acc, s) => acc + (Number(s.count) || s.fileNames?.length || 1), 0);
-                const carbonSavedKg = totalPlantedTrees * 21; 
-                const thisMonthUsers = users.filter(u => !u.createdAt || (new Date(u.createdAt).getMonth() === new Date().getMonth())).length;
+                const matchesFilter = (dateStr?: string) => {
+                  if (!dateStr) return true;
+                  const date = new Date(dateStr);
+                  if (isNaN(date.getTime())) return true;
+                  
+                  if (filterType === "All Time") return true;
+                  if (filterType === "Yearly") {
+                    return date.getFullYear() === selectedYear;
+                  }
+                  if (filterType === "Monthly") {
+                    return date.getFullYear() === selectedYear && date.getMonth() === selectedMonth;
+                  }
+                  return true;
+                };
+
+                // Calculations
+                const allTimeCitizenFunding = enrichedUsers.reduce((sum, u) => sum + (u.amount || 0), 0);
+                const periodicCitizenFunding = enrichedUsers
+                  .filter(u => matchesFilter(u.createdAt))
+                  .reduce((sum, u) => sum + (u.amount || 0), 0);
                 
+                const allTimeDeliveredCakes = enrichedUsers.filter(u => u.cakeStatus === 'Delivered').length;
+                const periodicDeliveredCakes = enrichedUsers
+                  .filter(u => matchesFilter(u.createdAt) && u.cakeStatus === 'Delivered').length;
+                const allTimeCakePayouts = allTimeDeliveredCakes * 220;
+                const periodicCakePayouts = periodicDeliveredCakes * 220;
+
+                const periodicNewMembers = enrichedUsers.filter(u => matchesFilter(u.createdAt)).length;
+
+                const periodicTreesPlanted = submissions
+                  .filter(s => matchesFilter(s.createdAt))
+                  .reduce((sum, s) => sum + (Number(s.count) || 1), 0) + 
+                  treeEntries
+                  .filter(te => matchesFilter(te.createdAt))
+                  .length;
+
+                const allTimeTreesPlanted = submissions.reduce((sum, s) => sum + (Number(s.count) || 1), 0) + treeEntries.length;
+
+                const filterLabel = filterType === "All Time" ? "All Time" : filterType === "Yearly" ? `${selectedYear}` : `${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][selectedMonth]} ${selectedYear}`;
+
                 return (
                   <>
-                    <div className="bg-emerald-600 text-white p-6 rounded-3xl shadow-xl shadow-emerald-500/20 relative overflow-hidden flex flex-col justify-between">
-                       <div className="relative z-10">
-                         <div className="text-[10px] font-black uppercase tracking-widest text-emerald-200 mb-2">Total Carbon Saved</div>
-                         <div className="text-4xl font-black tracking-tighter">{carbonSavedKg.toLocaleString()} <span className="text-lg">kg</span></div>
-                       </div>
-                       <Icon name="check" size={120} className="absolute -right-6 -bottom-6 text-emerald-500 opacity-50" />
+                    <div className="col-span-1 md:col-span-2 bg-black text-white p-6 rounded-3xl shadow-md border border-zinc-800 relative overflow-hidden flex flex-col justify-between group hover:border-zinc-700 transition-all duration-300">
+                      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none">
+                        <svg width={200} height={200} viewBox="0 0 100 100" fill="currentColor">
+                          <path d="M50 5 L95 25 L95 75 L50 95 L5 75 L5 25 Z" stroke="white" strokeWidth="2" fill="none" />
+                        </svg>
+                      </div>
+                      <div className="relative z-10 space-y-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Citizen Funding (Real-Time)</span>
+                          <span className="bg-zinc-800 text-zinc-300 text-[9px] font-bold px-2 py-0.5 rounded-lg border border-zinc-700">{filterLabel}</span>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="text-4xl font-extrabold tracking-tighter">₹{periodicCitizenFunding.toLocaleString()}</div>
+                          <div className="text-[10px] text-zinc-500 font-semibold tracking-wide">Cumulative: ₹{allTimeCitizenFunding.toLocaleString()}</div>
+                        </div>
+                      </div>
+                      <div className="relative z-10 pt-4 border-t border-zinc-800/80 mt-4 flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Primary System Revenue</span>
+                      </div>
                     </div>
-                    <div className="bg-white border border-gray-100 p-6 rounded-3xl shadow-sm flex flex-col justify-between">
-                       <div>
-                         <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Trees Planted</div>
-                         <div className="text-4xl font-black text-gray-900 tracking-tighter">{totalPlantedTrees}</div>
-                       </div>
+
+                    <div className="col-span-1 md:col-span-2 bg-white border border-zinc-200/80 p-6 rounded-3xl shadow-sm relative overflow-hidden flex flex-col justify-between group hover:border-black transition-all duration-300">
+                      <div className="relative z-10 space-y-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Cake Vendor Payouts</span>
+                          <span className="bg-zinc-100 text-black text-[9px] font-bold px-2 py-0.5 rounded-lg border border-zinc-200">{filterLabel}</span>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="text-4xl font-extrabold tracking-tighter text-zinc-900">₹{periodicCakePayouts.toLocaleString()}</div>
+                          <div className="text-[10px] text-zinc-500 font-semibold tracking-wide">
+                            ₹220 per Delivered Cake ({periodicDeliveredCakes} cakes this period)
+                          </div>
+                        </div>
+                      </div>
+                      <div className="relative z-10 pt-4 border-t border-zinc-100 mt-4 flex items-center justify-between">
+                        <span className="text-[10px] font-semibold text-zinc-400">All-Time Payout: ₹{allTimeCakePayouts.toLocaleString()} ({allTimeDeliveredCakes} delivered)</span>
+                      </div>
                     </div>
-                    <div className="bg-white border border-gray-100 p-6 rounded-3xl shadow-sm flex flex-col justify-between">
-                       <div>
-                         <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Partnering NGOs</div>
-                         <div className="text-4xl font-black text-gray-900 tracking-tighter">{ngos.length}</div>
-                       </div>
+
+                    <div className="bg-white border border-zinc-200/80 p-6 rounded-3xl shadow-sm flex flex-col justify-between group hover:border-black transition-all duration-300">
+                      <div className="space-y-4">
+                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">New Members Added</span>
+                        <div>
+                          <div className="text-4xl font-extrabold tracking-tighter text-zinc-900">+{periodicNewMembers.toLocaleString()}</div>
+                          <p className="text-[10px] text-zinc-500 font-semibold tracking-wide mt-1">Total: {enrichedUsers.length} Citizens</p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="bg-white border border-gray-100 p-6 rounded-3xl shadow-sm flex flex-col justify-between">
-                       <div>
-                         <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">New Citizens (Month)</div>
-                         <div className="text-4xl font-black text-emerald-600 tracking-tighter">+{thisMonthUsers}</div>
-                       </div>
+
+                    <div className="bg-white border border-zinc-200/80 p-6 rounded-3xl shadow-sm flex flex-col justify-between group hover:border-black transition-all duration-300">
+                      <div className="space-y-4">
+                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">Monthly / Periodic Revenue</span>
+                        <div>
+                          <div className="text-4xl font-extrabold tracking-tighter text-zinc-900">₹{periodicCitizenFunding.toLocaleString()}</div>
+                          <p className="text-[10px] text-zinc-500 font-semibold tracking-wide mt-1">Funding Flow</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white border border-zinc-200/80 p-6 rounded-3xl shadow-sm flex flex-col justify-between group hover:border-black transition-all duration-300">
+                      <div className="space-y-4">
+                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">Total Revenue</span>
+                        <div>
+                          <div className="text-4xl font-extrabold tracking-tighter text-zinc-900">₹{allTimeCitizenFunding.toLocaleString()}</div>
+                          <p className="text-[10px] text-zinc-500 font-semibold tracking-wide mt-1">Cumulative Impact</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white border border-zinc-200/80 p-6 rounded-3xl shadow-sm flex flex-col justify-between group hover:border-black transition-all duration-300">
+                      <div className="space-y-4">
+                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">Trees Planted</span>
+                        <div>
+                          <div className="text-4xl font-extrabold tracking-tighter text-emerald-600">+{periodicTreesPlanted.toLocaleString()}</div>
+                          <p className="text-[10px] text-zinc-500 font-semibold tracking-wide mt-1">Total Planted: {allTimeTreesPlanted.toLocaleString()}</p>
+                        </div>
+                      </div>
                     </div>
                   </>
                 );
               })()}
            </div>
 
-           {/* Charts */}
+           {/* Charts & Summary Row */}
            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-             <div className="col-span-1 lg:col-span-2 bg-white border border-gray-100 p-8 rounded-3xl shadow-sm">
-               <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-6 border-b border-gray-50 pb-4">Forest & Revenue Growth Trajectory</h3>
+             <div className="col-span-1 lg:col-span-2 bg-white border border-zinc-200/80 p-8 rounded-3xl shadow-sm">
+               <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-widest mb-6 border-b border-gray-50 pb-4">Forest & Revenue Growth Trajectory</h3>
                <div className="h-72 w-full">
                   {(() => {
                     const timelineData = [];
@@ -1556,8 +1816,8 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                           <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#9ca3af', fontWeight: 900}} />
                           <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#9ca3af', fontWeight: 900}} tickFormatter={(v) => `₹${v}`} />
                           <RechartsTooltip cursor={{stroke: '#e5e7eb', strokeWidth: 2}} contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}} />
-                          <Line yAxisId="left" type="monotone" dataKey="trees" stroke="#059669" strokeWidth={4} dot={{r: 6, strokeWidth: 2, fill: '#fff'}} activeDot={{r: 8}} name="Total Trees" />
-                          <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={4} dot={{r: 6, strokeWidth: 2, fill: '#fff'}} activeDot={{r: 8}} name="Revenue" />
+                          <Line yAxisId="left" type="monotone" dataKey="trees" stroke="#000000" strokeWidth={4} dot={{r: 6, strokeWidth: 2, fill: '#fff'}} activeDot={{r: 8}} name="Total Trees" />
+                          <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#71717a" strokeWidth={4} dot={{r: 6, strokeWidth: 2, fill: '#fff'}} activeDot={{r: 8}} name="Revenue" />
                         </LineChart>
                       </ResponsiveContainer>
                     );
@@ -1565,38 +1825,38 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                </div>
              </div>
              
-             <div className="col-span-1 bg-white border border-gray-100 p-8 rounded-3xl shadow-sm flex flex-col justify-between">
+             <div className="col-span-1 bg-white border border-zinc-200/80 p-8 rounded-3xl shadow-sm flex flex-col justify-between">
                <div>
-                  <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-6 border-b border-gray-50 pb-4">Operational Summary</h3>
+                  <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-widest mb-6 border-b border-gray-50 pb-4">Operational Summary</h3>
                   <div className="space-y-6">
                     {(() => {
                       const totalCakes = users.length;
-                      const deliveredCakes = users.filter(u => u.status === 'Delivered' || u.status === 'Planted').length;
+                      const deliveredCakes = users.filter(u => u.cakeStatus === 'Delivered').length;
                       const pendingOrders = users.reduce((acc, u) => acc + (u.trees || 1), 0) - submissions.reduce((acc, s) => acc + (Number(s.count) || s.fileNames?.length || 1), 0);
                       
                       return (
                         <>
                           <div>
                             <div className="flex justify-between items-center mb-2">
-                              <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Cakes Ordered</span>
-                              <span className="text-xs font-black text-gray-900">{totalCakes}</span>
+                              <span className="text-xs font-semibold text-zinc-500 tracking-wide text-gray-500">Cakes Ordered</span>
+                              <span className="text-xs font-bold text-zinc-900">{totalCakes}</span>
                             </div>
                             <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                              <div className="h-full bg-blue-500 rounded-full" style={{width: `${Math.min(100, Math.max(5, (totalCakes / (totalCakes+10)) * 100))}%`}}></div>
+                              <div className="h-full bg-zinc-900 rounded-full" style={{width: `${Math.min(100, Math.max(5, (totalCakes / (totalCakes+10)) * 100))}%`}}></div>
                             </div>
                           </div>
                           <div>
                             <div className="flex justify-between items-center mb-2">
-                              <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Cakes Delivered</span>
-                              <span className="text-xs font-black text-gray-900">{deliveredCakes}</span>
+                              <span className="text-xs font-semibold text-zinc-500 tracking-wide text-gray-500">Cakes Delivered</span>
+                              <span className="text-xs font-bold text-zinc-900">{deliveredCakes}</span>
                             </div>
                             <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                              <div className="h-full bg-indigo-500 rounded-full" style={{width: `${Math.min(100, totalCakes === 0 ? 0 : (deliveredCakes / totalCakes) * 100)}%`}}></div>
+                              <div className="h-full bg-zinc-500 rounded-full" style={{width: `${Math.min(100, totalCakes === 0 ? 0 : (deliveredCakes / totalCakes) * 100)}%`}}></div>
                             </div>
                           </div>
                           <div>
                             <div className="flex justify-between items-center mb-2">
-                              <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Pending Blockers</span>
+                              <span className="text-xs font-semibold text-zinc-500 tracking-wide text-gray-500">Pending Blockers</span>
                               <span className="text-xs font-black text-amber-500 font-mono">{Math.max(0, pendingOrders)} Trees</span>
                             </div>
                             <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -1608,28 +1868,28 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                     })()}
                   </div>
                </div>
-               <div className="mt-8 bg-emerald-50 p-4 rounded-2xl flex items-center justify-center gap-3">
-                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                 <span className="text-[9px] font-black uppercase tracking-widest text-emerald-700">Live Backend Stream</span>
+               <div className="mt-8 bg-zinc-50 border border-zinc-200/60 p-4 rounded-2xl flex items-center justify-center gap-3">
+                 <div className="w-2 h-2 rounded-full bg-black animate-pulse"></div>
+                 <span className="text-xs font-semibold tracking-wide text-zinc-700">Live Network Telemetry Active</span>
                </div>
              </div>
            </div>
 
            {/* Certificate Registry Section */}
-           <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm">
-             <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
+           <div className="bg-white border border-zinc-200/80 rounded-3xl overflow-hidden shadow-sm">
+             <div className="p-8 border-b border-zinc-200/60 flex justify-between items-center bg-zinc-50/50">
                <div>
-                 <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">Registry of Issued Certificates</h3>
+                 <h3 className="text-xl font-bold text-zinc-900 uppercase tracking-tight">Registry of Issued Certificates</h3>
                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Immutable Digital Environmental Credentials</p>
                </div>
-               <div className="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-widest border border-emerald-100">
+               <div className="px-4 py-2 bg-zinc-100 text-black rounded-xl text-xs font-semibold text-zinc-500 tracking-wide border border-zinc-200">
                   Total Issued: {certificates.length}
                </div>
              </div>
              <div className="overflow-x-auto">
                <table className="w-full text-left">
                  <thead>
-                   <tr className="bg-gray-50/50 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100">
+                   <tr className="bg-zinc-50/30 text-xs font-semibold text-zinc-500 tracking-wide border-b border-zinc-100">
                      <th className="px-8 py-4">Recipient Name</th>
                      <th className="px-8 py-4">Verification Code</th>
                      <th className="px-8 py-4">Verifying NGO</th>
@@ -1637,34 +1897,34 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                      <th className="px-8 py-4 text-center">Deliverability</th>
                    </tr>
                  </thead>
-                 <tbody className="divide-y divide-gray-50 text-xs">
+                 <tbody className="divide-y divide-zinc-100 text-xs">
                    {certificates.map(c => (
-                     <tr key={c._id} className="hover:bg-gray-50/80 transition-colors group">
+                     <tr key={c._id} className="hover:bg-zinc-50/80 transition-colors group">
                        <td className="px-8 py-4">
-                         <div className="font-black text-black group-hover:text-emerald-600 transition-colors uppercase tracking-tight">{c.userName}</div>
+                         <div className="font-semibold text-zinc-900 group-hover:text-black transition-colors uppercase tracking-tight">{c.userName}</div>
                          <div className="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">ID: {c.userId}</div>
                        </td>
                        <td className="px-8 py-4 font-mono font-bold text-gray-600 tracking-tighter">{c.verificationCode}</td>
                        <td className="px-8 py-4">
                          <div className="flex items-center gap-2">
                            <div className="w-1.5 h-1.5 rounded-full bg-black"></div>
-                           <span className="font-black text-gray-900 text-[10px] uppercase">{c.ngoName}</span>
+                           <span className="font-bold text-zinc-900 text-[10px] uppercase">{c.ngoName}</span>
                          </div>
                        </td>
                        <td className="px-8 py-4 text-gray-500 font-bold">
                          {new Date(c.issueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                        </td>
                        <td className="px-8 py-4">
-                          <div className={`flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest ${c.emailSent ? 'text-emerald-500' : 'text-gray-400'}`}>
-                            <div className={`w-1.5 h-1.5 rounded-full ${c.emailSent ? 'bg-emerald-500' : 'bg-gray-300'}`}></div>
-                            {c.emailSent ? 'Link Delivred' : 'Pending'}
+                          <div className={`flex items-center justify-center gap-2 text-xs font-semibold text-zinc-500 tracking-wide ${c.emailSent ? 'text-black' : 'text-gray-400'}`}>
+                            <div className={`w-1.5 h-1.5 rounded-full ${c.emailSent ? 'bg-black' : 'bg-zinc-300'}`}></div>
+                            {c.emailSent ? 'Link Delivered' : 'Pending'}
                           </div>
                        </td>
                      </tr>
                    ))}
                    {certificates.length === 0 && (
                      <tr>
-                       <td colSpan={5} className="py-12 text-center text-[10px] font-black uppercase tracking-widest text-gray-400">
+                       <td colSpan={5} className="py-12 text-center text-xs font-semibold text-zinc-500 tracking-wide text-gray-400">
                          No certificates issued in current epoch
                        </td>
                      </tr>
@@ -1680,13 +1940,13 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
         <div className="animate-in fade-in duration-500 bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
           <div className="p-4 sm:p-8 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center bg-gray-50/50 gap-4">
             <div>
-              <h2 className="text-2xl sm:text-3xl font-black text-gray-900 uppercase tracking-tight">Role Management</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-zinc-900 uppercase tracking-tight">Role Management</h2>
               <p className="text-[10px] sm:text-xs text-gray-500 font-bold tracking-widest uppercase mt-2">Manage Citizens, NGOs & Cake Vendors</p>
             </div>
             <div className="flex bg-gray-200/50 p-1 rounded-2xl w-full sm:w-auto overflow-x-auto no-scrollbar snap-x">
-               <button onClick={() => setRoleManageTab('users')} className={`flex-1 sm:flex-none whitespace-nowrap snap-center px-4 sm:px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${roleManageTab === 'users' ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-black'}`}>Citizens</button>
-               <button onClick={() => setRoleManageTab('ngos')} className={`flex-1 sm:flex-none whitespace-nowrap snap-center px-4 sm:px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${roleManageTab === 'ngos' ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-black'}`}>NGOs</button>
-               <button onClick={() => setRoleManageTab('vendors')} className={`flex-1 sm:flex-none whitespace-nowrap snap-center px-4 sm:px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${roleManageTab === 'vendors' ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-black'}`}>Vendors</button>
+               <button onClick={() => setRoleManageTab('users')} className={`flex-1 sm:flex-none whitespace-nowrap snap-center px-4 sm:px-6 py-3 rounded-xl text-xs font-semibold text-zinc-500 tracking-wide transition-all ${roleManageTab === 'users' ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-black'}`}>Citizens</button>
+               <button onClick={() => setRoleManageTab('ngos')} className={`flex-1 sm:flex-none whitespace-nowrap snap-center px-4 sm:px-6 py-3 rounded-xl text-xs font-semibold text-zinc-500 tracking-wide transition-all ${roleManageTab === 'ngos' ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-black'}`}>NGOs</button>
+               <button onClick={() => setRoleManageTab('vendors')} className={`flex-1 sm:flex-none whitespace-nowrap snap-center px-4 sm:px-6 py-3 rounded-xl text-xs font-semibold text-zinc-500 tracking-wide transition-all ${roleManageTab === 'vendors' ? 'bg-white text-black shadow-md' : 'text-gray-500 hover:text-black'}`}>Vendors</button>
             </div>
           </div>
           
@@ -1694,47 +1954,47 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
             <table className="w-full text-left border-collapse min-w-[500px]">
               <thead>
                 <tr className="border-b border-gray-100">
-                  <th className="pb-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">ID</th>
-                  <th className="pb-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Name</th>
-                  <th className="pb-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Email</th>
-                  <th className="pb-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Zone / Area</th>
-                  <th className="pb-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Actions</th>
+                  <th className="pb-4 text-xs font-semibold text-zinc-500 tracking-wide">ID</th>
+                  <th className="pb-4 text-xs font-semibold text-zinc-500 tracking-wide">Name</th>
+                  <th className="pb-4 text-xs font-semibold text-zinc-500 tracking-wide">Email</th>
+                  <th className="pb-4 text-xs font-semibold text-zinc-500 tracking-wide">Zone / Area</th>
+                  <th className="pb-4 text-right text-xs font-semibold text-zinc-500 tracking-wide">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {roleManageTab === 'users' && users.map(u => (
                   <tr key={u.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                     <td className="py-4 font-mono text-xs font-bold text-gray-500">{u.id}</td>
-                    <td className="py-4 text-sm font-black text-gray-900">{u.name}</td>
+                    <td className="py-4 text-sm font-bold text-zinc-900">{u.name}</td>
                     <td className="py-4 text-xs font-bold text-gray-500 w-1/4 truncate">{u.email}</td>
                     <td className="py-4 text-xs font-bold text-gray-500">{u.location}</td>
                     <td className="py-4 text-right space-x-2">
-                       <button onClick={() => setEditingRoleItem({type: 'user', data: u})} className="px-3 py-1.5 bg-gray-100 hover:bg-black hover:text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-colors text-black">Edit</button>
-                       <button onClick={() => handleDeleteRoleItem('user', u.id)} className="px-3 py-1.5 bg-rose-50 hover:bg-rose-500 hover:text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-colors text-rose-600">Del</button>
+                       <button onClick={() => setEditingRoleItem({type: 'user', data: u})} className="px-3 py-1.5 bg-gray-100 hover:bg-black hover:text-white text-xs font-semibold tracking-wide rounded-lg transition-colors text-black">Edit</button>
+                       <button onClick={() => handleDeleteRoleItem('user', u.id)} className="px-3 py-1.5 bg-rose-50 hover:bg-rose-500 hover:text-white text-xs font-semibold tracking-wide rounded-lg transition-colors text-rose-600">Del</button>
                     </td>
                   </tr>
                 ))}
                 {roleManageTab === 'ngos' && ngos.map(n => (
                   <tr key={n.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                     <td className="py-4 font-mono text-xs font-bold text-gray-500">{n.id}</td>
-                    <td className="py-4 text-sm font-black text-gray-900">{n.name}</td>
+                    <td className="py-4 text-sm font-bold text-zinc-900">{n.name}</td>
                     <td className="py-4 text-xs font-bold text-gray-500">{n.email}</td>
                     <td className="py-4 text-xs font-bold text-gray-500">{n.area}</td>
                     <td className="py-4 text-right space-x-2">
-                       <button onClick={() => setEditingRoleItem({type: 'ngo', data: n})} className="px-3 py-1.5 bg-gray-100 hover:bg-black hover:text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-colors text-black">Edit</button>
-                       <button onClick={() => handleDeleteRoleItem('ngo', n.id)} className="px-3 py-1.5 bg-rose-50 hover:bg-rose-500 hover:text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-colors text-rose-600">Del</button>
+                       <button onClick={() => setEditingRoleItem({type: 'ngo', data: n})} className="px-3 py-1.5 bg-gray-100 hover:bg-black hover:text-white text-xs font-semibold tracking-wide rounded-lg transition-colors text-black">Edit</button>
+                       <button onClick={() => handleDeleteRoleItem('ngo', n.id)} className="px-3 py-1.5 bg-rose-50 hover:bg-rose-500 hover:text-white text-xs font-semibold tracking-wide rounded-lg transition-colors text-rose-600">Del</button>
                     </td>
                   </tr>
                 ))}
                 {roleManageTab === 'vendors' && cakeVendors.map(v => (
                   <tr key={v.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                     <td className="py-4 font-mono text-xs font-bold text-gray-500">{v.id}</td>
-                    <td className="py-4 text-sm font-black text-gray-900">{v.name}</td>
+                    <td className="py-4 text-sm font-bold text-zinc-900">{v.name}</td>
                     <td className="py-4 text-xs font-bold text-gray-500">{v.email}</td>
                     <td className="py-4 text-xs font-bold text-gray-500">{v.area}</td>
                     <td className="py-4 text-right space-x-2">
-                       <button onClick={() => setEditingRoleItem({type: 'vendor', data: v})} className="px-3 py-1.5 bg-gray-100 hover:bg-black hover:text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-colors text-black">Edit</button>
-                       <button onClick={() => handleDeleteRoleItem('vendor', v.id)} className="px-3 py-1.5 bg-rose-50 hover:bg-rose-500 hover:text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-colors text-rose-600">Del</button>
+                       <button onClick={() => setEditingRoleItem({type: 'vendor', data: v})} className="px-3 py-1.5 bg-gray-100 hover:bg-black hover:text-white text-xs font-semibold tracking-wide rounded-lg transition-colors text-black">Edit</button>
+                       <button onClick={() => handleDeleteRoleItem('vendor', v.id)} className="px-3 py-1.5 bg-rose-50 hover:bg-rose-500 hover:text-white text-xs font-semibold tracking-wide rounded-lg transition-colors text-rose-600">Del</button>
                     </td>
                   </tr>
                 ))}
@@ -1742,7 +2002,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
                   (roleManageTab === 'ngos' && ngos.length === 0) || 
                   (roleManageTab === 'vendors' && cakeVendors.length === 0)) && (
                   <tr>
-                    <td colSpan={5} className="py-12 text-center text-[10px] font-black uppercase tracking-widest text-gray-400">
+                    <td colSpan={5} className="py-12 text-center text-xs font-semibold text-zinc-500 tracking-wide text-gray-400">
                       No Records Found
                     </td>
                   </tr>
@@ -1758,7 +2018,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <h3 className="text-lg font-black text-gray-900 uppercase tracking-tight">Edit {editingRoleItem.type}</h3>
+              <h3 className="text-lg font-bold text-zinc-900 uppercase tracking-tight">Edit {editingRoleItem.type}</h3>
               <button onClick={() => setEditingRoleItem(null)} className="p-2 hover:bg-white rounded-xl text-gray-400 hover:text-rose-500 transition-colors">
                 <Icon name="x" size={20} />
               </button>
@@ -1816,7 +2076,7 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
       {activeSection === "Settings" && (
         <div className="animate-in fade-in duration-500 bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
           <div className="p-8 border-b border-gray-100 bg-gray-50/50">
-            <h2 className="text-3xl font-black text-gray-900 uppercase tracking-tight">Core Framework Settings</h2>
+            <h2 className="text-3xl font-bold text-zinc-900 uppercase tracking-tight">Core Framework Settings</h2>
             <p className="text-xs text-gray-500 font-bold tracking-widest uppercase mt-2">Manage Global Parameters & Platform Health</p>
           </div>
           
@@ -1824,19 +2084,19 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
             <form onSubmit={handleSaveSettings} className="w-full max-w-2xl space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  <div className="space-y-2">
-                   <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Platform Name</label>
+                   <label className="text-xs font-semibold text-zinc-600 mb-1.5 block">Platform Name</label>
                    <input disabled={savingSettings} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:bg-white focus:border-black outline-none transition-all" value={localSettingsForm.platformName} onChange={e => setLocalSettingsForm({...localSettingsForm, platformName: e.target.value})} />
                  </div>
                  <div className="space-y-2">
-                   <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Tree Unit Price (₹)</label>
+                   <label className="text-xs font-semibold text-zinc-600 mb-1.5 block">Tree Unit Price (₹)</label>
                    <input type="number" disabled={savingSettings} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:bg-white focus:border-black outline-none transition-all font-mono" value={localSettingsForm.treeUnitPrice} onChange={e => setLocalSettingsForm({...localSettingsForm, treeUnitPrice: Number(e.target.value)})} />
                  </div>
                  <div className="space-y-2">
-                   <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Support Email</label>
+                   <label className="text-xs font-semibold text-zinc-600 mb-1.5 block">Support Email</label>
                    <input type="email" disabled={savingSettings} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:bg-white focus:border-black outline-none transition-all" value={localSettingsForm.supportEmail} onChange={e => setLocalSettingsForm({...localSettingsForm, supportEmail: e.target.value})} />
                  </div>
                  <div className="space-y-2">
-                   <label className="text-[10px] font-black pl-1 text-gray-400 uppercase tracking-widest">Support Phone</label>
+                   <label className="text-xs font-semibold text-zinc-600 mb-1.5 block">Support Phone</label>
                    <input disabled={savingSettings} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:bg-white focus:border-black outline-none transition-all font-mono" value={localSettingsForm.supportPhone} onChange={e => setLocalSettingsForm({...localSettingsForm, supportPhone: e.target.value})} />
                  </div>
               </div>
@@ -1864,6 +2124,104 @@ export const AdminDashboard = ({ handleLogout }: { handleLogout?: () => void }) 
         </div>
       )}
 
-    </DashboardLayout>
+      {activeSection === "Stories Management" && (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <div className="flex justify-between items-center bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
+            <div className="pl-2">
+              <h2 className="text-xl font-bold text-zinc-900">Stories Management</h2>
+              <p className="text-xs text-gray-400 font-medium italic">Manage stories displayed on the public landing page</p>
+            </div>
+            <button 
+              onClick={() => setShowAddStoryModal(true)}
+              className="bg-black text-white px-5 py-2.5 rounded-xl text-xs font-semibold tracking-wide flex items-center gap-2 hover:bg-gray-900 transition-all shadow-sm"
+            >
+              <Icon name="plus" size={14} /> Add New Story
+            </button>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {stories.map(story => (
+              <div key={story._id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col gap-4">
+                <img src={story.imageUrl} alt={story.title} className="w-full h-48 object-cover rounded-xl" />
+                <div>
+                  <h3 className="font-bold text-lg text-gray-900">{story.title}</h3>
+                  <p className="text-sm text-gray-600 line-clamp-2 mt-2">{story.content}</p>
+                  {story.linkUrl && <a href={story.linkUrl} target="_blank" rel="noreferrer" className="text-xs text-blue-500 mt-2 block break-all">{story.linkUrl}</a>}
+                </div>
+                <div className="mt-auto pt-4 border-t border-gray-50 flex justify-end">
+                  <button 
+                    onClick={async () => {
+                      if(window.confirm('Delete this story?')) {
+                        setLoading(true);
+                        try {
+                          await deleteStory(story._id);
+                          toast.success('Story deleted');
+                          refreshData();
+                        } catch(e: any) {
+                          toast.error('Failed to delete story');
+                        } finally {
+                          setLoading(false);
+                        }
+                      }
+                    }}
+                    className="text-xs text-rose-500 hover:text-rose-600 font-bold uppercase"
+                  >
+                    Delete Story
+                  </button>
+                </div>
+              </div>
+            ))}
+            {stories.length === 0 && (
+              <div className="col-span-full py-12 text-center text-gray-400 font-medium">No stories found. Create one to display on the landing page!</div>
+            )}
+          </div>
+
+          {showAddStoryModal && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+              <div className="bg-white rounded-[40px] w-full max-w-xl overflow-hidden shadow-2xl relative">
+                <div className="p-8 pb-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                  <div>
+                    <h2 className="text-2xl font-bold text-zinc-900">Add Story</h2>
+                    <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Publish to Landing Page</p>
+                  </div>
+                  <button onClick={() => setShowAddStoryModal(false)} className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-black transition-all shadow-sm">
+                    <Icon name="x" size={16} />
+                  </button>
+                </div>
+                <form 
+                  className="p-8 space-y-6"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    setLoading(true);
+                    try {
+                      await createStory(storyFormData);
+                      toast.success('Story created successfully');
+                      setShowAddStoryModal(false);
+                      setStoryFormData({ title: '', content: '', imageUrl: '', linkUrl: '' });
+                      refreshData();
+                    } catch(err) {
+                      toast.error('Failed to create story');
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                >
+                  <div className="space-y-4">
+                    <input required type="text" placeholder="Story Title" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:bg-white focus:border-black outline-none transition-all" value={storyFormData.title} onChange={e => setStoryFormData({...storyFormData, title: e.target.value})} />
+                    <textarea required placeholder="Story Content / Description" rows={4} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-black outline-none transition-all resize-none" value={storyFormData.content} onChange={e => setStoryFormData({...storyFormData, content: e.target.value})} />
+                    <input required type="url" placeholder="Image URL (e.g., https://unsplash.com/...)" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-black outline-none transition-all" value={storyFormData.imageUrl} onChange={e => setStoryFormData({...storyFormData, imageUrl: e.target.value})} />
+                    <input type="url" placeholder="Link URL (Optional link for 'Read More')" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium focus:bg-white focus:border-black outline-none transition-all" value={storyFormData.linkUrl} onChange={e => setStoryFormData({...storyFormData, linkUrl: e.target.value})} />
+                  </div>
+                  <button type="submit" disabled={loading} className="w-full bg-black text-white py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-gray-900 transition-all shadow-xl disabled:opacity-50">
+                    {loading ? 'Publishing...' : 'Publish Story'}
+                  </button>
+                </form>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+    </AdminDashboardLayout>
   );
 };

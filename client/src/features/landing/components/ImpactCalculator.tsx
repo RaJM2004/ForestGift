@@ -64,7 +64,7 @@ export const ImpactCalculator: React.FC<ImpactCalculatorProps> = ({ onPlantClick
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="text-5xl md:text-[72px] font-bold mb-4 tracking-tighter leading-none text-gray-950"
+            className="text-5xl md:text-[80px] font-bold mb-4 tracking-tighter leading-none text-gray-950 font-['League_Spartan']"
           >
             Forest. <span className="text-[#247114]">Impact</span>
           </motion.h2>
@@ -103,7 +103,7 @@ export const ImpactCalculator: React.FC<ImpactCalculatorProps> = ({ onPlantClick
               <input 
                 type="range" 
                 min="1" 
-                max="100" 
+                max="10" 
                 value={treeCount} 
                 onChange={(e) => setTreeCount(parseInt(e.target.value))}
                 className="w-full h-1.5 bg-emerald-50 rounded-lg appearance-none cursor-pointer accent-[#247114] outline-none border-none focus:ring-0"
@@ -111,7 +111,7 @@ export const ImpactCalculator: React.FC<ImpactCalculatorProps> = ({ onPlantClick
               
               {/* Presets Row */}
               <div className="grid grid-cols-6 gap-1.5">
-                {[1, 5, 10, 25, 50, 100].map((num) => (
+                {[1, 2, 4, 6, 8, 10].map((num) => (
                   <button
                     key={num}
                     onClick={() => setTreeCount(num)}

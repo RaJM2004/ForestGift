@@ -99,6 +99,7 @@ export const createCakeVendor = async (vendorData: any) => {
 export type ServerCakeDeliveryStatus =
   | 'Ordered'
   | 'Accepted'
+  | 'Preparing'
   | 'OutForDelivery'
   | 'Delivered'
   | 'Rejected';
@@ -131,7 +132,10 @@ export type CakeVendorDeliveryDto = {
   cakeSize: string;
   cakeFlavor: string;
   treeCount: number;
+  amount?: number;
   status: string;
+  statusUpdatedAt?: string;
+  orderPlacedAt?: string;
 };
 
 export type CakeVendorDashboardResponse = {
@@ -404,6 +408,28 @@ export const submitContactForm = async (data: { name: string; email: string; sub
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
+  return res.json();
+};
+
+export const fetchStories = async () => {
+  const res = await fetch(`${API_URL}/stories`);
+  if (!res.ok) throw new Error('Failed to fetch stories');
+  return res.json();
+};
+
+export const createStory = async (data: any) => {
+  const res = await fetch(`${API_URL}/stories`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Failed to create story');
+  return res.json();
+};
+
+export const deleteStory = async (id: string) => {
+  const res = await fetch(`${API_URL}/stories/${id}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Failed to delete story');
   return res.json();
 };
 

@@ -2,12 +2,11 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import {
   fetchCakeVendorDashboard,
   fetchCakeVendorCustomers,
-  patchCakeVendorDelivery,
   type CakeVendorDashboardResponse,
   type CakeVendorDeliveryDto,
-  type ServerCakeDeliveryStatus,
 } from '../../api';
-import type { DeliveryRequest } from './data/mockData';
+import { postCakeDeliveryWorkflow, type WorkflowAction } from './api/finance';
+import type { DeliveryRequest } from './types/delivery';
 import { useCakeUser } from './CakeUserContext';
 
 type CakeSummary = CakeVendorDashboardResponse['summary'];
@@ -21,7 +20,7 @@ type CakeDataContextValue = {
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
-  updateDelivery: (userId: string, uiStatus: DeliveryRequest['status']) => Promise<void>;
+  runWorkflow: (userId: string, action: WorkflowAction, otp?: string) => Promise<void>;
 };
 
 const CakeDataContext = createContext<CakeDataContextValue | null>(null);
@@ -40,19 +39,11 @@ function toDeliveryRequest(d: CakeVendorDeliveryDto): DeliveryRequest {
     cakeSize: d.cakeSize,
     cakeFlavor: d.cakeFlavor,
     treeCount: d.treeCount,
+    amount: d.amount,
     status: d.status as DeliveryRequest['status'],
+    statusUpdatedAt: d.statusUpdatedAt,
+    orderPlacedAt: d.orderPlacedAt,
   };
-}
-
-function uiStatusToServer(s: DeliveryRequest['status']): ServerCakeDeliveryStatus {
-  const m: Record<DeliveryRequest['status'], ServerCakeDeliveryStatus> = {
-    PENDING: 'Ordered',
-    ACCEPTED: 'Accepted',
-    OUT_FOR_DELIVERY: 'OutForDelivery',
-    DELIVERED: 'Delivered',
-    REJECTED: 'Rejected',
-  };
-  return m[s];
 }
 
 export function CakeDataProvider({ children }: { children: React.ReactNode }) {
@@ -99,11 +90,10 @@ export function CakeDataProvider({ children }: { children: React.ReactNode }) {
     void load();
   }, [load]);
 
-  const updateDelivery = useCallback(
-    async (userId: string, uiStatus: DeliveryRequest['status']) => {
+  const runWorkflow = useCallback(
+    async (userId: string, action: WorkflowAction, otp?: string) => {
       if (!vendorId) return;
-      const serverStatus = uiStatusToServer(uiStatus);
-      await patchCakeVendorDelivery(vendorId, userId, serverStatus);
+      await postCakeDeliveryWorkflow(vendorId, userId, action, otp);
       await load();
     },
     [vendorId, load],
@@ -118,9 +108,9 @@ export function CakeDataProvider({ children }: { children: React.ReactNode }) {
       loading,
       error,
       refetch: load,
-      updateDelivery,
+      runWorkflow,
     }),
-    [vendorId, vendor, deliveries, summary, loading, error, load, updateDelivery],
+    [vendorId, vendor, deliveries, summary, loading, error, load, runWorkflow],
   );
 
   return <CakeDataContext.Provider value={value}>{children}</CakeDataContext.Provider>;

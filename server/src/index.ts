@@ -1,6 +1,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
+import path from 'path';
 import dotenv from 'dotenv';
 import apiRoutes from './routes/api';
 import User from './models/User';
@@ -11,7 +12,9 @@ import BulkTreeEntry from './models/BulkTreeEntry';
 import Order from './models/Order';
 
 
-dotenv.config();
+// Load .env next to this file (server/src/.env), or fallback to server/.env
+dotenv.config({ path: path.join(__dirname, '.env') });
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -44,7 +47,7 @@ app.post('/api/seed', async (req, res) => {
   try {
     const USERS = [
       { id:"USR001", name:"Ramesh Kumar", dob:"1985-03-14", address:"12, MG Road, Bhopal MP", phone:"9876543210", email:"ramesh@email.com", token:"TKN-2024-0001", amount:5000, trees:5, status:"Planted", ngo:"GreenEarth NGO", location:"Block A, Satpura Zone", date:"2024-01-15", referralCount: 15, globalRank: 42, cakeVendor:"VND001", cakeStatus:"Ordered" },
-      { id:"USR002", name:"Sunita Devi", dob:"1990-07-22", address:"45, Civil Lines, Jabalpur MP", phone:"9812345678", email:"sunita@email.com", token:"TKN-2024-0002", amount:3000, trees:3, status:"Pending", ngo:"VanaRaksha Foundation", location:"Block B, Vindhya Zone", date:"2024-01-18", referralCount: 8, globalRank: 156, cakeVendor:"VND001", cakeStatus:"Accepted" },
+      { id:"USR002", name:"Sunita Devi", dob:"1990-07-22", address:"45, Civil Lines, Jabalpur MP", phone:"9812345678", email:"sunita@email.com", token:"TKN-2024-0002", amount:3000, trees:3, status:"Pending", ngo:"VanaRaksha Foundation", location:"Block B, Vindhya Zone", date:"2024-01-18", referralCount: 8, globalRank: 156, cakeVendor:"VND001", cakeStatus:"Preparing" },
       { id:"USR003", name:"Arun Mehta", dob:"1978-11-05", address:"78, Nai Basti, Indore MP", phone:"9988776655", email:"arun@email.com", token:"TKN-2024-0003", amount:10000, trees:10, status:"Planted", ngo:"GreenEarth NGO", location:"Block C, Satpura Zone", date:"2024-01-20", referralCount: 22, globalRank: 12, cakeVendor:"VND001", cakeStatus:"OutForDelivery" },
       { id:"USR004", name:"Priya Sharma", dob:"1995-02-28", address:"33, Shivaji Nagar, Bhopal MP", phone:"9765432100", email:"priya@email.com", token:"TKN-2024-0004", amount:2000, trees:2, status:"Pending", ngo:"Not Assigned", location:"TBD", date:"2024-01-22", referralCount: 3, globalRank: 890, cakeVendor:"VND001", cakeStatus:"Delivered" },
       { id:"USR005", name:"Vijay Patel", dob:"1982-09-17", address:"101, Gandhi Chowk, Rewa MP", phone:"9654321098", email:"vijay@email.com", token:"TKN-2024-0005", amount:7000, trees:7, status:"Planted", ngo:"SahyogVan Trust", location:"Block D, Amarkantak Zone", date:"2024-01-25", referralCount: 11, globalRank: 245, cakeVendor:"VND002", cakeStatus:"Ordered" },
@@ -104,6 +107,10 @@ app.post('/api/seed', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+export default app;

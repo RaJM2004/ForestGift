@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { motion } from 'framer-motion';
 import { NavigationProps } from '../types';
+import { fetchStories } from '../../../api';
 
-const stories = [
+const defaultStories = [
   {
     title: "Celebrate Nature: Join Forest in Planting Trees and Giving Back to Earth",
     description: "Welcome to Forest, where we celebrate life through nature. Discover how you can plant trees, gift personal forests, and support environmental projects. Join our community passionate about sustainability and explore eco-friendly products while tracking your tree plantations. Together, let's create a greener future—one tree at a time.",
@@ -22,6 +23,32 @@ const stories = [
 ];
 
 export const StoriesPage: React.FC<NavigationProps> = ({ onHomeClick, onAboutClick, onStoriesClick, onPlantClick, onLoginClick }) => {
+  const [stories, setStories] = useState<any[]>(defaultStories);
+
+  useEffect(() => {
+    const loadStories = async () => {
+      try {
+        const data = await fetchStories();
+        if (data && data.length > 0) {
+          // Format backend stories to match UI
+          const formatted = data.map((s: any) => ({
+            id: s._id,
+            title: s.title,
+            description: s.content,
+            image: s.imageUrl,
+            linkUrl: s.linkUrl,
+            date: new Date(s.createdAt).toLocaleDateString(),
+            readTime: "1 min read" // Could be calculated based on word count
+          }));
+          setStories([...formatted, ...defaultStories]);
+        }
+      } catch (error) {
+        console.error('Failed to load stories:', error);
+      }
+    };
+    loadStories();
+  }, []);
+
   return (
     <div className="min-h-screen bg-white text-[#1a1a1a] selection:bg-[#247114] selection:text-white">
       <main className="pt-32 pb-20">
@@ -50,6 +77,7 @@ export const StoriesPage: React.FC<NavigationProps> = ({ onHomeClick, onAboutCli
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
                 className="group cursor-pointer"
+                onClick={() => story.linkUrl && window.open(story.linkUrl, '_blank')}
               >
                 <div className="aspect-[16/10] overflow-hidden rounded-sm mb-8">
                   <img 

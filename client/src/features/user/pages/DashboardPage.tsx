@@ -38,7 +38,7 @@ export function DashboardPage() {
       {/* Welcome Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-           <h1 className="text-3xl font-black text-gray-900 tracking-tight leading-none uppercase">Welcome back, {user.name.split(' ')[0]} 🌳</h1>
+           <h1 className="text-3xl font-bold text-gray-900 tracking-tight leading-none uppercase">Welcome back, {user.name.split(' ')[0]} 🌳</h1>
            <p className="text-sm text-gray-400 font-medium italic mt-2">Track and manage your verified environmental impact.</p>
         </div>
         <div className="flex gap-3">
@@ -59,8 +59,8 @@ export function DashboardPage() {
       {/* Recent Orders Progress */}
       <div className="space-y-4">
          <div className="flex items-center justify-between">
-            <h3 className="text-xl font-black text-gray-900 uppercase">Recent Plantation Progress</h3>
-            <Button variant="ghost" size="sm" className="font-black text-[10px] uppercase text-emerald-600 tracking-widest">View All <ChevronRight className="w-3 h-3 ml-1" /></Button>
+            <h3 className="text-xl font-bold text-gray-900 uppercase">Recent Plantation Progress</h3>
+            <Button variant="ghost" size="sm" className="font-bold text-[10px] uppercase text-emerald-600 tracking-widest">View All <ChevronRight className="w-3 h-3 ml-1" /></Button>
          </div>
          <div className="grid grid-cols-1 gap-4">
             {orders.slice(0, 3).map((order) => {
@@ -72,12 +72,12 @@ export function DashboardPage() {
                  <Card key={order.orderId} className="p-6 border-none shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                        <div className="space-y-1 min-w-[200px]">
-                          <h4 className="font-black text-gray-900 tracking-tight">{order.orderId}</h4>
+                          <h4 className="font-bold text-gray-900 tracking-tight">{order.orderId}</h4>
                           <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{order.trees} Trees • {order.date}</p>
                        </div>
                        
                        <div className="flex-1 space-y-2">
-                          <div className="flex justify-between items-center text-[10px] font-black uppercase text-gray-500">
+                          <div className="flex justify-between items-center text-[10px] font-bold uppercase text-gray-500">
                              <span>Progress</span>
                              <span className="text-emerald-600">{displayProgress}%</span>
                           </div>
@@ -97,17 +97,17 @@ export function DashboardPage() {
                               }
                             }}
                             disabled={!cert}
-                            className={`h-9 px-6 text-[9px] font-black uppercase tracking-widest border-2 ${cert ? 'hover:bg-gray-50 text-gray-700 border-gray-200' : 'text-gray-300 border-gray-100 cursor-not-allowed'}`}>
+                            className={`h-9 px-6 text-[9px] font-bold uppercase tracking-widest border-2 ${cert ? 'hover:bg-gray-50 text-gray-700 border-gray-200' : 'text-gray-300 border-gray-100 cursor-not-allowed'}`}>
                             Verify
                           </Button>
                           <Button 
                              onClick={() => setSelectedCert(cert)}
                              disabled={!cert}
-                             className={`h-9 px-6 text-[9px] font-black uppercase tracking-widest shadow-sm ${cert ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+                             className={`h-9 px-6 text-[9px] font-bold uppercase tracking-widest shadow-sm ${cert ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
                           >
                              Certificate
                           </Button>
-                          <Badge className={`h-9 px-4 rounded-lg font-black text-[9px] uppercase tracking-widest flex items-center justify-center ${displayStatus === 'Certified' || displayStatus === 'Planted' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
+                          <Badge className={`h-9 px-4 rounded-lg font-bold text-[9px] uppercase tracking-widest flex items-center justify-center ${displayStatus === 'Certified' || displayStatus === 'Planted' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
                              {displayStatus}
                           </Badge>
                        </div>
@@ -120,7 +120,7 @@ export function DashboardPage() {
 
       {/* Interactive Map Section */}
       <div className="space-y-4">
-         <h3 className="text-xl font-black text-gray-900 uppercase">Interactive Tree Map</h3>
+         <h3 className="text-xl font-bold text-gray-900 uppercase">Interactive Tree Map</h3>
          <Card className="h-[450px] relative rounded-3xl overflow-hidden border-2 border-emerald-50 shadow-sm z-0">
             <MapContainer 
                center={treeEntries.length > 0 ? [treeEntries[0].lat, treeEntries[0].lng] : [23.2599, 77.4126]}
@@ -132,7 +132,7 @@ export function DashboardPage() {
                <Marker key={idx} position={[te.lat, te.lng]} icon={customMarkerIcon}>
                   <Popup>
                      <div className="p-2 space-y-2 max-w-[200px]">
-                        <p className="font-black text-emerald-700 uppercase">{te.species || "Plantation Unit"}</p>
+                        <p className="font-bold text-emerald-700 uppercase">{te.species || "Plantation Unit"}</p>
                         {(te.images?.[0] || te.proofs?.[0]) && (
                            <img 
                            src={te.images?.[0]?.startsWith('data:') || te.proofs?.[0]?.startsWith('data:') ? (te.images?.[0] || te.proofs?.[0]) : `http://localhost:5000/uploads/${te.images?.[0] || te.proofs?.[0]}`} 
@@ -148,7 +148,7 @@ export function DashboardPage() {
             </MapContainer>
             <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
                <div className="bg-white/90 backdrop-blur p-4 rounded-2xl shadow-2xl border border-gray-100 pointer-events-auto">
-                  <Button className="h-11 px-8 bg-emerald-600 hover:bg-emerald-700 font-black text-xs uppercase tracking-widest">
+                  <Button className="h-11 px-8 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs uppercase tracking-widest">
                      Explore Full Map
                   </Button>
                </div>
@@ -187,8 +187,8 @@ const ImpactSubCard = ({ icon: Icon, title, value, sub, iconColor, bgColor }: an
          <Icon className={`w-6 h-6 ${iconColor}`} />
       </div>
       <div className="space-y-1">
-         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{title}</p>
-         <h4 className="text-2xl font-black text-gray-900">{value}</h4>
+         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{title}</p>
+         <h4 className="text-2xl font-bold text-gray-900">{value}</h4>
          <p className="text-xs text-gray-500 font-medium italic">{sub}</p>
       </div>
    </Card>

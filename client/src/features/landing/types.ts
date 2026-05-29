@@ -8,4 +8,7 @@ export interface NavigationProps {
   isAuthenticated?: boolean;
   onDashboardClick?: () => void;
   onLogoutClick?: () => void;
+  onIndividualClick?: () => void;
+  onIndustriesClick?: () => void;
+  onInstitutesClick?: () => void;
 }

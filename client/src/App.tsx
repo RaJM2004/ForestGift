@@ -16,9 +16,15 @@ import { ExplorePage } from './features/landing/pages/ExplorePage';
 import { WhatsAppButton } from './shared/components/WhatsAppButton';
 import { VerifyPage } from './shared/pages/VerifyPage';
 import { PaymentSuccessPage } from './features/landing/pages/PaymentSuccessPage';
-import { ContactPage } from './features/landing/pages/ContactPage';
 import { TermsPage } from './features/landing/pages/TermsPage';
 import { PrivacyPage } from './features/landing/pages/PrivacyPage';
+import { IndividualPage } from './features/landing/pages/IndividualPage';
+import { IndustriesPage } from './features/landing/pages/IndustriesPage';
+import { InstitutesPage } from './features/landing/pages/InstitutesPage';
+import { configureLeafletIcons } from './shared/utils/leaflet-icons';
+
+// Initialize global Leaflet icon fix
+configureLeafletIcons();
 
 type Role = 'admin' | 'ngo' | 'cake' | 'user';
 
@@ -75,10 +81,18 @@ function App() {
     onStoriesClick: () => navigate('/stories'),
     onPlantClick: () => navigate('/plant'),
     onLoginClick: () => navigate('/login'),
-    onContactClick: () => navigate('/contact'),
+    onContactClick: () => {
+      navigate('/about');
+      setTimeout(() => {
+        document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    },
     isAuthenticated,
     onDashboardClick: () => navigate('/dashboard'),
-    onLogoutClick: handleLogout
+    onLogoutClick: handleLogout,
+    onIndividualClick: () => navigate('/challenges/individual'),
+    onIndustriesClick: () => navigate('/challenges/industries'),
+    onInstitutesClick: () => navigate('/challenges/institutes')
   };
 
   const isLoginPage = location.pathname === '/login';
@@ -104,9 +118,11 @@ function App() {
         <Route path="/plant" element={<PlantPage {...commonProps} />} />
         <Route path="/explore/:type" element={<ExploreWrapper {...commonProps} />} />
         <Route path="/payment-success" element={<PaymentSuccessPage />} />
-        <Route path="/contact" element={<ContactPage {...commonProps} />} />
         <Route path="/terms-and-conditions" element={<TermsPage {...commonProps} />} />
         <Route path="/privacy-policy" element={<PrivacyPage {...commonProps} />} />
+        <Route path="/challenges/individual" element={<IndividualPage />} />
+        <Route path="/challenges/industries" element={<IndustriesPage />} />
+        <Route path="/challenges/institutes" element={<InstitutesPage />} />
         
         <Route path="/login" element={
           isAuthenticated ? (
@@ -119,8 +135,8 @@ function App() {
         {/* Dashboard subroute - Strictly rendered full-screen if authenticated */}
         <Route path="/dashboard" element={
           isAuthenticated ? (
-            <div className="relative h-screen bg-gray-50">
-              <div className="h-full overflow-hidden">
+            <div className="relative h-screen w-full bg-gray-50 overflow-x-hidden">
+              <div className="h-full w-full overflow-hidden">
                 {role === 'admin' && <AdminDashboard handleLogout={handleLogout} />}
                 {role === 'ngo' && <NGODashboard user={user} handleLogout={handleLogout} />}
                 {role === 'cake' && <CakeDashboard user={user} handleLogout={handleLogout} />}

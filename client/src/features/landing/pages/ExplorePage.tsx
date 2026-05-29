@@ -3,61 +3,28 @@ import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { motion } from 'framer-motion';
 import { NavigationProps } from '../types';
+import { ExploreCakes } from './ExploreCakes';
+import { ExploreGifts } from './ExploreGifts';
+import { ExploreTours } from './ExploreTours';
 
 interface ExplorePageProps extends NavigationProps {
   type: 'gifts' | 'cakes' | 'tours';
 }
 
-const contentData = {
-  gifts: {
-    title: "Forest Gifts",
-    items: [
-      {
-        name: "Sunshine Bay Residence",
-        description: "Equipped with full air conditioning, a private pool, 3 on-suite bedrooms, and a spacious open living room kitchen area. Sunshine Bay Residences is an excellent choice for anyone dreaming of their own safe haven.",
-        image: "https://assets.zyrosite.com/AE0r4EWz6LuN9z6g/1-4c1STR4Jq4nO9NVI.svg"
-      },
-      {
-        name: "Bridgewater Joy Residence",
-        description: "Co-designed by the world-renowned architect James Smith, our Bridgewater Joy residences offer top views of the nearby lake Michigan. Perfect for a small family, a professional couple, or anyone looking to set up a home office.",
-        image: "https://assets.zyrosite.com/AE0r4EWz6LuN9z6g/2-sf7HukvFIYXezvfm.svg"
-      }
-    ]
-  },
-  cakes: {
-    title: "Forest Cakes",
-    items: [
-      {
-        name: "Eco-Friendly Delights",
-        description: "Our cakes are made with 100% organic ingredients, sourced from local sustainable farms. Each bite is a celebration of both taste and environmental responsibility.",
-        image: "https://assets.zyrosite.com/AE0r4EWz6LuN9z6g/2-sf7HukvFIYXezvfm.svg"
-      },
-      {
-        name: "Green Celebration",
-        description: "Celebrate your special day with a cake that gives back. For every cake ordered, we contribute to our tree-planting initiatives across the country.",
-        image: "https://assets.zyrosite.com/AE0r4EWz6LuN9z6g/1-weL5oULaZlVRdkoW.svg"
-      }
-    ]
-  },
-  tours: {
-    title: "Forest Tours",
-    items: [
-      {
-        name: "Nature's Trail",
-        description: "Experience the beauty of our forests first-hand. Our guided tours take you through the heart of our conservation areas, showing you the life your contributions have nurtured.",
-        image: "https://assets.zyrosite.com/AE0r4EWz6LuN9z6g/3-iaDdLp7eG6UiiwbN.svg"
-      },
-      {
-        name: "Sustainability Workshop",
-        description: "Join us for an immersive tour that includes hands-on workshops on sustainable living and environmental care. Learn how you can make a difference every day.",
-        image: "https://assets.zyrosite.com/AE0r4EWz6LuN9z6g/forest.-times-1-2clKT98XA9kyXQm1.svg"
-      }
-    ]
+export const ExplorePage: React.FC<ExplorePageProps> = (props) => {
+  const { type } = props;
+  
+  if (type === 'cakes') {
+    return <ExploreCakes {...props} />;
   }
-};
 
-export const ExplorePage: React.FC<ExplorePageProps> = ({ type, onHomeClick, onAboutClick, onStoriesClick, onPlantClick, onLoginClick }) => {
-  const pageData = contentData[type];
+  if (type === 'gifts') {
+    return <ExploreGifts {...props} />;
+  }
+
+  if (type === 'tours') {
+    return <ExploreTours {...props} />;
+  }
 
   return (
     <div className="min-h-screen bg-white text-[#1a1a1a] font-['Inter',_sans-serif]">

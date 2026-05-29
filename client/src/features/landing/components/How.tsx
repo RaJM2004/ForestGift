@@ -28,7 +28,7 @@ const Step = ({
         transition={{ duration: 0.6 }}
         className="w-[200px] h-[200px] flex items-center justify-center mb-0"
       >
-        <img src={image} alt={label} className="w-full h-auto object-contain" />
+        <img src={image} alt={label} className="w-full h-auto object-contain mix-blend-multiply rounded-3xl" />
       </motion.div>
     </div>
 
@@ -76,7 +76,7 @@ export const How: React.FC = () => {
             label="Plant."
             title="Planting a tree is not an event."
             subtitle="It is the beginning of a relationship."
-            image="https://assets.zyrosite.com/AE0r4EWz6LuN9z6g/4-hkCwalGJEivoA8Dg.svg"
+            image="/how/how_plant.png"
             content={
               <>
                 <p>At Forest, every journey starts with <strong>one tree</strong> — planted on your birthday.</p>
@@ -93,7 +93,7 @@ export const How: React.FC = () => {
             label="Pledge."
             title="Planting is easy."
             subtitle="Protection is responsibility."
-            image="https://assets.zyrosite.com/AE0r4EWz6LuN9z6g/1-lOVlndUGnL6Yyjbj.svg"
+            image="/how/how_pledge.png"
             content={
               <>
                 <p>When you plant a tree with Forest, you take a <strong>pledge</strong> — to respect nature, to protect life, and to return every year.</p>
@@ -108,7 +108,7 @@ export const How: React.FC = () => {
             label="Create."
             title="Forests are not created in a day."
             subtitle="They are created by people who return every year."
-            image="https://assets.zyrosite.com/AE0r4EWz6LuN9z6g/2-oE5RhPNhdc5LWECT.svg"
+            image="/how/how_create.png"
             content={
               <>
                 <p>At Forest, you don't plant unlimited trees.</p>
@@ -129,7 +129,7 @@ export const How: React.FC = () => {
             label="Celebrate."
             title="Birthdays mark life."
             subtitle="So should the way we celebrate them."
-            image="https://assets.zyrosite.com/AE0r4EWz6LuN9z6g/3-Feh1yyxTqxvqSYsR.svg"
+            image="/how/how_celebrate.png"
             content={
               <>
                 <p>Instead of cutting another cake alone, you celebrate by <strong>creating life.</strong></p>

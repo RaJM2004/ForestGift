@@ -10,7 +10,10 @@ export const Navbar: React.FC<NavigationProps> = ({
   onContactClick,
   isAuthenticated,
   onDashboardClick,
-  onLogoutClick
+  onLogoutClick,
+  onIndividualClick,
+  onIndustriesClick,
+  onInstitutesClick
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const linkClass = "relative py-2 group hover:text-[#247114] transition-colors cursor-pointer";
@@ -45,10 +48,7 @@ export const Navbar: React.FC<NavigationProps> = ({
             Plant
             <div className={underlineClass}></div>
           </div>
-          <div onClick={onContactClick} className={linkClass}>
-            Contact Us
-            <div className={underlineClass}></div>
-          </div>
+
           <div className="relative group cursor-pointer py-2">
             <div className="flex items-center group-hover:text-[#247114] transition-colors">
               <span>Challenges</span>
@@ -59,9 +59,9 @@ export const Navbar: React.FC<NavigationProps> = ({
             <div className={underlineClass}></div>
             
             <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-gray-100 shadow-xl rounded-xl py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-              <a href="#" className="block px-6 py-2.5 text-[14px] font-normal hover:bg-gray-50 hover:text-[#247114]">Individual</a>
-              <a href="#" className="block px-6 py-2.5 text-[14px] font-normal hover:bg-gray-50 hover:text-[#247114]">Individual Copy</a>
-              <a href="#" className="block px-6 py-2.5 text-[14px] font-normal hover:bg-gray-50 hover:text-[#247114]">Individual Copy Copy</a>
+              <div onClick={onIndividualClick} className="block px-6 py-2.5 text-[14px] font-normal hover:bg-gray-50 hover:text-[#247114] cursor-pointer">Individual</div>
+              <div onClick={onIndustriesClick} className="block px-6 py-2.5 text-[14px] font-normal hover:bg-gray-50 hover:text-[#247114] cursor-pointer">Industries</div>
+              <div onClick={onInstitutesClick} className="block px-6 py-2.5 text-[14px] font-normal hover:bg-gray-50 hover:text-[#247114] cursor-pointer">Institutes</div>
             </div>
           </div>
         </div>
@@ -88,7 +88,7 @@ export const Navbar: React.FC<NavigationProps> = ({
               onClick={onLoginClick}
               className="hidden lg:block px-10 py-3 bg-black text-white rounded-full text-sm font-bold tracking-widest hover:bg-[#247114] transition-all active:scale-95 uppercase"
             >
-              LOGIN
+              MY FOREST
             </button>
           )}
           
@@ -122,14 +122,14 @@ export const Navbar: React.FC<NavigationProps> = ({
             <div onClick={() => { onAboutClick(); setIsMenuOpen(false); }} className="text-[18px] font-medium text-gray-900 py-4 border-b border-gray-100">About Us</div>
             <div onClick={() => { onStoriesClick(); setIsMenuOpen(false); }} className="text-[18px] font-medium text-gray-900 py-4 border-b border-gray-100">Stories</div>
             <div onClick={() => { onPlantClick(); setIsMenuOpen(false); }} className="text-[18px] font-medium text-gray-900 py-4 border-b border-gray-100">Plant Today</div>
-            <div onClick={() => { onContactClick && onContactClick(); setIsMenuOpen(false); }} className="text-[18px] font-medium text-gray-900 py-4 border-b border-gray-100">Contact Us</div>
+
             
             <div className="py-4 border-b border-gray-100">
               <div className="text-[18px] font-medium text-gray-900 mb-4">Challenges</div>
               <div className="pl-4 space-y-4">
-                <a href="#" className="block text-gray-600 font-normal">Individual</a>
-                <a href="#" className="block text-gray-600 font-normal">Individual Copy</a>
-                <a href="#" className="block text-gray-600 font-normal">Individual Copy Copy</a>
+                <div onClick={() => { onIndividualClick?.(); setIsMenuOpen(false); }} className="block text-gray-600 font-normal cursor-pointer">Individual</div>
+                <div onClick={() => { onIndustriesClick?.(); setIsMenuOpen(false); }} className="block text-gray-600 font-normal cursor-pointer">Industries</div>
+                <div onClick={() => { onInstitutesClick?.(); setIsMenuOpen(false); }} className="block text-gray-600 font-normal cursor-pointer">Institutes</div>
               </div>
             </div>
 
@@ -153,7 +153,7 @@ export const Navbar: React.FC<NavigationProps> = ({
                 onClick={() => { onLoginClick(); setIsMenuOpen(false); }}
                 className="w-full py-4 bg-black text-white rounded-xl text-sm font-bold tracking-widest uppercase mt-8 shadow-lg active:scale-95 transition-all"
               >
-                LOGIN
+                MY FOREST
               </button>
             )}
           </div>

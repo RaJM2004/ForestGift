@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { Map as LeafletMap } from 'leaflet';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import { createBulkTreeEntry, fetchBulkTreeEntries } from '../../../api';
+import * as XLSX from 'xlsx';
 
 export type BulkEntryPageProps = {
   ngoData: any;
@@ -35,6 +36,8 @@ export const BulkEntryPage = ({ ngoData, orders }: BulkEntryPageProps) => {
   const [locationQuery, setLocationQuery] = useState('');
   const [selectedLocationLabel, setSelectedLocationLabel] = useState('');
   const [searchResults, setSearchResults] = useState<Array<{ display_name: string; lat: string; lon: string }>>([]);
+  const [excelEntries, setExcelEntries] = useState<any[]>([]);
+  const [excelUploadError, setExcelUploadError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const normalizeEntry = (raw: any) => ({
@@ -237,10 +240,44 @@ export const BulkEntryPage = ({ ngoData, orders }: BulkEntryPageProps) => {
     }
   };
 
+  const handleSubmitExcelEntries = async () => {
+    if (!excelEntries.length || isSubmitting) return;
+    try {
+      setIsSubmitting(true);
+      const createdEntries: any[] = [];
+
+      for (const entry of excelEntries) {
+        const payload = {
+          ngoId: ngoData?.id || ngoData?.name || '',
+          userId: undefined,
+          lat: entry.lat,
+          lng: entry.lng,
+          location: entry.location || ngoData?.area || '',
+          species: entry.species || species,
+          count: entry.count || 1,
+          note: entry.note || '',
+          fileNames: [],
+          images: Array.isArray(entry.images) ? entry.images : [],
+        };
+
+        const created = await createBulkTreeEntry(payload);
+        createdEntries.push(normalizeEntry(created));
+      }
+
+      setBulkEntries((prev) => [...createdEntries, ...prev]);
+      setExcelEntries([]);
+      setGoogleGeocodeError(null);
+    } catch (err) {
+      console.error('Failed to submit Excel entries', err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white rounded-3xl border border-gray-100 shadow-xl p-6">
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-[#b2d8d0]/50 shadow-sm p-6">
           <h2 className="text-lg font-bold text-gray-900 mb-4">Bulk Submission Map</h2>
           <p className="text-sm text-gray-500 mb-6">Select locations on the map for your bulk plantation report.</p>
           <div className="h-96 rounded-2xl overflow-hidden">
@@ -276,12 +313,87 @@ export const BulkEntryPage = ({ ngoData, orders }: BulkEntryPageProps) => {
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-xl p-6">
+        <div className="bg-white rounded-2xl border border-[#b2d8d0]/50 shadow-sm p-6">
           <h2 className="text-lg font-bold text-gray-900 mb-4">Bulk Plantation Entry</h2>
           <p className="text-sm text-gray-500 mb-6">Submit bulk tree data directly to the database.</p>
           
           <div className="space-y-4">
            
+            <div>
+              <label className="text-xs font-bold uppercase tracking-wide text-gray-500">Upload Excel (optional)</label>
+              <div className="flex gap-2 mt-2 items-center">
+                <input
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    try {
+                      setExcelUploadError(null);
+                      const data = await file.arrayBuffer();
+                      const workbook = XLSX.read(data, { type: 'array' });
+                      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                      const rows: any[] = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+                      const parsed = rows
+                        .map((r) => ({
+                          lat: Number(r.lat ?? r.Lat ?? r.latitude ?? r.Latitude ?? r.latitude),
+                          lng: Number(r.lng ?? r.lon ?? r.Lon ?? r.longitude ?? r.Longitude ?? r.longitude),
+                          location: r.location ?? r.Location ?? r.address ?? '',
+                          count: Number(r.count ?? r.Count ?? 1),
+                          note: r.note ?? r.Note ?? '',
+                          species: r.species ?? r.Species ?? species,
+                          images: typeof r.images === 'string' ? r.images.split(';').map((s: string) => s.trim()).filter(Boolean) : Array.isArray(r.images) ? r.images : [],
+                        }))
+                        .filter((p) => !Number.isNaN(p.lat) && !Number.isNaN(p.lng));
+
+                      if (!parsed.length) {
+                        setExcelUploadError('No valid rows found in the uploaded Excel file.');
+                        setExcelEntries([]);
+                        return;
+                      }
+
+                      const normalized = parsed.map((p) => normalizeEntry({ ...p, createdAt: new Date().toISOString() }));
+                      setExcelEntries(normalized);
+                    } catch (err) {
+                      console.error('Failed to parse excel file', err);
+                      setExcelUploadError('Failed to parse Excel file.');
+                      setExcelEntries([]);
+                    }
+                  }}
+                  className="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2"
+                />
+              </div>
+              {excelUploadError && (
+                <div className="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
+                  {excelUploadError}
+                </div>
+              )}
+              {excelEntries.length > 0 && (
+                <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-800">
+                  <div className="font-semibold">Excel upload ready to submit</div>
+                  <div className="mt-2 text-xs text-slate-600">{excelEntries.length} row(s) parsed successfully.</div>
+                  <div className="mt-3 flex flex-col gap-2">
+                    {excelEntries.slice(0, 3).map((entry, idx) => (
+                      <div key={idx} className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs">
+                        {entry.count} trees at {entry.location || `${entry.lat}, ${entry.lng}`}
+                      </div>
+                    ))}
+                    {excelEntries.length > 3 && (
+                      <div className="text-xs text-gray-500">+{excelEntries.length - 3} more rows</div>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSubmitExcelEntries}
+                    disabled={isSubmitting}
+                    className="mt-4 w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
+                  >
+                    {isSubmitting ? 'Submitting Excel rows...' : 'Submit Excel Rows'}
+                  </button>
+                </div>
+              )}
+            </div>
 
             <div>
               <label className="text-xs font-bold uppercase tracking-wide text-gray-500">Location Search</label>
@@ -369,7 +481,7 @@ export const BulkEntryPage = ({ ngoData, orders }: BulkEntryPageProps) => {
       </div>
 
       {bulkEntries.length > 0 && (
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-xl p-6">
+        <div className="bg-white rounded-2xl border border-[#b2d8d0]/50 shadow-sm p-6">
           <h3 className="text-lg font-bold text-gray-900 mb-4">Saved Bulk Tree Data</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {bulkEntries.map((item) => (

@@ -65,7 +65,7 @@ export const VolunteersPage = ({ submissions, ngoData }: VolunteersPageProps) =>
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-xl p-6">
+      <div className="bg-white rounded-2xl border border-[#b2d8d0]/50 shadow-sm p-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-emerald-50 rounded-xl p-5">
             <div className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Active Volunteers</div>

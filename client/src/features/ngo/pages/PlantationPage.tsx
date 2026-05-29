@@ -356,7 +356,7 @@ export const PlantationPage = ({ ngoData, orders, onSubmissionsCreated }: Planta
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white rounded-3xl border border-gray-100 shadow-xl p-6">
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-[#b2d8d0]/50 shadow-sm p-6">
           <h2 className="text-lg font-bold text-gray-900 mb-4">Field Submission Map</h2>
           <p className="text-sm text-gray-500 mb-6">Use the map to visualize submitted plantation locations.</p>
           <div className="h-96 rounded-2xl overflow-hidden">
@@ -405,7 +405,7 @@ export const PlantationPage = ({ ngoData, orders, onSubmissionsCreated }: Planta
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-xl p-6">
+        <div className="bg-white rounded-2xl border border-[#b2d8d0]/50 shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-lg font-bold text-gray-900">Report a Plantation</h2>

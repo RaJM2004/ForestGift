@@ -16,7 +16,7 @@ export function MobileHeader({ userName, userAvatar, notificationCount = 0, curr
     <header className="sticky top-0 left-0 right-0 bg-white border-b border-gray-200 z-40 md:hidden">
       <div className="flex items-center justify-between h-16 px-4">
         <div className="flex flex-col">
-           <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">{currentSection}</span>
+           <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">{currentSection}</span>
            <span className="text-sm font-bold text-gray-900 leading-none mt-1 uppercase tracking-tighter">ForestGift Portal</span>
         </div>
         

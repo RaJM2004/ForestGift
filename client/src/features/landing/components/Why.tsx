@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 
 const comparisonData = [
@@ -149,6 +149,9 @@ const comparisonData = [
 ];
 
 export const Why: React.FC = () => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const displayData = isExpanded ? comparisonData : comparisonData.slice(0, 5);
+
   return (
     <section className="py-24 px-6 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto">
@@ -170,14 +173,14 @@ export const Why: React.FC = () => {
             <div className="font-bold text-[#247114] underline decoration-2 underline-offset-8 mb-6 text-center">Plantation Software / Dashboards</div>
 
             {/* Data Rows */}
-            {comparisonData.map((row, i) => (
+            {displayData.map((row, i) => (
               <React.Fragment key={i}>
                 <motion.div 
                   initial={{ opacity: 0, x: -20 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: i * 0.02 }}
-                  className="font-bold text-[#247114] py-2 border-b border-gray-50"
+                  transition={{ duration: 0.4, delay: (i % 5) * 0.02 }}
+                  className="font-bold text-[#247114] py-2 border-b border-gray-50 flex items-center"
                 >
                   {row.dimension}
                 </motion.div>
@@ -185,8 +188,8 @@ export const Why: React.FC = () => {
                   initial={{ opacity: 0, y: 5 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: i * 0.02 }}
-                  className="text-center py-2 text-gray-900 font-bold bg-green-50/30 border-b border-gray-50"
+                  transition={{ duration: 0.4, delay: (i % 5) * 0.02 }}
+                  className="text-center py-2 text-gray-900 font-bold bg-green-50/30 border-b border-gray-50 flex items-center justify-center"
                 >
                   {row.forest}
                 </motion.div>
@@ -194,8 +197,8 @@ export const Why: React.FC = () => {
                   initial={{ opacity: 0, y: 5 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: i * 0.02 }}
-                  className="text-center py-2 text-gray-500 font-medium border-b border-gray-50"
+                  transition={{ duration: 0.4, delay: (i % 5) * 0.02 }}
+                  className="text-center py-2 text-gray-500 font-medium border-b border-gray-50 flex items-center justify-center"
                 >
                   {row.ngos}
                 </motion.div>
@@ -203,14 +206,23 @@ export const Why: React.FC = () => {
                   initial={{ opacity: 0, y: 5 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: i * 0.02 }}
-                  className="text-center py-2 text-gray-500 font-medium border-b border-gray-50"
+                  transition={{ duration: 0.4, delay: (i % 5) * 0.02 }}
+                  className="text-center py-2 text-gray-500 font-medium border-b border-gray-50 flex items-center justify-center"
                 >
                   {row.software}
                 </motion.div>
               </React.Fragment>
             ))}
           </div>
+        </div>
+
+        <div className="mt-12 flex justify-center">
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="px-10 py-3 bg-black text-white rounded-full text-[13px] font-black tracking-widest uppercase hover:bg-[#247114] transition-all"
+          >
+            {isExpanded ? 'Show Less' : 'Read More'}
+          </button>
         </div>
       </div>
     </section>

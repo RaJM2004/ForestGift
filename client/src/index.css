@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 @theme {
+  --font-sans: "League Spartan", ui-sans-serif, system-ui, sans-serif;
+  
   --color-forest-900: #000000;
   --color-forest-700: #1a1a1a;
   --color-forest-500: #333333;
@@ -74,16 +76,22 @@
   scrollbar-width: none !important;  /* Firefox */
 }
 
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+/* Prevent horizontal overflow and side-to-side wiggling globally across all dashboards on mobile */
+html, body, #root, main, .h-screen, .h-[100dvh], .h-full, .flex-1, .min-h-screen {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden !important;
 }
 
-#root {
-  width: 100%;
+/* Allow horizontal scrolling strictly on containers explicitly designated for it, such as data tables */
+.overflow-x-auto, .overflow-x-scroll, [class*="overflow-x-auto"] {
+  overflow-x: auto !important;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
 }
 
 @keyframes sway {

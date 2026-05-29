@@ -70,7 +70,7 @@ export const ProfilePage = ({ ngoData, onUpdate }: ProfilePageProps) => {
 
   return (
     <div className="max-w-3xl">
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-xl p-8">
+      <div className="bg-white rounded-2xl border border-[#b2d8d0]/50 shadow-sm p-8">
         <div className="flex items-center gap-6 mb-8 pb-8 border-b border-gray-200">
           <div className="w-20 h-20 rounded-full bg-emerald-500 text-white flex items-center justify-center text-3xl font-bold">
             {ngoData.ngo_name?.charAt(0) || 'N'}

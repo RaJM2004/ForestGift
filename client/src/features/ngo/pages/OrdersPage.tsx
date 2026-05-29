@@ -68,7 +68,7 @@ export const OrdersPage = ({ orders, submissions, onUpdateStatus }: OrdersPagePr
         </div>
       </div>
 
-      <div className="overflow-x-auto bg-white rounded-3xl border border-gray-100 shadow-xl">
+      <div className="overflow-x-auto bg-white rounded-2xl border border-[#b2d8d0]/50 shadow-sm">
         <table className="w-full text-left text-sm">
           <thead className="text-xs text-gray-500 uppercase tracking-wider">
             <tr>
