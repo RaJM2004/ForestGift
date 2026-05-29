@@ -79,9 +79,9 @@ export const AboutPage: React.FC<NavigationProps> = ({ onHomeClick, onAboutClick
               className="flex justify-center"
             >
               <img 
-                src="https://assets.zyrosite.com/AE0r4EWz6LuN9z6g/untitled-design-1-4jXcs1i9eBUQgZCg.svg" 
+                src="/about/about_vrinda.png" 
                 alt="Founder planting a tree" 
-                className="w-full max-w-md h-auto object-contain"
+                className="w-full max-w-md h-auto object-contain mix-blend-multiply rounded-3xl"
               />
             </motion.div>
           </section>
@@ -128,9 +128,9 @@ export const AboutPage: React.FC<NavigationProps> = ({ onHomeClick, onAboutClick
               </div>
               <div className="flex justify-center">
                 <img 
-                  src="https://assets.zyrosite.com/AE0r4EWz6LuN9z6g/my-forest-2-e1z4KzH4NORQWXm5.svg" 
+                  src="/about/about_vision.png" 
                   alt="Vision of forest" 
-                  className="w-full max-w-lg h-auto object-contain"
+                  className="w-full max-w-lg h-auto object-contain mix-blend-multiply rounded-3xl"
                 />
               </div>
             </div>
@@ -141,9 +141,9 @@ export const AboutPage: React.FC<NavigationProps> = ({ onHomeClick, onAboutClick
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div className="order-2 md:order-1 flex justify-center">
                 <img 
-                  src="https://assets.zyrosite.com/AE0r4EWz6LuN9z6g/my-forest-3-YQuvkdlFcHwwPz5M.svg" 
+                  src="/about/about_mission.png" 
                   alt="Mission interaction" 
-                  className="w-full max-w-lg md:max-w-xl h-auto object-contain scale-110"
+                  className="w-full max-w-lg md:max-w-xl h-auto object-contain scale-110 mix-blend-multiply rounded-3xl"
                 />
               </div>
               <div className="order-1 md:order-2 space-y-8">
@@ -178,7 +178,7 @@ export const AboutPage: React.FC<NavigationProps> = ({ onHomeClick, onAboutClick
           </section>
 
           {/* Contact Section: Want to connect with Vrinda & Family */}
-          <section id="contact" className="bg-[#fafafa] rounded-[40px] p-12 md:p-20 grid md:grid-cols-2 gap-16 items-center">
+          <section id="contact" className="bg-[#fafafa] rounded-[40px] p-6 md:p-20 grid md:grid-cols-2 gap-10 md:gap-16 items-center">
             <div className="space-y-8">
               <h2 className="text-5xl md:text-7xl font-bold tracking-tighter leading-tight">
                 Want to connect with <span className="text-[#247114]">Vrinda</span> & Family
@@ -192,7 +192,7 @@ export const AboutPage: React.FC<NavigationProps> = ({ onHomeClick, onAboutClick
                 </address>
               </div>
             </div>
-            <div className="bg-white rounded-3xl p-8 shadow-xl space-y-6">
+            <div className="bg-white rounded-3xl p-6 md:p-8 shadow-xl space-y-6">
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-widest text-gray-400">Your First Name</label>

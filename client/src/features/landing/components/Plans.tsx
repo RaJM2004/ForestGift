@@ -277,7 +277,7 @@ export const Plans: React.FC<{ showHeader?: boolean; onPlantClick?: () => void }
               "Exact GPS tracking & location updates"
             ]}
             badge="FRESH START"
-            image="/plans/1_tree.png"
+            image="/plans/plan_1_tree.png"
             delay={0.1}
             onPay={() => handlePlanClick(1000, 'CHILD')}
             isProcessing={processingId === 'CHILD'}
@@ -295,7 +295,7 @@ export const Plans: React.FC<{ showHeader?: boolean; onPlantClick?: () => void }
               "Quarterly growth & photo reports"
             ]}
             badge="MOST POPULAR"
-            image="/plans/5_trees.png"
+            image="/plans/plan_5_trees.png"
             delay={0.2}
             onPay={() => handlePlanClick(5000, 'YOUTH')}
             isProcessing={processingId === 'YOUTH'}
@@ -314,7 +314,7 @@ export const Plans: React.FC<{ showHeader?: boolean; onPlantClick?: () => void }
               "Creates a thriving local wild habitat"
             ]}
             badge="LEADER IMPACT"
-            image="/img/10_trees.png"
+            image="/plans/plan_10_trees.png"
             delay={0.3}
             onPay={() => handlePlanClick(10000, 'ELDER')}
             isProcessing={processingId === 'ELDER'}
